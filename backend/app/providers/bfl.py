@@ -4,6 +4,7 @@ Verified 2026-10-08 against api.bfl.ai/openapi.json and docs.bfl.ml: endpoints, 
 input_image..input_image_8, AsyncResponse {id, polling_url, cost}, status enum, 10-minute signed
 result URLs, /v1/credits. UNVERIFIED: whether FLUX.2 accepts inline base64 (docs show URLs only) —
 see BFL_IMAGE_ENCODING.
+Pricing: https://bfl.ai/pricing?category=flux.2 and https://docs.bfl.ai/quick_start/pricing
 """
 
 import math
@@ -112,6 +113,18 @@ class BflProvider(ImageProvider):
     def _headers(self) -> dict[str, str]:
         return {"x-key": self._key, "accept": "application/json", "Content-Type": "application/json"}
 
+    def estimate_request_cost_usd(self, model, size, reference_sizes):
+        if model.id == "flux-3-image":
+            return self.estimate_cost_usd(model, size)
+        # Official FLUX.2 rates, with conservative MP rounding for each normalized reference.
+        first, additional, reference = (0.03, 0.015, 0.015) if model.id == "flux-2-pro" else (0.07, 0.03, 0.03)
+        output_mp = int((size or model.default_size).removesuffix("MP"))
+        input_mp = 0
+        for width, height in reference_sizes:
+            scale = min(1, 2048 / max(width, height))
+            input_mp += max(1, math.ceil(math.ceil(width * scale) * math.ceil(height * scale) / 1_000_000))
+        return round(first + additional * max(0, output_mp - 1) + reference * input_mp, 6)
+
     def _encode(self, ref: ReferenceImage) -> str:
         if self._encoding == "data_url":
             return f"data:{ref.mime_type};base64,{b64(ref.data)}"
@@ -120,9 +133,14 @@ class BflProvider(ImageProvider):
     def build_payload(self, request: ImageRequest, model: ModelInfo) -> dict:
         size = request.options.get("size") or model.default_size
         safety = int(request.options.get("safety_tolerance", 2))
+        prompt = request.prompt
+        if request.references:
+            prompt += "\nReference image roles (in input order):\n" + "\n".join(
+                f"Image {index}: {ref.label}" for index, ref in enumerate(request.references, start=1)
+            )
         if model.id == "flux-3-image":
             payload: dict = {
-                "prompt": request.prompt,
+                "prompt": prompt,
                 "aspect_ratio": request.aspect_ratio,
                 "resolution": size,
                 "safety_tolerance": min(safety, 4),
@@ -134,7 +152,7 @@ class BflProvider(ImageProvider):
 
         width, height = flux2_dimensions(request.aspect_ratio, float(size.removesuffix("MP")))
         payload = {
-            "prompt": request.prompt,
+            "prompt": prompt,
             "width": width,
             "height": height,
             "output_format": "png",

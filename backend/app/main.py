@@ -10,7 +10,7 @@ from app.database import SessionLocal
 from app.jobs.runner import JobRunner
 from app.logging_setup import configure_logging
 from app.providers.registry import build_registry
-from app.routes import assets, jobs, projects, providers
+from app.routes import assets, jobs, projects, providers, workflow, concepts, exports
 from app.schemas import HealthResponse
 
 configure_logging()
@@ -45,7 +45,7 @@ async def lifespan(app: FastAPI):
 app = FastAPI(
     title="Character Studio API",
     description="Transform photos into stylized 3D characters",
-    version="0.2.0",
+    version="1.0.0",
     lifespan=lifespan,
 )
 
@@ -60,6 +60,9 @@ app.include_router(projects.router)
 app.include_router(assets.router)
 app.include_router(providers.router)
 app.include_router(jobs.router)
+app.include_router(workflow.router)
+app.include_router(concepts.router)
+app.include_router(exports.router)
 
 
 @app.get("/health", response_model=HealthResponse)

@@ -24,6 +24,9 @@ def _model_out(m: ModelInfo) -> ModelOut:
         status=m.status,
         notes=m.notes,
         default=m.default,
+        sizes=list(m.sizes),
+        default_size=m.default_size,
+        price_table=dict(m.price_table),
     )
 
 

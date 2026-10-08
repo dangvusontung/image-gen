@@ -17,7 +17,8 @@ test('provider settings show key status, capabilities and connection test', asyn
   await expect(card('Black Forest Labs')).toContainText('flux-2-pro')
   await expect(card('Midjourney')).toContainText('Không hỗ trợ')
   await expect(card('Midjourney').getByRole('button', { name: 'Kiểm tra kết nối' })).toHaveCount(0)
-  await expect(page.getByText(/Chi tiêu 24h/)).toContainText('$0.00 / $5.00')
+  await expect(page.getByText(/Chi phí job 24h/)).toContainText('$0.00')
+  await expect(page.getByText(/Giới hạn ứng dụng/)).toContainText('Không giới hạn')
 
   await card('Mock').getByRole('button', { name: 'Kiểm tra kết nối' }).click()
   await expect(card('Mock').getByRole('status')).toHaveText('Mock provider luôn sẵn sàng')

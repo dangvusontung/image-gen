@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { ProjectDetail } from '@/api/client'
@@ -41,6 +41,37 @@ function renderStep(project: ProjectDetail) {
 afterEach(() => vi.unstubAllGlobals())
 
 describe('ReferencesStep', () => {
+  it('uploads clipboard images into the selected category', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response('[]', { status: 200 }))
+    vi.stubGlobal('fetch', fetchMock)
+    renderStep({ ...baseProject, rights_confirmed: true })
+    await userEvent.selectOptions(screen.getByLabelText('Dán ảnh vào'), 'side_profile')
+    fireEvent.paste(document, { clipboardData: { files: [new File(['image'], 'clipboard.png', { type: 'image/png' })] } })
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledOnce())
+    const [url, init] = fetchMock.mock.calls[0]
+    expect(url).toBe('/api/projects/p1/assets')
+    expect(init.body.get('kind')).toBe('side_profile')
+    expect(init.body.getAll('files')[0].name).toBe('clipboard.png')
+  })
+
+  it('does not upload pasted images before rights confirmation', () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    renderStep(baseProject)
+    fireEvent.paste(document, { clipboardData: { files: [new File(['image'], 'clipboard.png', { type: 'image/png' })] } })
+    expect(fetchMock).not.toHaveBeenCalled()
+  })
+
+  it('validates pasted formats and leaves text paste untouched', () => {
+    const fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+    renderStep({ ...baseProject, rights_confirmed: true })
+    expect(fireEvent.paste(document, { clipboardData: { files: [] } })).toBe(true)
+    fireEvent.paste(document, { clipboardData: { files: [new File(['image'], 'clipboard.gif', { type: 'image/gif' })] } })
+    expect(fetchMock).not.toHaveBeenCalled()
+    expect(screen.getByText(/clipboard.gif/)).toBeInTheDocument()
+  })
+
   it('disables upload until rights are confirmed, then PATCHes the project', async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(JSON.stringify({ ...baseProject, rights_confirmed: true }), { status: 200 }),

@@ -21,7 +21,7 @@ export default defineConfig({
       cwd: backendDir,
       url: 'http://127.0.0.1:8100/health',
       // Blank keys: E2E must never reach paid providers, even if the shell exports real keys.
-      env: { DATA_DIR: dataDir, CORS_ORIGINS: 'http://127.0.0.1:5180', GEMINI_API_KEY: '', BFL_API_KEY: '', MOCK_DELAY_SECONDS: '0.3' },
+      env: { DATA_DIR: dataDir, CORS_ORIGINS: 'http://127.0.0.1:5180', GEMINI_API_KEY: '', BFL_API_KEY: '', MOCK_DELAY_SECONDS: '0.3', SPEND_LIMIT_USD_PER_DAY: '0' },
       reuseExistingServer: false,
     },
     {

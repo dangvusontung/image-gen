@@ -1,5 +1,5 @@
 import { ArrowLeftIcon, ArrowRightIcon, RepeatIcon, ShieldCheckIcon, Trash2Icon, TriangleAlertIcon } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
   assetUrl,
   useDeleteAsset,
@@ -28,6 +28,7 @@ export default function ReferencesStep({ project }: { project: ProjectDetail }) 
   const upload = useUploadAssets(project.id)
   const reorder = useReorderAssets(project.id)
   const [clientErrors, setClientErrors] = useState<string[]>([])
+  const [pasteKind, setPasteKind] = useState<AssetKind>('reference')
 
   const byKind = (kind: AssetKind) => project.assets.filter((a) => a.kind === kind)
   const references = byKind('reference')
@@ -35,10 +36,25 @@ export default function ReferencesStep({ project }: { project: ProjectDetail }) 
   const warning = referenceCountWarning(references.length)
 
   const handleFiles = (kind: AssetKind) => (files: File[]) => {
+    if (!project.rights_confirmed || upload.isPending) return
     const { accepted, errors } = prevalidateFiles(files, kind, byKind(kind).length)
     setClientErrors(errors)
     if (accepted.length) upload.mutate({ files: accepted, kind })
   }
+
+  useEffect(() => {
+    const paste = (event: ClipboardEvent) => {
+      const target = event.target
+      if (target instanceof HTMLElement && target.closest('input, textarea, [contenteditable="true"], [role="textbox"]')) return
+      if (!project.rights_confirmed || upload.isPending || !event.clipboardData) return
+      const files = Array.from(event.clipboardData.files).filter(file => file.type.startsWith('image/'))
+      if (!files.length) return
+      event.preventDefault()
+      handleFiles(pasteKind)(files)
+    }
+    document.addEventListener('paste', paste)
+    return () => document.removeEventListener('paste', paste)
+  })
 
   const move = (kind: AssetKind, from: number, to: number) => {
     const moved = moveItem(byKind(kind), from, to)
@@ -75,6 +91,15 @@ export default function ReferencesStep({ project }: { project: ProjectDetail }) 
           {updateProject.error && <div className="mt-3"><ErrorAlert error={updateProject.error} /></div>}
         </CardContent>
       </Card>
+
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border p-4 text-sm">
+        <label>Dán ảnh vào <select aria-label="Dán ảnh vào" className="ml-2 rounded border p-2" value={pasteKind}
+          disabled={!project.rights_confirmed || upload.isPending} onChange={event => setPasteKind(event.target.value as AssetKind)}>
+          <option value="reference">Ảnh tham chiếu</option>
+          <option value="side_profile">Ảnh nghiêng</option>
+        </select></label>
+        <p>Sao chép ảnh, rồi nhấn Ctrl+V (Mac: ⌘V) tại bước này để tải lên.</p>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2">
         <UploadDropzone

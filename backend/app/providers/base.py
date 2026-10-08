@@ -146,8 +146,11 @@ class ImageProvider(ABC):
     def estimate_cost_usd(self, model: ModelInfo, size: str | None = None) -> float | None:
         prices = dict(model.price_table)
         if prices:
-            return prices.get(size or model.default_size or "", model.price_per_image_usd)
+            return prices.get(size or model.default_size or "")
         return model.price_per_image_usd
+
+    def estimate_request_cost_usd(self, model: ModelInfo, size: str | None, reference_sizes: list[tuple[int, int]]) -> float | None:
+        return self.estimate_cost_usd(model, size)
 
     @abstractmethod
     async def submit(self, request: ImageRequest) -> Submission: ...

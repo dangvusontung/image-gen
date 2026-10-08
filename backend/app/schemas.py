@@ -3,6 +3,8 @@ from typing import Any, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
+WorkflowMode = Literal["manual", "hybrid", "hybrid_gemini"]
+
 AssetKind = Literal["reference", "side_profile"]
 
 
@@ -32,6 +34,7 @@ class ProjectUpdate(BaseModel):
     rights_confirmed: Optional[bool] = None
     provider: Optional[str] = None
     model: Optional[str] = None
+    workflow_mode: WorkflowMode = "manual"
 
 
 class ProjectSummary(BaseModel):
@@ -41,10 +44,15 @@ class ProjectSummary(BaseModel):
     rights_confirmed: bool
     provider: str
     model: str
+    workflow_mode: WorkflowMode = "manual"
     created_at: datetime
     updated_at: datetime
     asset_count: int
     thumbnail_asset_id: Optional[str]
+    completed_jobs: int = 0
+    active_jobs: int = 0
+    failed_jobs: int = 0
+    recent_activity: Optional[str] = None
 
 
 class ProjectDetail(BaseModel):
@@ -54,6 +62,7 @@ class ProjectDetail(BaseModel):
     rights_confirmed: bool
     provider: str
     model: str
+    workflow_mode: WorkflowMode = "manual"
     created_at: datetime
     updated_at: datetime
     assets: list[AssetResponse]
@@ -78,6 +87,9 @@ class ModelOut(BaseModel):
     status: str
     notes: Optional[str]
     default: bool
+    sizes: list[str] = []
+    default_size: Optional[str] = None
+    price_table: dict[str, float] = {}
 
 
 class ProviderOut(BaseModel):
@@ -130,3 +142,93 @@ class JobOut(BaseModel):
 class HealthResponse(BaseModel):
     status: str
     message: str
+
+
+class ConceptOut(BaseModel):
+    id: str
+    batch: Literal["A", "B"]
+    run: int
+    slot: int
+    revision: int
+    mood: str
+    camera: str
+    brief: dict[str, str]
+    master_version_id: str
+    turnaround_version_id: Optional[str]
+    stale: bool
+    job: JobOut
+    created_at: datetime
+
+
+class EnhancementOut(BaseModel):
+    id: str
+    concept_id: str
+    number: int
+    master_version_id: str
+    turnaround_version_id: Optional[str]
+    stale: bool
+    job: JobOut
+    created_at: datetime
+
+
+class GenerationResult(BaseModel):
+    id: Optional[str] = None
+    job_ids: list[str]
+    concept_ids: list[str] = []
+
+
+class ReferencePlan(BaseModel):
+    provider: str
+    model: str
+    size: str | None = None
+    reference_asset_ids: list[str]
+    reference_labels: list[str]
+    omitted_asset_ids: list[str]
+    warning: Optional[str]
+    estimated_cost_usd: Optional[float]
+    master_version_id: str
+    turnaround_version_id: Optional[str]
+
+
+class MasterOut(BaseModel):
+    id: str
+    round: int
+    variant: int
+    job: JobOut
+
+
+class TurnaroundViewOut(BaseModel):
+    angle: str
+    job: JobOut
+
+
+class TurnaroundOut(BaseModel):
+    id: str
+    number: int
+    master_version_id: str
+    stale: bool
+    approved_at: Optional[datetime]
+    views: list[TurnaroundViewOut]
+
+
+class ApprovalOut(BaseModel):
+    target_type: str
+    target_id: str
+    previous_id: Optional[str]
+    created_at: datetime
+
+
+class WorkflowOut(BaseModel):
+    approved_master_id: Optional[str]
+    approved_turnaround_id: Optional[str]
+    masters: list[MasterOut]
+    turnarounds: list[TurnaroundOut]
+    approvals: list[ApprovalOut]
+
+
+class PromptOut(BaseModel):
+    name: str
+    body: str
+    source: str
+    template_version: int
+    revision: Optional[int]

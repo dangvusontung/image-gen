@@ -10,7 +10,7 @@ from sqlalchemy import or_, update
 from sqlalchemy.orm import Session
 
 from app.config import GENERATED_MAX_SIZE
-from app.models import Asset, GenerationJob, JobStatus
+from app.models import Asset, GenerationJob, JobStatus, Project
 from app.providers.base import (
     ErrorKind,
     ImageProvider,
@@ -45,6 +45,7 @@ class _Snapshot:
     prompt: str
     settings: dict[str, Any]
     reference_asset_ids: list[str]
+    meta: dict[str, Any]
     provider_request_id: str | None
     polling_url: str | None
     submitted_at: datetime | None
@@ -194,7 +195,7 @@ class JobRunner:
                 db.commit()
             return _Snapshot(
                 job.id, job.project_id, job.purpose, job.provider, job.model, job.prompt, dict(job.settings),
-                list(job.reference_asset_ids), job.provider_request_id, job.polling_url, job.submitted_at,
+                list(job.reference_asset_ids), dict(job.meta), job.provider_request_id, job.polling_url, job.submitted_at,
             )
 
     def _load_references(self, snap: _Snapshot) -> list[ReferenceImage]:
@@ -213,8 +214,13 @@ class JobRunner:
                     data, mime = prepare_reference(raw)
                 except OSError:
                     raise ProviderError("reference_invalid", f"Không đọc được ảnh tham chiếu {asset.filename}") from None
-                label = {"reference": "reference photo", "side_profile": "side profile photo"}.get(asset.kind, asset.kind)
-                refs.append(ReferenceImage(data=data, mime_type=mime, label=f"{label} {index}"))
+                labels = snap.meta.get("reference_labels") or []
+                if index <= len(labels):
+                    label = labels[index - 1]
+                else:
+                    kind = {"reference": "reference photo", "side_profile": "side profile photo"}.get(asset.kind, asset.kind)
+                    label = f"{kind} {index}"
+                refs.append(ReferenceImage(data=data, mime_type=mime, label=label))
             return refs
 
     async def _execute(self, job_id: str) -> None:
@@ -237,6 +243,13 @@ class JobRunner:
             )
             provider.validate(request)
             log.info("job %s: submitting to %s/%s with %d references", job_id, snap.provider, snap.model, len(refs))
+            # Reserve spend before sending, including sync APIs and unknown outcomes.
+            with self._sessions() as db:
+                job = db.get(GenerationJob, job_id)
+                if job is None:
+                    return
+                job.submitted_at = _now()
+                db.commit()
             submission = await provider.submit(request)
         except ProviderError as exc:
             self._handle_submit_error(job_id, exc)
@@ -344,6 +357,9 @@ class JobRunner:
                     job.actual_cost_usd = submission.actual_cost_usd
                 job.status, job.finished_at = JobStatus.SUCCEEDED, _now()
                 job.error_code = job.error_message = None
+                project = db.get(Project, snap.project_id)
+                if project is not None:
+                    project.updated_at = _now()
                 db.commit()
             except Exception:
                 db.rollback()
@@ -372,6 +388,8 @@ class JobRunner:
             job = db.get(GenerationJob, job_id)
             if job is None:
                 return
+            if exc.kind != ErrorKind.AMBIGUOUS:
+                job.submitted_at = None
             if exc.kind == ErrorKind.TRANSIENT_SAFE and job.attempts < job.max_attempts and not job.cancel_requested:
                 delay = max(exc.retry_after or 0.0, self._backoff_base * 2 ** (job.attempts - 1))
                 delay *= 1 + random.random() * 0.25

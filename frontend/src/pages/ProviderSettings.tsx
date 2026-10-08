@@ -29,7 +29,7 @@ export default function ProviderSettings({ onBack }: { onBack: () => void }) {
         </div>
         {spend.data && (
           <Badge variant="outline" className="h-8 px-3 text-sm">
-            Chi tiêu 24h (ước tính): ${spend.data.spent_24h_usd.toFixed(2)} / ${spend.data.limit_usd.toFixed(2)}
+            Chi phí job 24h (báo cáo + ước tính): ${spend.data.spent_24h_usd.toFixed(2)} · Giới hạn ứng dụng: {spend.data.limit_usd <= 0 ? 'Không giới hạn' : `$${spend.data.limit_usd.toFixed(2)} / 24h`}
           </Badge>
         )}
       </header>

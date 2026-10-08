@@ -47,7 +47,9 @@ def test_flux2_submit_payload():
     assert str(sent.url) == "https://api.bfl.ai/v1/flux-2-pro"
     assert sent.headers["x-key"] == KEY
     body = json.loads(sent.content)
-    assert body["prompt"] == "Nhân vật 3D"
+    assert body["prompt"].startswith("Nhân vật 3D")
+    assert "Image 1: reference photo 1" in body["prompt"]
+    assert "Image 3: reference photo 3" in body["prompt"]
     assert (body["width"], body["height"]) == (864, 1152)
     assert body["output_format"] == "png" and body["disable_pup"] is True and body["seed"] == 3
     assert [k for k in body if k.startswith("input_image")] == ["input_image", "input_image_2", "input_image_3"]

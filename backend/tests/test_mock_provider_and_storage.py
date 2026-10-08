@@ -30,10 +30,12 @@ def test_mock_submit_then_poll_returns_png_for_aspect_ratio():
 
 def test_mock_poll_after_restart_still_resolves():
     async def run():
-        sub = await MockProvider(delay_seconds=0).submit(ImageRequest(model="mock-v1", prompt="x"))
+        sub = await MockProvider(delay_seconds=0).submit(ImageRequest(model="mock-v1", prompt="x", aspect_ratio="3:4"))
         return await MockProvider().poll(sub)  # fresh instance = process restart
 
-    assert asyncio.run(run()).state == SubmissionState.READY
+    result = asyncio.run(run())
+    assert result.state == SubmissionState.READY
+    assert Image.open(io.BytesIO(result.images[0].data)).size == (768, 1024)
 
 
 def test_capability_check_refuses_instead_of_dropping_references():

@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
 from app.database import get_db
-from app.models import Project
+from app.models import GenerationJob, JobStatus, MasterVersion, Project
 from app.providers.base import CapabilityError
 from app.providers.registry import ProviderRegistry, get_registry
 from app.routes.assets import storage
@@ -26,6 +26,7 @@ def _detail(project: Project) -> ProjectDetail:
         rights_confirmed=project.rights_confirmed,
         provider=project.provider,
         model=project.model,
+        workflow_mode=project.workflow_mode,
         created_at=project.created_at,
         updated_at=project.updated_at,
         assets=[AssetResponse.model_validate(a) for a in project.source_assets],
@@ -37,6 +38,14 @@ def list_projects(db: Session = Depends(get_db)):
     projects = (
         db.query(Project).options(selectinload(Project.source_assets)).order_by(Project.updated_at.desc()).all()
     )
+    jobs = db.query(GenerationJob).order_by(GenerationJob.updated_at.desc()).all()
+    by_project = {}
+    for job in jobs:
+        by_project.setdefault(job.project_id, []).append(job)
+    thumbnails = {}
+    for master in db.query(MasterVersion).filter(MasterVersion.id.in_([p.approved_master_id for p in projects if p.approved_master_id])):
+        if master.job.output_asset_ids:
+            thumbnails[master.project_id] = master.job.output_asset_ids[0]
     return [
         ProjectSummary(
             id=p.id,
@@ -45,10 +54,15 @@ def list_projects(db: Session = Depends(get_db)):
             rights_confirmed=p.rights_confirmed,
             provider=p.provider,
             model=p.model,
+            workflow_mode=p.workflow_mode,
             created_at=p.created_at,
             updated_at=p.updated_at,
             asset_count=len(p.source_assets),
-            thumbnail_asset_id=p.source_assets[0].id if p.source_assets else None,
+            thumbnail_asset_id=thumbnails.get(p.id) or (p.source_assets[0].id if p.source_assets else None),
+            completed_jobs=sum(j.status == JobStatus.SUCCEEDED for j in by_project.get(p.id, [])),
+            active_jobs=sum(j.status in JobStatus.ACTIVE for j in by_project.get(p.id, [])),
+            failed_jobs=sum(j.status == JobStatus.FAILED for j in by_project.get(p.id, [])),
+            recent_activity=by_project[p.id][0].purpose if by_project.get(p.id) else None,
         )
         for p in projects
     ]

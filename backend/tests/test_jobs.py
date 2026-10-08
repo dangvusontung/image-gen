@@ -6,6 +6,11 @@ from fastapi.testclient import TestClient
 
 from app.database import SessionLocal
 from app.jobs.service import JobRequestError, check_spend
+
+
+def test_zero_spend_limit_disables_cap():
+    # Unlimited requests should not query spend or reject the generation.
+    check_spend(None, 10000, limit=0)
 from app.main import app
 from app.models import GenerationJob, JobStatus
 from app.providers.base import ImageRequest, Submission, SubmissionState

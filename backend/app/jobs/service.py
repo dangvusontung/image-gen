@@ -16,12 +16,13 @@ class JobRequestError(Exception):
         self.code, self.message, self.status = code, message, status
 
 
-def spent_last_24h(db: Session) -> float:
+def spent_last_24h(db: Session, exclude_ids: list[str] | None = None) -> float:
     since = datetime.now(timezone.utc) - timedelta(hours=24)
     total = (
         db.query(func.coalesce(func.sum(func.coalesce(GenerationJob.actual_cost_usd, GenerationJob.estimated_cost_usd)), 0.0))
         .filter(GenerationJob.created_at >= since)
         .filter(GenerationJob.provider != "mock")
+        .filter(GenerationJob.id.notin_(exclude_ids or []))
         # Jobs cancelled or failed before reaching the provider cost nothing.
         .filter(~((GenerationJob.status.in_([JobStatus.CANCELLED, JobStatus.FAILED])) & (GenerationJob.submitted_at.is_(None))))
         .scalar()
@@ -29,10 +30,10 @@ def spent_last_24h(db: Session) -> float:
     return float(total or 0.0)
 
 
-def check_spend(db: Session, additional_usd: float, limit: float = SPEND_LIMIT_USD_PER_DAY) -> None:
-    if additional_usd <= 0:
+def check_spend(db: Session, additional_usd: float, limit: float = SPEND_LIMIT_USD_PER_DAY, exclude_ids: list[str] | None = None) -> None:
+    if limit <= 0 or additional_usd <= 0:
         return
-    spent = spent_last_24h(db)
+    spent = spent_last_24h(db, exclude_ids)
     if spent + additional_usd > limit:
         raise JobRequestError(
             "spend_limit_exceeded",
@@ -40,6 +41,11 @@ def check_spend(db: Session, additional_usd: float, limit: float = SPEND_LIMIT_U
             "(chỉnh SPEND_LIMIT_USD_PER_DAY trong .env)",
             status=402,
         )
+
+
+def estimate_job_cost(db, provider, model, reference_asset_ids, size=None):
+    refs = db.query(Asset).filter(Asset.id.in_(reference_asset_ids)).all()
+    return provider.estimate_request_cost_usd(model, size, [(a.width or 2048, a.height or 2048) for a in refs])
 
 
 def enqueue_job(
@@ -83,7 +89,7 @@ def enqueue_job(
     if missing:
         raise JobRequestError("reference_not_found", f"Không tìm thấy {len(missing)} ảnh tham chiếu trong dự án")
 
-    estimate = provider.estimate_cost_usd(model, size)
+    estimate = estimate_job_cost(db, provider, model, reference_asset_ids, size)
     if not skip_spend_check and provider_name != "mock":
         check_spend(db, estimate or 0.0)
 
@@ -108,6 +114,7 @@ def enqueue_job(
         output_asset_ids=[],
     )
     db.add(job)
+    project.updated_at = datetime.now(timezone.utc)
     return job
 
 
@@ -129,7 +136,7 @@ def retry_job(db: Session, registry: ProviderRegistry, job: GenerationJob) -> Ge
     if job.status not in (JobStatus.FAILED, JobStatus.CANCELLED):
         raise JobRequestError("job_not_retryable", "Chỉ thử lại được job đã lỗi hoặc đã huỷ", 409)
     project = db.get(Project, job.project_id)
-    return enqueue_job(
+    new_job = enqueue_job(
         db,
         registry,
         project,
@@ -144,3 +151,6 @@ def retry_job(db: Session, registry: ProviderRegistry, job: GenerationJob) -> Ge
         provider_name=job.provider,
         model_id=job.model,
     )
+    from app.jobs.versioning import attach_retry
+    attach_retry(db, job, new_job)
+    return new_job

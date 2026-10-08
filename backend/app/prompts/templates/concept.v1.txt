@@ -1,0 +1,15 @@
+Use the approved MASTER as identity authority and available TURNAROUND images for angle guidance. Generate ONE standalone cinematic lifestyle scene of the SAME recognizable stylized 3D character.
+
+Mood: {mood}. Camera/head orientation: {camera}.
+Concept brief: {brief}
+Previously used briefs to avoid repeating: {prior_briefs}
+
+CUTE DIRECTION: Make the scene warm, charming and full of gentle personality. Preserve the approved face, apparent age, skin tone, hair, body proportions and stylized 3D design. Use expressive eyes with subtle catchlights, relaxed eyebrows and a natural small smile or an endearing expression appropriate to the mood. Express cuteness through a slight head tilt, relaxed shoulders, a small lively gesture or a candid moment; keep the requested camera and a physically plausible activity. Do not infantilize, exaggerate anatomy or replace the face with a generic beauty or doll face.
+
+SCENE DETAIL: Turn the brief into a specific inviting moment. Include a clear foreground prop, a readable activity and two or three complementary background details. Favor rounded ceramic objects, tiny flowers, soft textiles, handmade accessories and cozy natural textures when they fit the setting. For tea scenes, show a small rounded teapot, a delicate stream of tea, a warm ceramic cup, subtle steam and a simple linen mat, with believable hand placement. For other activities, choose equally thoughtful details suited to that activity. Keep props away from the face and do not add unrelated clutter.
+
+OUTFIT AND PALETTE: Retain the brief's clothing category, with soft tactile fabric, small stitched details, gentle folds and a restrained cute accent such as a tiny embroidered motif or rounded button. Use harmonious cream, peach, dusty pink, pale mint or soft sky-blue accents without changing skin or hair color. Adapt the palette to the setting rather than making every scene identical.
+
+LIGHT AND COMPOSITION: Follow the brief's time and weather with soft flattering light, open gentle shadows, subtle rim separation and a welcoming atmosphere. On an overcast day, use diffused skylight and warm reflected fill rather than harsh sunlight. Keep the face clearly readable, hands anatomically coherent and the activity in frame. Use layered depth and restrained background blur. Elegant, bold or mysterious moods should remain softly charming rather than severe, intimidating or seductive.
+
+OUTPUT: One complete portrait 3:4 image, polished animated-film rendering. No photographic drift, collage, inset panels, borders, captions, watermarks or text.

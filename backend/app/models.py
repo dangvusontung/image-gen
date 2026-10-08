@@ -26,6 +26,10 @@ class Project(Base):
     rights_confirmed = Column(Boolean, nullable=False, default=False)
     provider = Column(String(32), nullable=False, default="mock")
     model = Column(String(128), nullable=False, default="mock-v1")
+    workflow_mode = Column(String(32), nullable=False, default="manual", server_default="manual")
+    # Plain pointers (no FK) to avoid a projects<->versions FK cycle; maintained by the approval routes.
+    approved_master_id = Column(String(36), nullable=True)
+    approved_turnaround_id = Column(String(36), nullable=True)
     created_at = Column(UTCDateTime(), default=_now, nullable=False)
     updated_at = Column(UTCDateTime(), default=_now, onupdate=_now, nullable=False)
 
@@ -107,3 +111,112 @@ class GenerationJob(Base):
     project = relationship("Project", back_populates="jobs")
 
     __table_args__ = (Index("ix_generation_jobs_status_next", "status", "next_attempt_at"),)
+
+
+class PromptTemplate(Base):
+    """Append-only override history. project_id NULL = global override; body NULL = reset to inherited."""
+
+    __tablename__ = "prompt_templates"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(32), nullable=False)
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=True)
+    body = Column(Text, nullable=True)
+    template_version = Column(Integer, nullable=False)
+    revision = Column(Integer, nullable=False)
+    created_at = Column(UTCDateTime(), default=_now, nullable=False)
+
+    __table_args__ = (Index("ix_prompt_templates_lookup", "name", "project_id", "revision"),)
+
+
+class MasterVersion(Base):
+    __tablename__ = "master_versions"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    job_id = Column(String(36), ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False)
+    round = Column(Integer, nullable=False)
+    variant = Column(Integer, nullable=False)
+    created_at = Column(UTCDateTime(), default=_now, nullable=False)
+
+    job = relationship("GenerationJob")
+
+
+class TurnaroundVersion(Base):
+    __tablename__ = "turnaround_versions"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    master_version_id = Column(String(36), ForeignKey("master_versions.id", ondelete="CASCADE"), nullable=False)
+    forked_from_id = Column(String(36), ForeignKey("turnaround_versions.id", ondelete="SET NULL"), nullable=True)
+    number = Column(Integer, nullable=False)
+    approved_at = Column(UTCDateTime(), nullable=True)
+    created_at = Column(UTCDateTime(), default=_now, nullable=False)
+
+    views = relationship(
+        "TurnaroundView", back_populates="version", cascade="all, delete-orphan", order_by="TurnaroundView.created_at"
+    )
+
+
+class TurnaroundView(Base):
+    __tablename__ = "turnaround_views"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    turnaround_version_id = Column(
+        String(36), ForeignKey("turnaround_versions.id", ondelete="CASCADE"), nullable=False, index=True
+    )
+    angle = Column(String(16), nullable=False)
+    job_id = Column(String(36), ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False)
+    selected = Column(Boolean, nullable=False, default=False)
+    created_at = Column(UTCDateTime(), default=_now, nullable=False)
+
+    version = relationship("TurnaroundVersion", back_populates="views")
+    job = relationship("GenerationJob")
+
+
+class ApprovalEvent(Base):
+    __tablename__ = "approval_events"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    target_type = Column(String(16), nullable=False)  # "master" | "turnaround"
+    target_id = Column(String(36), nullable=False)
+    previous_id = Column(String(36), nullable=True)
+    created_at = Column(UTCDateTime(), default=_now, nullable=False)
+
+
+class Concept(Base):
+    """One standalone slot revision. Earlier results are never overwritten."""
+
+    __tablename__ = "concepts"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    batch = Column(String(1), nullable=False)
+    run = Column(Integer, nullable=False)
+    slot = Column(Integer, nullable=False)
+    revision = Column(Integer, nullable=False, default=1)
+    mood = Column(String(128), nullable=False)
+    camera = Column(String(128), nullable=False)
+    brief = Column(JSON, nullable=False)
+    master_version_id = Column(String(36), ForeignKey("master_versions.id", ondelete="CASCADE"), nullable=False)
+    turnaround_version_id = Column(String(36), ForeignKey("turnaround_versions.id", ondelete="SET NULL"), nullable=True)
+    job_id = Column(String(36), ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(UTCDateTime(), default=_now, nullable=False)
+
+    job = relationship("GenerationJob")
+
+
+class EnhancementVersion(Base):
+    __tablename__ = "enhancement_versions"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    concept_id = Column(String(36), ForeignKey("concepts.id", ondelete="CASCADE"), nullable=False, index=True)
+    number = Column(Integer, nullable=False)
+    master_version_id = Column(String(36), ForeignKey("master_versions.id", ondelete="CASCADE"), nullable=False)
+    turnaround_version_id = Column(String(36), ForeignKey("turnaround_versions.id", ondelete="SET NULL"), nullable=True)
+    job_id = Column(String(36), ForeignKey("generation_jobs.id", ondelete="CASCADE"), nullable=False)
+    created_at = Column(UTCDateTime(), default=_now, nullable=False)
+
+    job = relationship("GenerationJob")

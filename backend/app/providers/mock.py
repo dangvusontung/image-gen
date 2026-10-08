@@ -6,6 +6,7 @@ import textwrap
 import time
 import uuid
 from functools import lru_cache
+from urllib.parse import parse_qs, urlparse
 
 from PIL import Image, ImageDraw, ImageFont
 
@@ -148,13 +149,16 @@ class MockProvider(ImageProvider):
 
         task_id = f"mock-{uuid.uuid4()}"
         self._tasks[task_id] = (time.monotonic() + self.delay, request)
-        return Submission(state=SubmissionState.PENDING, provider_request_id=task_id, polling_url=f"mock://{task_id}")
+        return Submission(state=SubmissionState.PENDING, provider_request_id=task_id,
+                          polling_url=f"mock://{task_id}?aspect_ratio={request.aspect_ratio}")
 
     async def poll(self, submission: Submission) -> Submission:
         task = self._tasks.get(submission.provider_request_id or "")
         if task is None:
             # Process restarted while the task was pending: real providers keep the task; emulate that.
-            request = ImageRequest(model="mock-v1", prompt="(khôi phục sau khi khởi động lại)")
+            ratio = parse_qs(urlparse(submission.polling_url or "").query).get("aspect_ratio", ["1:1"])[0]
+            request = ImageRequest(model="mock-v1", prompt="(khôi phục sau khi khởi động lại)",
+                                   aspect_ratio=ratio if ratio in ASPECT_RATIOS else "1:1")
             data = await asyncio.to_thread(render_placeholder, request, "resumed")
             return Submission(SubmissionState.READY, submission.provider_request_id, images=[GeneratedImage(data, "image/png")], actual_cost_usd=0.0)
         ready_at, request = task

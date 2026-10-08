@@ -27,9 +27,14 @@ export interface ProjectSummary {
   updated_at: string
   asset_count: number
   thumbnail_asset_id: string | null
+  completed_jobs: number
+  active_jobs: number
+  failed_jobs: number
+  recent_activity: string | null
 }
 
 export interface ProjectDetail {
+  workflow_mode?: "manual" | "hybrid" | "hybrid_gemini"
   id: string
   name: string
   description: string | null
@@ -52,6 +57,9 @@ export interface ModelInfo {
   status: string
   notes: string | null
   default: boolean
+  sizes?: string[]
+  default_size?: string | null
+  price_table?: Record<string, number>
 }
 
 export interface ProviderInfo {
@@ -86,7 +94,7 @@ export class ApiError extends Error {
   }
 }
 
-async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit): Promise<T> {
   let resp: Response
   try {
     resp = await fetch(`${API_BASE}${path}`, init)
@@ -115,6 +123,32 @@ const json = (method: string, data: unknown): RequestInit => ({
 })
 
 export const assetUrl = (assetId: string) => `${API_BASE}/assets/${assetId}/content`
+export const downloadUrl = (assetId: string, format = 'original') => `${API_BASE}/assets/${assetId}/download?format=${format}`
+
+export interface GenerationJob {
+  id: string; purpose: string; provider: string; model: string; status: string
+  output_asset_ids: string[]; reference_asset_ids: string[]; error_message: string | null
+  prompt: string; meta: Record<string, unknown>; settings: Record<string, unknown>
+  estimated_cost_usd: number | null; actual_cost_usd: number | null
+  attempts: number; max_attempts: number; cancel_requested: boolean
+  created_at: string; updated_at: string
+}
+
+export interface Concept {
+  id: string; batch: 'A' | 'B'; run: number; slot: number; revision: number
+  mood: string; camera: string; brief: Record<string, string>; stale: boolean
+  master_version_id: string; turnaround_version_id: string | null; job: GenerationJob
+}
+
+export interface Enhancement {
+  id: string; concept_id: string; number: number; stale: boolean; job: GenerationJob
+}
+
+export interface ReferencePlan {
+  provider: string; model: string; size: string | null
+  reference_asset_ids: string[]; reference_labels: string[]; omitted_asset_ids: string[]
+  warning: string | null; estimated_cost_usd: number | null; master_version_id: string
+}
 
 export const api = {
   listProjects: () => request<ProjectSummary[]>('/projects'),
@@ -123,7 +157,7 @@ export const api = {
     request<ProjectDetail>('/projects', json('POST', data)),
   updateProject: (
     id: string,
-    data: Partial<Pick<ProjectDetail, 'name' | 'description' | 'rights_confirmed' | 'provider' | 'model'>>,
+    data: Partial<Pick<ProjectDetail, 'name' | 'description' | 'rights_confirmed' | 'provider' | 'model' | 'workflow_mode'>>,
   ) =>
     request<ProjectDetail>(`/projects/${id}`, json('PATCH', data)),
   deleteProject: (id: string) => request<void>(`/projects/${id}`, { method: 'DELETE' }),
@@ -151,7 +185,7 @@ const keys = {
   project: (id: string) => ['projects', id] as const,
 }
 
-export const useProjects = () => useQuery({ queryKey: keys.projects, queryFn: api.listProjects })
+export const useProjects = () => useQuery({ queryKey: keys.projects, queryFn: api.listProjects, refetchInterval: 5000 })
 
 export const useProject = (id: string) => useQuery({ queryKey: keys.project(id), queryFn: () => api.getProject(id) })
 
@@ -193,6 +227,8 @@ export function useUpdateProject(projectId: string) {
     mutationFn: (data: Parameters<typeof api.updateProject>[1]) => api.updateProject(projectId, data),
     onSuccess: (project) => {
       qc.setQueryData(keys.project(projectId), project)
+      qc.invalidateQueries({ queryKey: ['estimate', projectId] })
+      qc.invalidateQueries({ queryKey: ['enhance-plan', projectId] })
       qc.invalidateQueries({ queryKey: keys.projects, exact: true })
     },
   })

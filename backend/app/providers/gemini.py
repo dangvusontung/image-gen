@@ -1,6 +1,7 @@
 """Google Gemini image generation ("Nano Banana" family) via REST generateContent.
 
-Verified 2026-10-08 against ai.google.dev (models, image-generation, pricing, api-errors, billing):
+Verified 2026-10-08 against https://ai.google.dev/gemini-api/docs/generate-content/image-generation
+and https://ai.google.dev/gemini-api/docs/pricing (plus models, api-errors, billing):
 model IDs, generationConfig.imageConfig {aspectRatio, imageSize}, 14 total references,
 "400/500 errors are not charged". Response parsing is defensive (camelCase or snake_case).
 """

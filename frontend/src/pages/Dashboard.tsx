@@ -26,7 +26,7 @@ export default function Dashboard({
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10">
-      <header className="mb-8 flex items-end justify-between gap-4">
+      <header className="mb-8 flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-3xl font-semibold tracking-tight">Character Studio</h1>
           <p className="mt-1 text-muted-foreground">Biến ảnh của một người thành nhân vật 3D phong cách hoá, nhất quán.</p>
@@ -103,10 +103,14 @@ function ProjectCard({ project, onOpen }: { project: ProjectSummary; onOpen: () 
         <CardTitle className="truncate">{project.name}</CardTitle>
         {project.description && <CardDescription className="line-clamp-2">{project.description}</CardDescription>}
       </CardHeader>
-      <CardContent className="flex items-center justify-between pt-3 text-xs text-muted-foreground">
-        <div className="flex items-center gap-2">
+      <CardContent className="flex items-center justify-between gap-2 pt-3 text-xs text-muted-foreground">
+        <div className="flex flex-wrap items-center gap-2">
           <Badge variant="secondary">{project.asset_count} ảnh</Badge>
+          {!!project.completed_jobs && <span>{project.completed_jobs} ảnh đã tạo</span>}
+          {!!project.active_jobs && <Badge>{project.active_jobs} đang tạo</Badge>}
+          {!!project.failed_jobs && <Badge variant="destructive">{project.failed_jobs} lỗi</Badge>}
           <span>Cập nhật {dateFmt.format(new Date(project.updated_at))}</span>
+          {project.recent_activity && <span>Gần nhất: {({ master: 'nhân vật gốc', turnaround: 'turnaround', concept: 'concept', enhance: 'nâng cấp' } as Record<string, string>)[project.recent_activity] ?? 'tạo ảnh'}</span>}
         </div>
         <Button
           variant="ghost"
