@@ -1,6 +1,7 @@
 import { ArrowLeftIcon } from 'lucide-react'
 import { useProject } from '@/api/client'
 import { ErrorAlert } from '@/components/ErrorAlert'
+import ProviderPicker from '@/components/ProviderPicker'
 import ReferencesStep from '@/components/ReferencesStep'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -29,9 +30,12 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
 
       {project && (
         <>
-          <header className="mb-6">
-            <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
-            {project.description && <p className="mt-1 text-muted-foreground">{project.description}</p>}
+          <header className="mb-6 grid gap-4">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
+              {project.description && <p className="mt-1 text-muted-foreground">{project.description}</p>}
+            </div>
+            <ProviderPicker project={project} />
           </header>
 
           <Tabs defaultValue="references">

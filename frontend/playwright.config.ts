@@ -20,7 +20,8 @@ export default defineConfig({
       command: `${venvBin}/alembic upgrade head && ${venvBin}/uvicorn app.main:app --host 127.0.0.1 --port 8100`,
       cwd: backendDir,
       url: 'http://127.0.0.1:8100/health',
-      env: { DATA_DIR: dataDir, CORS_ORIGINS: 'http://127.0.0.1:5180' },
+      // Blank keys: E2E must never reach paid providers, even if the shell exports real keys.
+      env: { DATA_DIR: dataDir, CORS_ORIGINS: 'http://127.0.0.1:5180', GEMINI_API_KEY: '', BFL_API_KEY: '', MOCK_DELAY_SECONDS: '0.3' },
       reuseExistingServer: false,
     },
     {

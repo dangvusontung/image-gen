@@ -21,6 +21,8 @@ export interface ProjectSummary {
   name: string
   description: string | null
   rights_confirmed: boolean
+  provider: string
+  model: string
   created_at: string
   updated_at: string
   asset_count: number
@@ -32,15 +34,46 @@ export interface ProjectDetail {
   name: string
   description: string | null
   rights_confirmed: boolean
+  provider: string
+  model: string
   created_at: string
   updated_at: string
   assets: Asset[]
 }
 
+export interface ModelInfo {
+  id: string
+  display_name: string
+  max_reference_images: number
+  aspect_ratios: string[]
+  default_aspect_ratio: string
+  price_per_image_usd: number | null
+  price_note: string | null
+  status: string
+  notes: string | null
+  default: boolean
+}
+
 export interface ProviderInfo {
   name: string
+  display_name: string
+  selectable: boolean
+  key_configured: boolean
   enabled: boolean
-  capabilities: Record<string, unknown>
+  info_url: string | null
+  data_notice: string | null
+  models: ModelInfo[]
+}
+
+export interface ConnectionTestResult {
+  ok: boolean
+  message: string
+  code: string | null
+}
+
+export interface SpendInfo {
+  spent_24h_usd: number
+  limit_usd: number
 }
 
 export class ApiError extends Error {
@@ -88,7 +121,10 @@ export const api = {
   getProject: (id: string) => request<ProjectDetail>(`/projects/${id}`),
   createProject: (data: { name: string; description?: string }) =>
     request<ProjectDetail>('/projects', json('POST', data)),
-  updateProject: (id: string, data: Partial<Pick<ProjectDetail, 'name' | 'description' | 'rights_confirmed'>>) =>
+  updateProject: (
+    id: string,
+    data: Partial<Pick<ProjectDetail, 'name' | 'description' | 'rights_confirmed' | 'provider' | 'model'>>,
+  ) =>
     request<ProjectDetail>(`/projects/${id}`, json('PATCH', data)),
   deleteProject: (id: string) => request<void>(`/projects/${id}`, { method: 'DELETE' }),
   uploadAssets: (projectId: string, files: File[], kind: AssetKind) => {
@@ -102,6 +138,8 @@ export const api = {
   updateAsset: (assetId: string, kind: AssetKind) => request<Asset>(`/assets/${assetId}`, json('PATCH', { kind })),
   deleteAsset: (assetId: string) => request<void>(`/assets/${assetId}`, { method: 'DELETE' }),
   listProviders: () => request<ProviderInfo[]>('/providers'),
+  testProvider: (name: string) => request<ConnectionTestResult>(`/providers/${name}/test`, { method: 'POST' }),
+  getSpend: () => request<SpendInfo>('/spend'),
 }
 
 export const queryClient = new QueryClient({
@@ -117,7 +155,12 @@ export const useProjects = () => useQuery({ queryKey: keys.projects, queryFn: ap
 
 export const useProject = (id: string) => useQuery({ queryKey: keys.project(id), queryFn: () => api.getProject(id) })
 
-export const useProviders = () => useQuery({ queryKey: ['providers'], queryFn: api.listProviders })
+export const useProviders = () =>
+  useQuery({ queryKey: ['providers'], queryFn: api.listProviders, staleTime: 5 * 60_000 })
+
+export const useSpend = () => useQuery({ queryKey: ['spend'], queryFn: api.getSpend })
+
+export const useTestProvider = () => useMutation({ mutationFn: api.testProvider })
 
 export function useCreateProject() {
   const qc = useQueryClient()

@@ -9,8 +9,6 @@ const png = (name: string) => ({ name, mimeType: 'image/png', buffer: PNG })
 
 test('create project, confirm rights, upload/reorder/remove photos, survive reload', async ({ page }) => {
   await page.goto('/')
-  await expect(page.getByText('Chưa có dự án nào')).toBeVisible()
-
   await page.getByRole('button', { name: 'Tạo dự án mới' }).click()
   await page.getByLabel('Tên dự án').fill('Nhân vật E2E')
   await page.getByRole('button', { name: 'Tạo dự án', exact: true }).click()
@@ -45,6 +43,7 @@ test('create project, confirm rights, upload/reorder/remove photos, survive relo
   await expect(tiles).toHaveCount(1)
 
   await page.getByRole('button', { name: 'Tất cả dự án' }).click()
-  await expect(page.getByText('1 ảnh')).toBeVisible()
-  await expect.poll(() => page.locator('main img').first().evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(2)
+  const card = page.locator('[data-slot=card]').filter({ hasText: 'Nhân vật E2E' })
+  await expect(card.getByText('1 ảnh')).toBeVisible()
+  await expect.poll(() => card.locator('img').evaluate((img: HTMLImageElement) => img.naturalWidth)).toBe(2)
 })

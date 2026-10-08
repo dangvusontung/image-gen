@@ -1,4 +1,4 @@
-import { ImageIcon, PlusIcon, Trash2Icon } from 'lucide-react'
+import { ImageIcon, PlusIcon, SettingsIcon, Trash2Icon } from 'lucide-react'
 import { assetUrl, useDeleteProject, useProjects, type ProjectSummary } from '@/api/client'
 import { CreateProjectDialog } from '@/components/CreateProjectDialog'
 import { ErrorAlert } from '@/components/ErrorAlert'
@@ -9,7 +9,13 @@ import { Skeleton } from '@/components/ui/skeleton'
 
 const dateFmt = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })
 
-export default function Dashboard({ onOpenProject }: { onOpenProject: (id: string) => void }) {
+export default function Dashboard({
+  onOpenProject,
+  onOpenSettings,
+}: {
+  onOpenProject: (id: string) => void
+  onOpenSettings: () => void
+}) {
   const { data: projects, isPending, error } = useProjects()
 
   const newButton = (
@@ -25,7 +31,12 @@ export default function Dashboard({ onOpenProject }: { onOpenProject: (id: strin
           <h1 className="text-3xl font-semibold tracking-tight">Character Studio</h1>
           <p className="mt-1 text-muted-foreground">Biến ảnh của một người thành nhân vật 3D phong cách hoá, nhất quán.</p>
         </div>
-        <CreateProjectDialog trigger={newButton} onCreated={onOpenProject} />
+        <div className="flex gap-2">
+          <Button variant="outline" size="lg" onClick={onOpenSettings}>
+            <SettingsIcon /> Nhà cung cấp & model
+          </Button>
+          <CreateProjectDialog trigger={newButton} onCreated={onOpenProject} />
+        </div>
       </header>
 
       {error && <ErrorAlert title="Không tải được danh sách dự án" error={error} />}
