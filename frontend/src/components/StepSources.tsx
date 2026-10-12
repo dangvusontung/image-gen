@@ -168,6 +168,7 @@ export default function StepSources({ project, step, onBack }: { project: Projec
   const leadStep: WorkflowStep = step === 'concepts' ? 'concept' : step
 
   // Only the master step shows the project's own photos, so only there can order be changed.
+  const setConceptLead = useSetStepLead(project.id)
   const reorder = useReorderAssets(project.id)
   const reorderUsed = (orderedIds: string[]) => {
     const all = [...project.assets].sort((a, b) => a.position - b.position).map((a) => a.id)
@@ -186,6 +187,15 @@ export default function StepSources({ project, step, onBack }: { project: Projec
       onBack={onBack}
       onReorder={step === 'master' && used.length > 1 ? reorderUsed : undefined}
       lead={<>
+        {step === 'concepts' && <div className="space-y-2">
+          <Button variant={project.step_leads?.concept === 'none' ? 'outline' : 'default'}
+            className="w-full" disabled={setConceptLead.isPending}
+            onClick={() => setConceptLead.mutate({ step: 'concept', lead: project.step_leads?.concept === 'none' ? null : 'none' })}>
+            {project.step_leads?.concept === 'none' ? 'Dùng lại turnaround' : 'Bỏ turnaround'}
+          </Button>
+          <p className="text-xs text-muted-foreground">{project.step_leads?.concept === 'none' ? 'Đã bỏ turnaround khỏi ảnh tham chiếu tạo concept.' : 'Có thể bỏ turnaround và chỉ dùng nhân vật gốc cùng guideline.'}</p>
+          {setConceptLead.error && <ErrorAlert error={setConceptLead.error} title="Không đổi được lựa chọn turnaround" />}
+        </div>}
         <LeadPicker project={project} step={leadStep} options={leadOptions[step]} />
         <TemplatePicker project={project} step={leadStep} />
       </>}

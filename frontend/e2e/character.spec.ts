@@ -166,6 +166,8 @@ test('turnaround can be skipped without generating any angle jobs', async ({ pag
   await page.getByRole('tab', { name: '3. Turnaround (tùy chọn)', exact: true }).click()
   await page.getByRole('button', { name: 'Bỏ qua → Concept', exact: true }).click()
   await expect(page.getByRole('tab', { name: '4. Concept' })).toHaveAttribute('data-state', 'active')
+  await page.getByRole('button', { name: 'Bỏ turnaround', exact: true }).click()
+  await expect(page.getByRole('button', { name: 'Dùng lại turnaround', exact: true })).toBeVisible()
   await page.getByText('Ảnh tùy chỉnh · tự chọn trang phục và bối cảnh').click()
   await page.getByLabel('Trang phục concept').selectOption('denim_shorts')
   await page.getByLabel('Bối cảnh concept').selectOption('poolside')

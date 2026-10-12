@@ -150,7 +150,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         <Button size="sm" variant="outline" onClick={() => { setPicked([]); setConfirmed(false) }} disabled={chosen.length === 0}>Bỏ chọn tất cả</Button>
         <span className="text-sm text-muted-foreground">Đang chọn {chosen.length}/{list.length}</span>
       </div>
-      <ul className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+      <ul className="space-y-3">
         {list.map(p => <li key={p.id} className={`rounded-xl border p-3 text-sm ${picked !== null && !picked.includes(p.slot) ? 'opacity-60' : ''}`}>
           <label className="flex items-start gap-2 font-medium">
             <input type="checkbox" aria-label={`Chọn concept ${p.slot}`} className="mt-1"
@@ -244,12 +244,17 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       <a className="text-sm underline" href={`/api${base}/contact-sheet?run=${run}`}>Tải bảng ảnh</a>
       <span className="text-sm">{cards.filter(c => c?.job.status === 'succeeded').length}/{cards.length} hoàn tất</span>
     </div>}
-    {!!runs.length && <div className={`grid gap-4 ${compact ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'sm:grid-cols-2 lg:grid-cols-3'}`}>
+    {!!runs.length && <div className={`grid gap-4 ${compact ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1'}`}>
       {cards.map(c => c ? <article key={c.id} className="space-y-3 rounded-xl border p-4" aria-label={`Concept ${c.slot}`}>
+        <div className={compact ? 'space-y-3' : 'grid gap-4 sm:grid-cols-[10rem_minmax(0,1fr)]'}>
+          <div className="space-y-2">
+        {c.job.output_asset_ids[0] ? <><ImagePreview assetId={c.job.output_asset_ids[0]} title={`Concept ${c.slot} · ${c.mood}`} /><DownloadLinks assetId={c.job.output_asset_ids[0]} /></> : active(c.job) ? <JobPlaceholder job={c.job} /> : <div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-muted text-sm">Chưa có ảnh kết quả</div>}
+          </div>
+          <div className="min-w-0 space-y-3">
         <h3 className="font-semibold">{c.slot}. {c.mood}</h3>
         <p className="text-sm text-muted-foreground">{c.camera} · Bản {c.revision}</p>
         {c.stale && <p className="text-sm text-amber-700">Dựa trên nhân vật gốc cũ</p>}
-        {c.job.output_asset_ids[0] ? <><ImagePreview assetId={c.job.output_asset_ids[0]} title={`Concept ${c.slot} · ${c.mood}`} /><DownloadLinks assetId={c.job.output_asset_ids[0]} /></> : active(c.job) ? <JobPlaceholder job={c.job} /> : <div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-muted text-sm">Chưa có ảnh kết quả</div>}
+
         {!compact && <>
           <p className="text-sm">Trang phục: {c.brief.outfit}</p>
           <p className="text-sm">{c.brief.setting} · {c.brief.activity}</p>
@@ -264,6 +269,8 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         <div className="flex flex-wrap gap-2">
           <Button size="sm" variant="outline" disabled={pending || active(c.job) || !ready} onClick={() => action.mutate({ path: `${base}/concepts/${c.id}/regenerate`, data: { size: size || null } })}>Tạo lại ô {c.slot}</Button>
           <Button size="sm" disabled={c.job.status !== 'succeeded'} onClick={() => onEnhance(c.id)}>Nâng cấp ô {c.slot}</Button>
+        </div>
+          </div>
         </div>
       </article> : null)}
     </div>}
