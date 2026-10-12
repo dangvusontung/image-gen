@@ -172,3 +172,24 @@ def test_fetch_reports_provider_errors_and_unsupported_providers(client):
     # Ones that have a catalogue but no key report the missing key instead.
     assert client.post("/api/providers/gemini/models/fetch").json()["detail"]["code"] == "provider_not_configured"
     assert client.post("/api/providers/nope/models/fetch").status_code == 404
+
+
+def test_openai_quality_defaults_to_low_and_respects_explicit_choice():
+    import asyncio
+    import base64
+    import json
+    import httpx
+    from app.providers.openai_images import OpenAIImageProvider
+    from app.providers.base import ImageRequest
+    sent = []
+    def handler(request):
+        sent.append(json.loads(request.content))
+        return httpx.Response(200, json={"data": [{"b64_json": base64.b64encode(make_image()).decode()}]})
+    provider = OpenAIImageProvider(httpx.AsyncClient(transport=httpx.MockTransport(handler)), api_key="fake", quality="low")
+    assert all(model.default_size == "low" for model in provider.models())
+    asyncio.run(provider.submit(ImageRequest(model="gpt-image-2.5-sunburst", prompt="test")))
+    assert sent[-1]["quality"] == "low"
+    asyncio.run(provider.submit(ImageRequest(model="gpt-image-2.5-sunburst", prompt="test", options={"size": "medium"})))
+    assert sent[-1]["quality"] == "medium"
+    provider = OpenAIImageProvider(httpx.AsyncClient(), api_key="fake", quality="medium")
+    assert all(model.default_size == "medium" for model in provider.models())

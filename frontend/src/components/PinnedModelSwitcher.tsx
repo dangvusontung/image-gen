@@ -72,7 +72,7 @@ export default function PinnedModelSwitcher({ project }: { project: ProjectDetai
         </div>}
 
         {!hybrid && <>
-          {!!model?.sizes?.length && <label className="grid gap-1 text-xs">Kích thước ảnh
+          {!!model?.sizes?.length && <label className="grid gap-1 text-xs">{draft.provider === 'openai' ? 'Chất lượng ảnh' : 'Kích thước ảnh'}
             <select
               aria-label="Kích thước ảnh (ghim)"
               className="rounded border p-2 text-sm"

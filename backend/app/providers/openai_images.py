@@ -59,7 +59,7 @@ MODELS = (
         aspect_ratios=_RATIOS,
         default_aspect_ratio="3:4",
         sizes=QUALITIES,
-        default_size="high",
+        default_size="low",
         price_note=_PRICE_NOTE,
         status="ga",
         notes="OpenAI khuyến nghị khi cần chỉnh sửa chính xác từ ảnh tham chiếu. Tối đa 16 ảnh. "
@@ -73,7 +73,7 @@ MODELS = (
         aspect_ratios=_RATIOS,
         default_aspect_ratio="3:4",
         sizes=QUALITIES,
-        default_size="high",
+        default_size="low",
         price_note=_PRICE_NOTE,
         status="ga",
         notes="Nhanh hơn, dùng cho ảnh thường ngày. Tối đa 16 ảnh tham chiếu.",
@@ -85,7 +85,7 @@ MODELS = (
         aspect_ratios=_RATIOS,
         default_aspect_ratio="3:4",
         sizes=LEGACY_QUALITIES,
-        default_size="high",
+        default_size="low",
         price_note=_PRICE_NOTE,
         status="deprecated",
         notes="Thế hệ trước, giữ lại cho tài khoản chưa có model 2.5.",
@@ -125,7 +125,7 @@ class OpenAIImageProvider(ImageProvider):
         self._client = client
         self._key = api_key
         self._base = base_url
-        self._quality = quality if quality in QUALITIES else "high"
+        self._quality = quality if quality in QUALITIES else "low"
         self._price = price_per_image_usd
         self._live: list[ModelInfo] | None = None
 
@@ -134,7 +134,8 @@ class OpenAIImageProvider(ImageProvider):
         return bool(self._key)
 
     def models(self) -> list[ModelInfo]:
-        models = self._live if self._live is not None else list(MODELS)
+        models = [replace(model, default_size=self._quality if self._quality in model.sizes else "low")
+                  for model in (self._live if self._live is not None else MODELS)]
         if not self._price:
             return list(models)
         note = f"~${self._price}/ảnh theo OPENAI_PRICE_PER_IMAGE_USD"
@@ -242,7 +243,7 @@ class OpenAIImageProvider(ImageProvider):
                 found.append(ModelInfo(
                     id=model_id, display_name=model_id, max_reference_images=16,
                     aspect_ratios=_RATIOS, default_aspect_ratio="3:4", sizes=QUALITIES,
-                    default_size="high", price_note=_PRICE_NOTE, status="preview",
+                    default_size="low", price_note=_PRICE_NOTE, status="preview",
                     notes="Lấy từ /models. Khả năng chi tiết chưa rõ."))
         if not found:
             return []

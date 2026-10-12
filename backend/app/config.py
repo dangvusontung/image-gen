@@ -35,7 +35,7 @@ ARK_TEXT_MODEL = os.getenv("ARK_TEXT_MODEL", "").strip()
 
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1").rstrip("/")
-OPENAI_IMAGE_QUALITY = os.getenv("OPENAI_IMAGE_QUALITY", "high").strip()
+OPENAI_IMAGE_QUALITY = os.getenv("OPENAI_IMAGE_QUALITY", "low").strip()
 # GPT Image is priced per token and varies by quality, so the price is configured, not shipped.
 OPENAI_PRICE_PER_IMAGE_USD = float(os.getenv("OPENAI_PRICE_PER_IMAGE_USD", "0"))
 

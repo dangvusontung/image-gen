@@ -5,7 +5,18 @@ const key = (projectId: string) => `image-size:${projectId}`
 /** Output size, chosen once per project in the pinned switcher and used by every step. */
 export function useImageSize(projectId: string) {
   const [size, setSizeState] = useState(() => {
-    try { return localStorage.getItem(key(projectId)) ?? '' } catch { return '' }
+    try {
+      const saved = localStorage.getItem(key(projectId)) ?? ''
+      const migrationKey = `image-quality-low-default:${projectId}`
+      if (!localStorage.getItem(migrationKey)) {
+        localStorage.setItem(migrationKey, '1')
+        if (['high', 'xhigh', 'max', 'auto'].includes(saved)) {
+          localStorage.setItem(key(projectId), 'low')
+          return 'low'
+        }
+      }
+      return saved
+    } catch { return '' }
   })
 
   useEffect(() => {
