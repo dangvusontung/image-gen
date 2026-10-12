@@ -26,8 +26,8 @@ def test_full_workflow_preserves_versions(client, project, reference_ids):
     for job_id in turn["job_ids"]:
         job = wait_for_job(client, job_id)
         assert job["status"] == "succeeded"
-        assert job["reference_asset_ids"] == masters[0]["job"]["output_asset_ids"]
-        assert job["meta"]["reference_labels"] == ["MASTER identity authority"]
+        assert job["reference_asset_ids"] == [*masters[0]["job"]["output_asset_ids"], *reference_ids]
+        assert job["meta"]["reference_labels"] == ["MASTER identity authority", *["Real reference photo, identity guidance"] * len(reference_ids)]
     assert client.post(f"{base}/turnaround/{turn['id']}/approve").status_code == 200
     regen = client.post(f"{base}/turnaround/{turn['id']}/views/left90/regenerate")
     assert regen.status_code == 201, regen.text
@@ -138,3 +138,17 @@ def test_flux_projects_render_the_master_from_the_flux_prompt(client, project, r
     finally:
         if original is not None:
             app.state.registry._providers["bfl"] = original
+
+
+def test_turnaround_uses_selected_reference_photos_and_estimates_same_inputs(client, project, reference_ids):
+    base = f"/api/projects/{project}"
+    masters = generate_master(client, project)
+    client.post(f"{base}/master/{masters[0]['id']}/approve")
+    client.patch(f"/api/assets/{reference_ids[0]}", json={"selected": False})
+    estimate = client.get(f"{base}/generation-estimate", params={"purpose": "turnaround", "count": 1})
+    assert estimate.json()["reference_count"] == len(reference_ids)
+    result = client.post(f"{base}/turnaround/generate", json={"angles": ["left90"]})
+    assert result.status_code == 201
+    job = wait_for_job(client, result.json()["job_ids"][0])
+    assert job["status"] == "succeeded"
+    assert job["reference_asset_ids"] == [*masters[0]["job"]["output_asset_ids"], *reference_ids[1:]]

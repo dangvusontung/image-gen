@@ -13,3 +13,5 @@ PRESENTATION: Clean warm-white studio background. Six equally sized panels in a 
 FINAL GOAL: Create a reliable multi-angle reference sheet for generating future lifestyle scenes of the same recognizable character. Prioritize identity consistency, anatomical coherence and faithful reproduction of the approved master over artistic variation.
 
 Generate the six-view turnaround sheet now.
+
+Use the supplied real reference photos and side-profile photos to resolve facial identity and anatomy at the requested angle. Keep the approved MASTER as the authority for stylized 3D design, clothing, materials and proportions; do not copy the photographs' background or photorealistic rendering.

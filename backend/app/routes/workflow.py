@@ -226,7 +226,9 @@ def create_turn(db, registry, project, previous=None, angle=None, angles=None):
         fail("master_required", "Tạo và duyệt nhân vật gốc trước khi tạo turnaround")
     master = owned(db, MasterVersion, project.id, project.approved_master_id)
     master_asset = output(db, master)
-    sides = db.query(Asset).filter_by(project_id=project.id, kind="side_profile", selected=True).order_by(Asset.position).all()
+    sides = db.query(Asset).filter(Asset.project_id == project.id,
+                                      Asset.kind.in_(["reference", "side_profile"]),
+                                      Asset.selected.is_(True)).order_by(Asset.position).all()
     sides = lead_first(sides, (project.step_leads or {}).get("turnaround"))
     number = (db.query(func.max(TurnaroundVersion.number)).filter_by(project_id=project.id).scalar() or 0) + 1
     turn = TurnaroundVersion(project_id=project.id, master_version_id=master.id, number=number, forked_from_id=previous.id if previous else None)
@@ -246,7 +248,7 @@ def create_turn(db, registry, project, previous=None, angle=None, angles=None):
         else:
             prompt, meta = snapshot(db, project.id, provider_template("turnaround", generation_target(project, "turnaround")[0]), angle=label)
             template = step_template(db, project, "turnaround")
-            refs = [(master_asset, "MASTER identity authority")] + [(s.id, "Real side-profile photo") for s in sides]
+            refs = [(master_asset, "MASTER identity authority")] + [(s.id, "Real side-profile photo" if s.kind == "side_profile" else "Real reference photo, identity guidance") for s in sides]
             if template:
                 prompt += TEMPLATE_NOTE
                 refs.append(template)

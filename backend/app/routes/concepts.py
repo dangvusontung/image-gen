@@ -95,7 +95,7 @@ def generation_estimate(project_id: str, purpose: Literal["master", "turnaround"
             if template:
                 refs.append(template[0])
         else:
-            refs += [a.id for a in db.query(Asset).filter_by(project_id=project_id, kind="side_profile", selected=True)]
+            refs += [a.id for a in db.query(Asset).filter(Asset.project_id == project_id, Asset.kind.in_(["reference", "side_profile"]), Asset.selected.is_(True))]
     try:
         provider_name, model_id, default_size = generation_target(project, purpose)
         size = size or default_size

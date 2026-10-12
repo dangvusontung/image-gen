@@ -154,7 +154,7 @@ export default function StepSources({ project, step, onBack }: { project: Projec
   const used = project.assets.filter(a => a.selected)
   const images = step === 'master' ? used.map(a => ({ id: a.id, label: `${a.kind === 'side_profile' ? 'Ảnh nghiêng' : 'Ảnh tham chiếu'} · ${a.filename}` })) : [
     ...(master?.job.output_asset_ids[0] ? [{ id: master.job.output_asset_ids[0], label: `Master đã duyệt · Lần ${master.round}, bản ${master.variant}` }] : []),
-    ...(step === 'turnaround' ? used.filter(a => a.kind === 'side_profile').map(a => ({ id: a.id, label: `Ảnh nghiêng · ${a.filename}` })) : project.step_leads?.concept === 'none' ? [] : turn?.views.filter(v => v.job.status === 'succeeded' && v.job.output_asset_ids[0]).map(v => ({ id: v.job.output_asset_ids[0], label: `Turnaround ${turn.number} · ${v.angle}` })) ?? []),
+    ...(step === 'turnaround' ? used.filter(a => a.kind !== 'template').map(a => ({ id: a.id, label: `${a.kind === 'side_profile' ? 'Ảnh nghiêng' : 'Ảnh tham chiếu'} · ${a.filename}` })) : project.step_leads?.concept === 'none' ? [] : turn?.views.filter(v => v.job.status === 'succeeded' && v.job.output_asset_ids[0]).map(v => ({ id: v.job.output_asset_ids[0], label: `Turnaround ${turn.number} · ${v.angle}` })) ?? []),
   ]
   const angles = (turn?.views ?? [])
     .filter(v => v.job.status === 'succeeded' && v.job.output_asset_ids[0])
@@ -162,7 +162,7 @@ export default function StepSources({ project, step, onBack }: { project: Projec
   const leadOptions: Record<typeof step, { value: string; label: string }[]> = {
     // Step 2 leads with one of the uploaded photos; step 3 with one of the side profiles.
     master: used.map(a => ({ value: a.id, label: a.filename })),
-    turnaround: used.filter(a => a.kind === 'side_profile').map(a => ({ value: a.id, label: a.filename })),
+    turnaround: used.filter(a => a.kind !== 'template').map(a => ({ value: a.id, label: a.filename })),
     concepts: angles,
   }
   const leadStep: WorkflowStep = step === 'concepts' ? 'concept' : step
