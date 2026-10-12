@@ -28,7 +28,7 @@ export function LeadPicker({ project, step, options }: {
         Ảnh dẫn hướng
         <select
           aria-label={`Ảnh dẫn hướng cho bước ${step}`}
-          className="ml-2 rounded border p-2"
+          className="block w-full max-w-full rounded border p-2"
           value={stale ? '' : current}
           disabled={setLead.isPending}
           onChange={(e) => setLead.mutate({ step, lead: e.target.value || null })}
@@ -61,7 +61,7 @@ export function TemplatePicker({ project, step }: { project: ProjectDetail; step
         Ảnh mẫu
         <select
           aria-label={`Ảnh mẫu cho bước ${step}`}
-          className="ml-2 rounded border p-2"
+          className="block w-full max-w-full rounded border p-2"
           value={current}
           disabled={setTemplate.isPending}
           onChange={(e) => setTemplate.mutate({ step, assetId: e.target.value || null })}
@@ -73,6 +73,11 @@ export function TemplatePicker({ project, step }: { project: ProjectDetail; step
           </option>)}
         </select>
       </label>
+      {current !== 'none' && <img
+        src={assetUrl(current || 'builtin:concept_reference')}
+        alt="Ảnh guideline phong cách"
+        className="max-h-64 w-full rounded-lg border bg-muted object-contain"
+      />}
       <span className="text-xs text-muted-foreground">
         {current === 'none'
           ? 'Chỉ dùng prompt để định hướng phong cách.'

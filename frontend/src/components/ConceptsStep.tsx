@@ -7,7 +7,7 @@ import { request, useProviders, type Concept, type ConceptProposal, type Project
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { active, costLabel, DownloadLinks, ImagePreview, JobDetails, JobPlaceholder, PromptEditor, useGenerationAction } from '@/components/GenerationUI'
+import { active, costLabel, DownloadLinks, ImagePreview, JobDetails, JobPlaceholder, useGenerationAction } from '@/components/GenerationUI'
 
 const BRIEF_FIELDS = ['setting', 'activity', 'pose', 'outfit', 'silhouette', 'expression', 'gaze', 'camera', 'framing', 'lighting']
 
@@ -134,7 +134,6 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       9 concept lối sống khác nhau, mỗi concept một bối cảnh, hoạt động, trang phục và ánh sáng riêng.
       Chọn concept bạn muốn rồi tạo ảnh — không cần bước nào khác.
     </p>
-    <PromptEditor projectId={project.id} name="concept" />
 
     {!ready && <p className="text-sm">Xác nhận quyền sử dụng ảnh và duyệt nhân vật gốc để tiếp tục.</p>}
 

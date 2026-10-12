@@ -1,12 +1,10 @@
-import CopyPromptButton from '@/components/CopyPromptButton'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
 import { request, useProviders, type ProjectDetail, type GenerationJob } from '@/api/client'
 import { DownloadLinks, ImagePreview, JobDetails, JobPlaceholder, type GalleryImage } from '@/components/GenerationUI'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { Button } from '@/components/ui/button'
-import { Textarea } from '@/components/ui/textarea'
 
 type Job = GenerationJob
 interface Master { id: string; round: number; variant: number; job: Job }
@@ -48,10 +46,6 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
   const [variants, setVariants] = useState(1)
   const [angles, setAngles] = useState<string[]>(ANGLE_KEYS)
   const [confirmed, setConfirmed] = useState(false)
-  const [body, setBody] = useState('')
-  const prompt = useQuery({ queryKey: ['prompt', project.id, step], enabled: step !== 'history',
-    queryFn: () => request<{ body: string }>(`/prompts/${step}?project_id=${project.id}`) })
-  useEffect(() => { if (prompt.data) setBody(prompt.data.body) }, [prompt.data])
   const action = useMutation({
     mutationFn: ({ path, data, method = 'POST' }: { path: string; data?: unknown; method?: string }) =>
       request(path, { method, headers: { 'Content-Type': 'application/json' }, body: data === undefined ? undefined : JSON.stringify(data) }),
@@ -93,16 +87,6 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
       </div>}
       {!ready && <p>{!project.rights_confirmed ? 'Xác nhận quyền sử dụng ảnh ở bước 1.' : step === 'master' ? (project.assets.length ? 'Chọn ít nhất một ảnh ở bước 1.' : 'Tải ảnh tham chiếu ở bước 1.') : 'Tạo và duyệt nhân vật gốc ở bước 2.'}</p>}
       {paid && <p className="text-sm">{model?.display_name}{defaultSize ? ` · ${defaultSize}` : ''} · {step === 'master' ? `${selectedAssets.length} ảnh tham chiếu đã chọn sẽ được gửi` : 'Ảnh tham chiếu sẽ được gửi'} tới nhà cung cấp đã chọn.</p>}
-      <details className="space-y-3 rounded-lg border p-4"><summary>Chỉnh sửa prompt</summary>
-        {prompt.error && <ErrorAlert error={prompt.error} title="Không tải được prompt" />}
-        <Textarea aria-label="Prompt" value={body} onChange={e => setBody(e.target.value)} rows={7} />
-        <div className="flex flex-wrap gap-2">
-          <CopyPromptButton text={body} />
-          <Button disabled={pending || !body.trim()} onClick={() => run(`/prompts/${step}?project_id=${project.id}`, { body }, 'PUT')}>Lưu prompt</Button>
-          <Button variant="outline" disabled={pending} onClick={() => run(`/prompts/${step}?project_id=${project.id}`, { body: null }, 'PUT')}>Đặt lại mặc định</Button>
-        </div>
-        <p className="text-xs">Lưu thay đổi trước khi tạo ảnh.</p>
-      </details>
       <div className="flex flex-wrap items-center gap-4">
         {step === 'master' && <label>Số biến thể <select aria-label="Số biến thể" className="rounded border p-2" value={variants} onChange={e => { setVariants(Number(e.target.value)); setConfirmed(false) }}>
           {[1, 2, 3, 4].map(n => <option key={n}>{n}</option>)}

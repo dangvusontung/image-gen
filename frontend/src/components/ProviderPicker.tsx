@@ -32,7 +32,7 @@ export default function ProviderPicker({ project }: { project: ProjectDetail }) 
             Bộ cấu hình theo bước
             <select
               aria-label="Bộ cấu hình theo bước"
-              className="ml-2 rounded border p-2"
+              className="max-w-full rounded border p-2"
               value={project.preset_id ?? ''}
               disabled={update.isPending}
               onChange={(e) => update.mutate({ preset_id: e.target.value || null })}
@@ -52,7 +52,7 @@ export default function ProviderPicker({ project }: { project: ProjectDetail }) 
             Chép prompt từ dự án
             <select
               aria-label="Chép prompt từ dự án"
-              className="ml-2 rounded border p-2"
+              className="max-w-full rounded border p-2"
               value=""
               disabled={copyPrompts.isPending}
               onChange={(e) => { if (e.target.value) copyPrompts.mutate(e.target.value) }}
@@ -92,7 +92,7 @@ export default function ProviderPicker({ project }: { project: ProjectDetail }) 
             onValueChange={(value) => update.mutate({ provider: value })}
             disabled={update.isPending}
           >
-            <SelectTrigger id="provider-select" className="w-64">
+            <SelectTrigger id="provider-select" className="w-full">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -110,7 +110,7 @@ export default function ProviderPicker({ project }: { project: ProjectDetail }) 
             Model
           </Label>
           <Select value={project.model} onValueChange={(value) => update.mutate({ model: value })} disabled={update.isPending}>
-            <SelectTrigger id="model-select" className="w-full min-w-0 sm:w-96">
+            <SelectTrigger id="model-select" className="w-full min-w-0">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>

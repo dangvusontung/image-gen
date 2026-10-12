@@ -200,7 +200,7 @@ export function PromptEditor({ projectId, name }: { projectId: string; name: str
   useEffect(() => { if (prompt.data) setBody(prompt.data.body) }, [prompt.data])
   const save = useMutation({ mutationFn: (value: string | null) => request(path, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ body: value }) }),
     onSuccess: () => qc.invalidateQueries({ queryKey: key }) })
-  return <details className="space-y-3 rounded-lg border p-4"><summary>Chỉnh sửa prompt</summary>
+  return <details open className="space-y-3 rounded-lg border bg-background p-4"><summary className="font-semibold">Chỉnh sửa prompt</summary>
     {prompt.error && <ErrorAlert error={prompt.error} title="Không tải được prompt" />}
     <Textarea aria-label={`Prompt ${name}`} rows={6} value={body} onChange={e => setBody(e.target.value)} />
     <div className="flex flex-wrap gap-2"><CopyPromptButton text={body} /><Button disabled={save.isPending || !body.trim()} onClick={() => save.mutate(body)}>Lưu prompt</Button>

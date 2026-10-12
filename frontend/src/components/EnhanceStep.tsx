@@ -5,7 +5,7 @@ import { request, useProviders, type Concept, type Enhancement, type ProjectDeta
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { active, costLabel, DownloadLinks, ImagePreview, JobDetails, JobPlaceholder, PromptEditor, useGenerationAction } from '@/components/GenerationUI'
+import { active, costLabel, DownloadLinks, ImagePreview, JobDetails, JobPlaceholder, useGenerationAction } from '@/components/GenerationUI'
 
 export default function EnhanceStep({ project, selectedConceptId, onSelect, onBack }: { project: ProjectDetail; selectedConceptId: string | null; onSelect: (id: string) => void; onBack?: () => void }) {
   const base = `/projects/${project.id}`
@@ -43,7 +43,6 @@ export default function EnhanceStep({ project, selectedConceptId, onSelect, onBa
       {onBack && <Button size="sm" variant="outline" onClick={onBack}>Quay lại chọn concept</Button>}
     </div>
     <p className="text-sm text-muted-foreground">Tạo lại một ảnh 3:4 độc lập, giữ cảnh, trang phục, tư thế, biểu cảm và góc máy. Nhân vật gốc đã duyệt là nguồn nhận diện chính.</p>
-    <PromptEditor projectId={project.id} name="enhance" />
     {concepts.error && <ErrorAlert error={concepts.error} title="Không tải được concept" />}
     {versions.error && <ErrorAlert error={versions.error} title="Không tải được bản nâng cấp" />}
     {!concepts.isPending && !successful.length && <p className="rounded-lg bg-muted p-8 text-center">Tạo thành công ít nhất một concept ở bước 4 để nâng cấp.</p>}

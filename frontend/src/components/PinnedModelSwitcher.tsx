@@ -1,3 +1,4 @@
+import ProviderPicker from '@/components/ProviderPicker'
 import { useState } from 'react'
 import { ChevronDownIcon, SettingsIcon, StarIcon } from 'lucide-react'
 import { generationProject } from '@/lib/generationPolicy'
@@ -7,7 +8,6 @@ import { Button } from '@/components/ui/button'
 import { useFavouriteModels } from '@/lib/favourites'
 import { useImageSize } from '@/lib/imageSize'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
-import { groupByGeneration } from '@/lib/providers'
 
 /** Always-reachable provider/model switcher, so it is not lost above the fold on long steps. */
 export default function PinnedModelSwitcher({ project }: { project: ProjectDetail }) {
@@ -26,10 +26,9 @@ export default function PinnedModelSwitcher({ project }: { project: ProjectDetai
   const starred = providers.flatMap((p) =>
     p.models.filter((m) => isFavourite(p.name, m.id)).map((m) => ({ provider: p, model: m })),
   )
-  const generations = groupByGeneration(provider?.models ?? [])
 
   return (
-    <aside className={`fixed bottom-4 left-4 z-40 rounded-xl border bg-popover text-sm shadow-lg ${open ? 'w-72' : 'max-w-56'}`}>
+    <aside className={`fixed bottom-4 left-4 z-40 rounded-xl border bg-popover text-sm shadow-lg ${open ? 'w-[min(36rem,calc(100vw-2rem))]' : 'max-w-56'}`}>
       <button
         type="button"
         className="flex w-full items-center gap-2 p-3 text-left"
@@ -46,9 +45,10 @@ export default function PinnedModelSwitcher({ project }: { project: ProjectDetai
         <ChevronDownIcon className={`size-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
       </button>
 
-      {open && <div className="space-y-3 border-t p-3">
+      {open && <div className="max-h-[70vh] space-y-3 overflow-y-auto border-t p-3">
+        <ProviderPicker project={project} />
         {hybrid && <p className="text-xs text-muted-foreground">
-          Quy trình tiết kiệm tự chọn model cho mỗi bước. Chuyển sang “Thủ công” ở đầu trang để đổi tay.
+          Quy trình tiết kiệm tự chọn model cho mỗi bước. Chuyển sang “Thủ công” trong bảng này để đổi tay.
         </p>}
 
         {starred.length > 0 && <div className="space-y-1">
@@ -72,32 +72,6 @@ export default function PinnedModelSwitcher({ project }: { project: ProjectDetai
         </div>}
 
         {!hybrid && <>
-          <label className="grid gap-1 text-xs">Nhà cung cấp
-            <select
-              aria-label="Nhà cung cấp (ghim)"
-              className="rounded border p-2 text-sm"
-              value={project.provider}
-              disabled={update.isPending}
-              onChange={(e) => update.mutate({ provider: e.target.value })}
-            >
-              {providers.map((p) => <option key={p.name} value={p.name} disabled={!p.enabled}>{p.display_name}</option>)}
-            </select>
-          </label>
-          <label className="grid gap-1 text-xs">Model
-            <select
-              aria-label="Model (ghim)"
-              className="rounded border p-2 text-sm"
-              value={project.model}
-              disabled={update.isPending}
-              onChange={(e) => update.mutate({ model: e.target.value })}
-            >
-              {generations.map(({ generation, models }) => (
-                <optgroup key={generation.key} label={generation.label}>
-                  {models.map((m) => <option key={m.id} value={m.id}>{m.display_name} — {m.id}</option>)}
-                </optgroup>
-              ))}
-            </select>
-          </label>
           {!!model?.sizes?.length && <label className="grid gap-1 text-xs">Kích thước ảnh
             <select
               aria-label="Kích thước ảnh (ghim)"

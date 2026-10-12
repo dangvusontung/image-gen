@@ -4,7 +4,7 @@ import { ArrowLeftIcon } from 'lucide-react'
 import { request, useProject, type GenerationJob } from '@/api/client'
 import { useQuery } from '@tanstack/react-query'
 import { ErrorAlert } from '@/components/ErrorAlert'
-import ProviderPicker from '@/components/ProviderPicker'
+import { PromptEditor } from '@/components/GenerationUI'
 import StepSources from '@/components/StepSources'
 import ReferencesStep from '@/components/ReferencesStep'
 import CharacterStep from '@/components/CharacterStep'
@@ -69,7 +69,6 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
               <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
               {project.description && <p className="mt-1 text-muted-foreground">{project.description}</p>}
             </div>
-            <ProviderPicker project={project} />
             <div className="flex flex-wrap gap-4 text-sm">
               <a className="underline" href={`/api/projects/${projectId}/export`}>Tải toàn bộ dự án (ZIP)</a>
             </div>
@@ -87,15 +86,18 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
               <ReferencesStep project={project} />
               <Button className="mt-5" disabled={!project.rights_confirmed || !project.assets.length} onClick={() => pickStep('master')}>Tiếp tục → Nhân vật gốc</Button>
             </TabsContent>
-            {(['master', 'turnaround'] as const).map(step => <TabsContent key={step} value={step} className="mt-4">
-              <StepSources project={project} step={step} onBack={() => pickStep(step === 'master' ? 'references' : 'master')} />
-              <CharacterStep onSkip={step === 'turnaround' ? () => pickStep('concepts') : undefined} onApproved={() => pickStep(step === 'master' ? 'turnaround' : 'concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} step={step} />
+            {(['master', 'turnaround'] as const).map(step => <TabsContent key={step} value={step} className="mt-4 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+              <div className="min-w-0 space-y-5"><PromptEditor projectId={project.id} name={step} />
+              <CharacterStep onSkip={step === 'turnaround' ? () => pickStep('concepts') : undefined} onApproved={() => pickStep(step === 'master' ? 'turnaround' : 'concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} step={step} /></div>
+              <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step={step} onBack={() => pickStep(step === 'master' ? 'references' : 'master')} /></aside>
             </TabsContent>)}
-            <TabsContent value="concepts" className="mt-4">
-              <StepSources project={project} step="concepts" onBack={() => pickStep('turnaround')} />
-              <ConceptsStep key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} onEnhance={id => { setSelectedConceptId(id); pickStep('enhance') }} />
+            <TabsContent value="concepts" className="mt-4 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+              <div className="min-w-0 space-y-5"><PromptEditor projectId={project.id} name="concept" />
+              <ConceptsStep key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} onEnhance={id => { setSelectedConceptId(id); pickStep('enhance') }} /></div>
+              <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step="concepts" onBack={() => pickStep('turnaround')} /></aside>
             </TabsContent>
-            <TabsContent value="enhance" className="mt-4">
+            <TabsContent value="enhance" className="mt-4 space-y-5">
+              <PromptEditor projectId={project.id} name="enhance" />
               <EnhanceStep onBack={() => pickStep('concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'enhance')} selectedConceptId={selectedConceptId} onSelect={setSelectedConceptId} />
             </TabsContent>
             <TabsContent value="history" className="mt-4"><HistoryStep projectId={projectId} /></TabsContent>
