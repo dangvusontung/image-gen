@@ -102,7 +102,7 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
             </TabsContent>
             <TabsContent value="history" className="mt-4"><HistoryStep projectId={projectId} /></TabsContent>
           </Tabs>
-          <GenerationMonitor projectId={projectId} />
+          <GenerationMonitor projectId={projectId} projectName={project.name} />
           <PinnedModelSwitcher project={project} />
           <ProjectSwitcher projectId={projectId} onOpen={(id) => { window.location.hash = `/projects/${id}` }} />
         </>

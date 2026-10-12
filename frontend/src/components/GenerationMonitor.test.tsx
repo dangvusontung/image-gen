@@ -21,7 +21,7 @@ function serve(polls: GenerationJob[][]) {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } })
   render(
     <QueryClientProvider client={qc}>
-      <GenerationMonitor projectId="p1" />
+      <GenerationMonitor projectId="p1" projectName="Character project Alpha" />
     </QueryClientProvider>,
   )
   return () => qc.invalidateQueries({ queryKey: ['jobs', 'p1'] })
@@ -41,6 +41,7 @@ describe('generation monitor', () => {
     serve([[job({ id: 'a', status: 'running' }), job({ id: 'b', status: 'queued', purpose: 'concept' })]])
     await waitFor(() => expect(panel()).toBeInTheDocument())
     expect(screen.getByText('Đang tạo 2 ảnh')).toBeInTheDocument()
+    expect(screen.getByText('Dự án: Character project Alpha')).toBeInTheDocument()
     expect(screen.getByText('Nhân vật gốc')).toBeInTheDocument()
     expect(screen.getByText('Concept')).toBeInTheDocument()
     expect(screen.getByText('Đang tạo')).toBeInTheDocument()

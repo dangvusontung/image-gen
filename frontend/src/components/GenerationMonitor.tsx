@@ -20,7 +20,7 @@ interface Finished {
 }
 
 /** Floating panel: what is generating now, and a short-lived note as each job finishes. */
-export default function GenerationMonitor({ projectId }: { projectId: string }) {
+export default function GenerationMonitor({ projectId, projectName }: { projectId: string; projectName: string }) {
   // Same key and URL as the history step, so both share one poll.
   const jobs = useQuery({
     queryKey: ['jobs', projectId],
@@ -68,6 +68,7 @@ export default function GenerationMonitor({ projectId }: { projectId: string }) 
       aria-label="Tiến trình tạo ảnh"
       className="fixed right-4 bottom-4 z-50 w-72 space-y-2 rounded-xl border bg-popover p-3 text-sm shadow-lg"
     >
+      <p className="break-words border-b pb-2 font-semibold" title={projectName}>Dự án: {projectName}</p>
       {running.length > 0 && (
         <>
           <p className="flex items-center gap-2 font-medium">
