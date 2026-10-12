@@ -241,3 +241,18 @@ def test_exports_validation_and_project_isolation(client, studio):
     assert client.get('/api/projects/missing/export').status_code == 404
     assert client.delete(base).status_code == 204
     assert client.get(f"{base}/concepts").status_code == 404
+
+
+def test_concepts_can_exclude_an_approved_turnaround(client, studio):
+    base, master, _ = studio
+    response = client.put(f"{base}/step-lead", json={"step": "concept", "lead": "none"})
+    assert response.status_code == 200
+    proposals = propose(client, base)
+    rendered = render(client, base, proposals[:1])
+    job = wait_for_job(client, rendered["job_ids"][0])
+    assert job["status"] == "succeeded"
+    assert job["reference_asset_ids"] == [master["job"]["output_asset_ids"][0], "builtin:concept_reference"]
+    estimate = client.get(f"{base}/generation-estimate", params={"purpose": "concept", "count": 1})
+    assert estimate.status_code == 200
+    assert estimate.json()["reference_count"] == 2
+    assert client.get(base).json()["step_leads"]["concept"] == "none"

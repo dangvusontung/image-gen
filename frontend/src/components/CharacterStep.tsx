@@ -1,3 +1,4 @@
+import CopyPromptButton from '@/components/CopyPromptButton'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
@@ -95,7 +96,8 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
       <details className="space-y-3 rounded-lg border p-4"><summary>Chỉnh sửa prompt</summary>
         {prompt.error && <ErrorAlert error={prompt.error} title="Không tải được prompt" />}
         <Textarea aria-label="Prompt" value={body} onChange={e => setBody(e.target.value)} rows={7} />
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <CopyPromptButton text={body} />
           <Button disabled={pending || !body.trim()} onClick={() => run(`/prompts/${step}?project_id=${project.id}`, { body }, 'PUT')}>Lưu prompt</Button>
           <Button variant="outline" disabled={pending} onClick={() => run(`/prompts/${step}?project_id=${project.id}`, { body: null }, 'PUT')}>Đặt lại mặc định</Button>
         </div>

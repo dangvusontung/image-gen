@@ -91,6 +91,9 @@ def generation_estimate(project_id: str, purpose: Literal["master", "turnaround"
         refs = [master_asset]
         if purpose == "concept":
             refs += [a for a, _ in concept_turn_ref(turn, "", (project.step_leads or {}).get("concept"))]
+            template = step_template(db, project, "concept")
+            if template:
+                refs.append(template[0])
         else:
             refs += [a.id for a in db.query(Asset).filter_by(project_id=project_id, kind="side_profile", selected=True)]
     try:
@@ -134,6 +137,8 @@ def concept_turn_ref(turn, camera="", lead=None):
 
     Sending all six crowds the request and pushes most concepts toward the front view.
     """
+    if lead == "none":
+        return []
     available = turn_refs(turn)
     if not available:
         return []

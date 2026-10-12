@@ -19,9 +19,9 @@ export function LeadPicker({ project, step, options }: {
 }) {
   const setLead = useSetStepLead(project.id)
   const current = project.step_leads?.[step] ?? ''
-  const stale = current && !options.some((o) => o.value === current)
+  const stale = current && !(step === 'concept' && current === 'none') && !options.some((o) => o.value === current)
 
-  if (options.length < 2) return null
+  if (options.length < 2 && step !== 'concept') return null
   return (
     <div className="flex flex-wrap items-center gap-2 text-sm">
       <label>
@@ -34,11 +34,12 @@ export function LeadPicker({ project, step, options }: {
           onChange={(e) => setLead.mutate({ step, lead: e.target.value || null })}
         >
           <option value="">Tự động chọn</option>
+          {step === 'concept' && <option value="none">Không dùng turnaround</option>}
           {options.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       </label>
       <span className="text-xs text-muted-foreground">
-        {current && !stale ? 'Ảnh này được gửi đầu tiên làm mốc nhận diện.' : 'Ứng dụng tự chọn theo góc máy của concept.'}
+        {current === 'none' && step === 'concept' ? 'Chỉ dùng nhân vật gốc và ảnh mẫu đã chọn.' : current && !stale ? 'Ảnh này được gửi đầu tiên làm mốc nhận diện.' : 'Ứng dụng tự chọn theo góc máy của concept.'}
       </span>
       {setLead.error && <ErrorAlert error={setLead.error} title="Không lưu được ảnh dẫn hướng" />}
     </div>
@@ -148,7 +149,7 @@ export default function StepSources({ project, step, onBack }: { project: Projec
   const used = project.assets.filter(a => a.selected)
   const images = step === 'master' ? used.map(a => ({ id: a.id, label: `${a.kind === 'side_profile' ? 'Ảnh nghiêng' : 'Ảnh tham chiếu'} · ${a.filename}` })) : [
     ...(master?.job.output_asset_ids[0] ? [{ id: master.job.output_asset_ids[0], label: `Master đã duyệt · Lần ${master.round}, bản ${master.variant}` }] : []),
-    ...(step === 'turnaround' ? used.filter(a => a.kind === 'side_profile').map(a => ({ id: a.id, label: `Ảnh nghiêng · ${a.filename}` })) : turn?.views.filter(v => v.job.status === 'succeeded' && v.job.output_asset_ids[0]).map(v => ({ id: v.job.output_asset_ids[0], label: `Turnaround ${turn.number} · ${v.angle}` })) ?? []),
+    ...(step === 'turnaround' ? used.filter(a => a.kind === 'side_profile').map(a => ({ id: a.id, label: `Ảnh nghiêng · ${a.filename}` })) : project.step_leads?.concept === 'none' ? [] : turn?.views.filter(v => v.job.status === 'succeeded' && v.job.output_asset_ids[0]).map(v => ({ id: v.job.output_asset_ids[0], label: `Turnaround ${turn.number} · ${v.angle}` })) ?? []),
   ]
   const angles = (turn?.views ?? [])
     .filter(v => v.job.status === 'succeeded' && v.job.output_asset_ids[0])

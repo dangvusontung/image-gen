@@ -1,3 +1,4 @@
+import CopyPromptButton from '@/components/CopyPromptButton'
 import { useEffect, useState } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon, Clock3Icon, LoaderCircleIcon, MaximizeIcon, ZoomInIcon, ZoomOutIcon } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -202,7 +203,7 @@ export function PromptEditor({ projectId, name }: { projectId: string; name: str
   return <details className="space-y-3 rounded-lg border p-4"><summary>Chỉnh sửa prompt</summary>
     {prompt.error && <ErrorAlert error={prompt.error} title="Không tải được prompt" />}
     <Textarea aria-label={`Prompt ${name}`} rows={6} value={body} onChange={e => setBody(e.target.value)} />
-    <div className="flex gap-2"><Button disabled={save.isPending || !body.trim()} onClick={() => save.mutate(body)}>Lưu prompt</Button>
+    <div className="flex flex-wrap gap-2"><CopyPromptButton text={body} /><Button disabled={save.isPending || !body.trim()} onClick={() => save.mutate(body)}>Lưu prompt</Button>
       <Button variant="outline" disabled={save.isPending} onClick={() => save.mutate(null)}>Đặt lại mặc định</Button></div>
     {save.error && <ErrorAlert error={save.error} title="Không lưu được prompt" />}
     {save.isSuccess && <p role="status">Đã lưu prompt.</p>}
