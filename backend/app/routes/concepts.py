@@ -180,7 +180,7 @@ def concept_out(concept, project):
 def list_concepts(project_id: str, db: Session = Depends(get_db)):
     project = get_project_or_404(db, project_id)
     rows = db.query(Concept).filter_by(project_id=project_id).order_by(Concept.run.desc(), Concept.slot, Concept.revision.desc()).all()
-    return [concept_out(c, project) for c in rows]
+    return [concept_out(c, project) for c in rows if not c.job.dismissed]
 
 
 def new_concept(db, registry, project, run, slot, mood, camera, revision, size, choices=None, brief=None):
@@ -483,4 +483,4 @@ def list_enhancements(project_id: str, db: Session = Depends(get_db)):
     return [EnhancementOut(id=e.id, concept_id=e.concept_id, number=e.number, master_version_id=e.master_version_id,
                            turnaround_version_id=e.turnaround_version_id, stale=e.master_version_id != project.approved_master_id,
                            job=JobOut.model_validate(e.job), created_at=e.created_at)
-            for e in db.query(EnhancementVersion).filter_by(project_id=project_id).order_by(EnhancementVersion.created_at.desc()).all()]
+            for e in db.query(EnhancementVersion).filter_by(project_id=project_id).order_by(EnhancementVersion.created_at.desc()).all() if not e.job.dismissed]

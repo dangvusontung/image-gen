@@ -88,6 +88,8 @@ class JobStatus:
 class GenerationJob(Base):
     __tablename__ = "generation_jobs"
 
+    dismissed = Column(Boolean, nullable=False, default=False, server_default="0")
+
     id = Column(String(36), primary_key=True, default=_uuid)
     project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     purpose = Column(String(32), nullable=False)  # "master" | "turnaround" | "concept" | "enhance" | "test"

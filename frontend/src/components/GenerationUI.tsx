@@ -39,7 +39,7 @@ export function useGenerationAction(projectId: string) {
     mutationFn: ({ path, data, method = 'POST' }: { path: string; data?: unknown; method?: string }) =>
       request(path, { method, headers: { 'Content-Type': 'application/json' }, body: data === undefined ? undefined : JSON.stringify(data) }),
     onSuccess: () => {
-      for (const key of [['workflow', projectId], ['concepts', projectId], ['enhancements', projectId], ['jobs', projectId], ['projects'], ['spend'], ['enhance-plan', projectId]]) {
+      for (const key of [['workflow', projectId], ['concepts', projectId], ['enhancements', projectId], ['jobs', projectId], ['projects'], ['spend'], ['global-jobs'], ['enhance-plan', projectId]]) {
         qc.invalidateQueries({ queryKey: key })
       }
     },
@@ -181,6 +181,8 @@ export function JobDetails({ job, projectId }: { job: GenerationJob; projectId: 
           onClick={() => action.mutate({ path: `/jobs/${job.id}/retry`, data: retryTarget ? { provider: retryTarget.provider, model: retryTarget.id } : {} })}>
           {retryTarget ? 'Thử lại với model khác' : 'Thử lại job'}
         </Button>
+        <Button size="sm" variant="destructive" disabled={action.isPending}
+          onClick={() => action.mutate({ path: `/jobs/${job.id}`, method: 'DELETE' })}>Xoá lượt tạo lỗi</Button>
       </>}
     </div>
     {action.error && <ErrorAlert error={action.error} title="Không thực hiện được" />}
@@ -209,4 +211,15 @@ export function PromptEditor({ projectId, name }: { projectId: string; name: str
     {save.isSuccess && <p role="status">Đã lưu prompt.</p>}
     <p className="text-xs">Lưu thay đổi trước khi tạo ảnh. Lịch sử job giữ nguyên prompt đã dùng.</p>
   </details>
+}
+
+
+export function RemoveFailedGeneration({ job }: { job: GenerationJob }) {
+  const action = useGenerationAction(job.project_id)
+  if (!['failed', 'cancelled'].includes(job.status)) return null
+  return <div className="mt-2">
+    <Button size="sm" variant="destructive" disabled={action.isPending}
+      onClick={() => action.mutate({ path: `/jobs/${job.id}`, method: 'DELETE' })}>Xoá lượt tạo lỗi</Button>
+    {action.error && <ErrorAlert error={action.error} title="Không xoá được lượt tạo" />}
+  </div>
 }

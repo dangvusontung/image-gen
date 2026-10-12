@@ -40,7 +40,7 @@ def list_jobs(
     db: Session = Depends(get_db),
 ):
     get_project_or_404(db, project_id)
-    query = db.query(GenerationJob).filter(GenerationJob.project_id == project_id)
+    query = db.query(GenerationJob).filter(GenerationJob.project_id == project_id, GenerationJob.dismissed.is_(False))
     if status:
         query = query.filter(GenerationJob.status.in_(status.split(",")))
     if purpose:
@@ -56,7 +56,7 @@ def list_all_jobs(
     db: Session = Depends(get_db),
 ):
     """Newest generations across every project, for the global history popup."""
-    query = db.query(GenerationJob, Project.name).join(Project, Project.id == GenerationJob.project_id)
+    query = db.query(GenerationJob, Project.name).join(Project, Project.id == GenerationJob.project_id).filter(GenerationJob.dismissed.is_(False))
     if status:
         query = query.filter(GenerationJob.status.in_(status.split(",")))
     if purpose:
@@ -101,3 +101,13 @@ def retry(job_id: str, request: Request, data: RetryRequest | None = None, db: S
     db.refresh(new_job)
     notify_runner(request)
     return new_job
+
+
+@router.delete("/api/jobs/{job_id}")
+def remove_failed_job(job_id: str, db: Session = Depends(get_db)):
+    job = _job_or_404(db, job_id)
+    if job.status not in ("failed", "cancelled"):
+        raise HTTPException(409, detail={"code": "job_not_removable", "message": "Chỉ có thể xoá lượt tạo lỗi hoặc đã huỷ."})
+    job.dismissed = True
+    db.commit()
+    return {"removed": True}

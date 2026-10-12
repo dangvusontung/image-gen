@@ -210,3 +210,24 @@ def test_global_history_lists_every_project_with_its_name(client, project, refer
     assert [r["created_at"] for r in history] == sorted((r["created_at"] for r in history), reverse=True)
     assert client.get("/api/jobs?purpose=enhance").json() == []
     assert len(client.get("/api/jobs?limit=1").json()) == 1
+
+
+def test_remove_failed_generation_hides_versions_and_preserves_accounting(client, project, reference_ids):
+    base = f"/api/projects/{project}"
+    response = client.post(f"{base}/master/generate", json={"variants": 1})
+    job_id = response.json()["job_ids"][0]
+    assert wait_for_job(client, job_id)["status"] == "succeeded"
+    assert client.delete(f"/api/jobs/{job_id}").status_code == 409
+    with SessionLocal() as db:
+        job = db.get(GenerationJob, job_id)
+        job.status = "failed"
+        job.actual_cost_usd = 0.25
+        db.commit()
+    assert client.delete(f"/api/jobs/{job_id}").status_code == 200
+    assert client.get(f"{base}/jobs").json() == []
+    assert not any(j["id"] == job_id for j in client.get('/api/jobs').json())
+    assert client.get(f"{base}/workflow").json()["masters"] == []
+    with SessionLocal() as db:
+        job = db.get(GenerationJob, job_id)
+        assert job.dismissed and job.actual_cost_usd == 0.25
+    assert client.delete(f"/api/jobs/{job_id}").status_code == 200

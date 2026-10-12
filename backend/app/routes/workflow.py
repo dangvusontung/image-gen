@@ -168,11 +168,11 @@ def get_workflow(project_id: str, db: Session = Depends(get_db)):
     return {
         "approved_master_id": project.approved_master_id,
         "approved_turnaround_id": project.approved_turnaround_id,
-        "masters": [{"id": m.id, "round": m.round, "variant": m.variant, "job": JobOut.model_validate(m.job)} for m in masters],
+        "masters": [{"id": m.id, "round": m.round, "variant": m.variant, "job": JobOut.model_validate(m.job)} for m in masters if not m.job.dismissed],
         "turnarounds": [{"id": t.id, "number": t.number, "master_version_id": t.master_version_id,
                          "stale": t.master_version_id != project.approved_master_id,
                          "approved_at": t.approved_at,
-                         "views": [{"angle": v.angle, "job": JobOut.model_validate(v.job)} for v in t.views if v.selected]} for t in turns],
+                         "views": [{"angle": v.angle, "job": JobOut.model_validate(v.job)} for v in t.views if v.selected and not v.job.dismissed]} for t in turns if any(v.selected and not v.job.dismissed for v in t.views)],
         "approvals": [{"target_type": e.target_type, "target_id": e.target_id, "previous_id": e.previous_id,
                        "created_at": e.created_at} for e in events],
     }

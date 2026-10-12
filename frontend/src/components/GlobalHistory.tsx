@@ -1,3 +1,4 @@
+import { RemoveFailedGeneration } from '@/components/GenerationUI'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { HistoryIcon } from 'lucide-react'
@@ -81,6 +82,7 @@ export default function GlobalHistory({ onOpenProject }: { onOpenProject: (id: s
                   </time>
                 </span>
               </button>
+              <RemoveFailedGeneration job={job} />
             </li>
           ))}
         </ul>
