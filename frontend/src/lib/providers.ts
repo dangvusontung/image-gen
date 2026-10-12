@@ -42,7 +42,7 @@ export interface Generation {
  * both "FLUX 2". Ids with no version number fall back to the product name alone.
  */
 export function modelGeneration(model: ModelInfo): Generation {
-  const id = model.id.toLowerCase()
+  const id = model.id.toLowerCase().replace(/^dola-(?=seedream-|seededit-)/, '')
   // A two-segment version (seedream-5-0-…) reads as one number; a single or dotted one (flux-2-…,
   // gemini-3.1-…, gemini-nano-banana-2.1) is already in final form.
   const match = /^([a-z][a-z-]*?)-(\d+)-(\d+)(?:-|$)/.exec(id) ?? /^([a-z][a-z-]*?)-(\d+(?:\.\d+)?)(?:-|$)/.exec(id)

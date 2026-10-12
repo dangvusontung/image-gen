@@ -40,6 +40,7 @@ const withId = (id: string) => ({ id, display_name: id } as ModelInfo)
 describe('model generations', () => {
   it('reads a two-segment version as one generation', () => {
     expect(modelGeneration(withId('seedream-5-0-pro-260628')).label).toBe('Seedream 5.0')
+    expect(modelGeneration(withId('dola-seedream-5-0-pro-260628')).label).toBe('Seedream 5.0')
     expect(modelGeneration(withId('seedream-5-0-flash-260915')).label).toBe('Seedream 5.0')
     expect(modelGeneration(withId('seedream-4-5-251128')).label).toBe('Seedream 4.5')
     expect(modelGeneration(withId('seedream-9-9-ultra-261231')).order).toBe(9.9)

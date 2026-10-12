@@ -62,7 +62,7 @@ CONTROL_VERSION = "2024-01-01"
 CONTROL_PAGE_SIZE = 100
 CONTROL_MAX_PAGES = 10
 # The control plane lists every foundation model on the account, LLMs included.
-IMAGE_MODEL_PREFIXES = ("seedream", "seededit")
+IMAGE_MODEL_PREFIXES = ("seedream", "seededit", "dola-seedream", "dola-seededit")
 # Chat families ModelArk serves alongside the image models; used to auto-pick a text model.
 TEXT_MODEL_PREFIXES = ("doubao", "skylark", "seed-")
 # Same families also cover embeddings, speech and video, which cannot answer a prompt.
@@ -141,10 +141,20 @@ MODELS = (
 )
 
 
+# BytePlus also exposes the pro model under its dola-prefixed invocation ID.
+MODELS += (replace(
+    next(model for model in MODELS if model.id == "seedream-5-0-pro-260628"),
+    id="dola-seedream-5-0-pro-260628",
+    display_name="Seedream 5.0 pro (dola)",
+),)
+MAX_PIXELS["dola-seedream-5-0-pro-260628"] = MAX_PIXELS["seedream-5-0-pro-260628"]
+_PNG_MODELS.add("dola-seedream-5-0-pro-260628")
+
 #: Control-plane "Name" -> the static record whose capabilities that family uses.
 FAMILIES = {
     "seedream-4-5": "seedream-4-5-251128",
     "seedream-5-0-pro": "seedream-5-0-pro-260628",
+    "dola-seedream-5-0-pro": "dola-seedream-5-0-pro-260628",
     "seedream-5-0-flash": "seedream-5-0-flash-260915",
     "seedream-4-0": "seedream-4-0-250828",
 }

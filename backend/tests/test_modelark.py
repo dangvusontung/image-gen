@@ -332,3 +332,17 @@ def test_configured_price_applies_to_fetched_models():
                                 control_host=CONTROL, price_per_image_usd=0.04)
     provider.apply_catalogue(asyncio.run(provider.fetch_catalogue()))
     assert all(m.price_per_image_usd == 0.04 for m in provider.models())
+
+
+def test_dola_pro_catalogue_preserves_invocation_id_and_png_capabilities():
+    provider, seen = provider_with(lambda r: ok_response())
+    model_id = "dola-seedream-5-0-pro-260628"
+    assert provider.get_model(model_id).sizes == ("1K", "2K")
+    models = provider.apply_catalogue([{"id": model_id, "display_name": "Dola pro"}])
+    assert len(models) == 1
+    assert models[0].status == "ga"
+    asyncio.run(provider.submit(req(model=model_id, n_refs=1)))
+    payload = json.loads(seen[0].content)
+    assert payload["model"] == model_id
+    assert payload["output_format"] == "png"
+    assert payload["size"] == seedream_size("3:4", "2K", MAX_PIXELS[model_id])
