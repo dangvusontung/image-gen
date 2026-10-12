@@ -165,16 +165,23 @@ class JobRunner:
             if free <= 0:
                 return
 
+            bfl_active = db.query(GenerationJob).filter(
+                GenerationJob.provider == "bfl",
+                GenerationJob.status.in_([JobStatus.SUBMITTING, JobStatus.RUNNING]),
+            ).count()
             now = _now()
             due = (
-                db.query(GenerationJob.id)
+                db.query(GenerationJob.id, GenerationJob.provider)
                 .filter(GenerationJob.status == JobStatus.QUEUED)
                 .filter(or_(GenerationJob.next_attempt_at.is_(None), GenerationJob.next_attempt_at <= now))
                 .order_by(GenerationJob.created_at)
-                .limit(free)
                 .all()
             )
-            for (job_id,) in due:
+            for job_id, provider in due:
+                if free <= 0:
+                    break
+                if provider == "bfl" and bfl_active >= 5:
+                    continue
                 claimed = db.execute(
                     update(GenerationJob)
                     .where(GenerationJob.id == job_id, GenerationJob.status == JobStatus.QUEUED)
@@ -183,6 +190,9 @@ class JobRunner:
                 db.commit()
                 if claimed:
                     self._spawn(job_id, self._execute(job_id))
+                    free -= 1
+                    if provider == "bfl":
+                        bfl_active += 1
 
     # ---- job execution ---------------------------------------------------------------------
 

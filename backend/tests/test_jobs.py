@@ -231,3 +231,45 @@ def test_remove_failed_generation_hides_versions_and_preserves_accounting(client
         job = db.get(GenerationJob, job_id)
         assert job.dismissed and job.actual_cost_usd == 0.25
     assert client.delete(f"/api/jobs/{job_id}").status_code == 200
+
+
+def test_bfl_dispatch_is_capped_at_five_without_blocking_other_providers(tmp_path):
+    from sqlalchemy import create_engine
+    from sqlalchemy.orm import sessionmaker
+    from app.database import Base
+    from app.jobs.runner import JobRunner
+    from app.models import Project
+
+    engine = create_engine(f"sqlite:///{tmp_path / 'concurrency.db'}")
+    Base.metadata.create_all(engine)
+    sessions = sessionmaker(bind=engine)
+    with sessions() as db:
+        project = Project(name="Concurrency test", rights_confirmed=True)
+        db.add(project)
+        db.flush()
+        for index in range(8):
+            db.add(GenerationJob(project_id=project.id, purpose="test", provider="bfl", model="test", prompt="test", status="queued"))
+        db.add(GenerationJob(project_id=project.id, purpose="test", provider="mock", model="mock-v1", prompt="test", status="queued"))
+        db.commit()
+    runner = JobRunner(sessions, None, None, concurrency=9, backoff_base=0.01, poll_interval=0.01, poll_timeout=1)
+    spawned = []
+    def spawn(job_id, coroutine):
+        coroutine.close()
+        spawned.append(job_id)
+        runner._inflight[job_id] = None
+    runner._spawn = spawn
+    runner._dispatch()
+    with sessions() as db:
+        assert db.query(GenerationJob).filter_by(provider="bfl", status="submitting").count() == 5
+        assert db.query(GenerationJob).filter_by(provider="bfl", status="queued").count() == 3
+        assert db.query(GenerationJob).filter_by(provider="mock", status="submitting").count() == 1
+        completed = db.query(GenerationJob).filter_by(provider="bfl", status="submitting").first()
+        completed.status = "succeeded"
+        runner._inflight.pop(completed.id)
+        db.commit()
+    runner._dispatch()
+    with sessions() as db:
+        assert db.query(GenerationJob).filter_by(provider="bfl", status="submitting").count() == 5
+        assert db.query(GenerationJob).filter_by(provider="bfl", status="queued").count() == 2
+    assert len(spawned) == 7
+    engine.dispose()
