@@ -26,7 +26,7 @@ const STEP_OF_PURPOSE: Record<string, string> = {
 const STEPS = [
   { value: 'references', label: '1. Ảnh tham chiếu' },
   { value: 'master', label: '2. Nhân vật gốc' },
-  { value: 'turnaround', label: '3. Turnaround' },
+  { value: 'turnaround', label: '3. Turnaround (tùy chọn)' },
   { value: 'concepts', label: '4. Concept' },
   { value: 'enhance', label: '5. Nâng cấp' },
   { value: 'history', label: 'Lịch sử' },
@@ -89,7 +89,7 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
             </TabsContent>
             {(['master', 'turnaround'] as const).map(step => <TabsContent key={step} value={step} className="mt-4">
               <StepSources project={project} step={step} onBack={() => pickStep(step === 'master' ? 'references' : 'master')} />
-              <CharacterStep onApproved={() => pickStep(step === 'master' ? 'turnaround' : 'concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} step={step} />
+              <CharacterStep onSkip={step === 'turnaround' ? () => pickStep('concepts') : undefined} onApproved={() => pickStep(step === 'master' ? 'turnaround' : 'concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} step={step} />
             </TabsContent>)}
             <TabsContent value="concepts" className="mt-4">
               <StepSources project={project} step="concepts" onBack={() => pickStep('turnaround')} />

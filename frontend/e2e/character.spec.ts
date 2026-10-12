@@ -146,3 +146,32 @@ test('complete mock workflow: master, six views, nine concepts, enhancement, and
   await expect(page.getByLabel('Trang phục concept')).toHaveValue('denim_shorts')
   await expect(page.getByLabel('Bối cảnh concept')).toHaveValue('poolside')
 })
+
+
+test('turnaround can be skipped without generating any angle jobs', async ({ page, request }) => {
+  const created = await request.post('http://127.0.0.1:8100/api/projects', { data: { name: 'Optional turnaround E2E' } })
+  const project = await created.json()
+  const base = `http://127.0.0.1:8100/api/projects/${project.id}`
+  await request.patch(base, { data: { rights_confirmed: true } })
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGM8kWLEwMDAxMDAwMDAAAARKAFipiAqoAAAAABJRU5ErkJggg==', 'base64')
+  await request.post(`${base}/assets`, { multipart: { files: { name: 'face.png', mimeType: 'image/png', buffer: png }, kind: 'reference' } })
+  await request.post(`${base}/master/generate`, { data: { variants: 1 } })
+  await expect.poll(async () => {
+    const workflow = await (await request.get(`${base}/workflow`)).json()
+    return workflow.masters[0]?.job.status
+  }).toBe('succeeded')
+  const workflow = await (await request.get(`${base}/workflow`)).json()
+  await request.post(`${base}/master/${workflow.masters[0].id}/approve`)
+  await page.goto(`/#/projects/${project.id}`)
+  await page.getByRole('tab', { name: '3. Turnaround (tùy chọn)', exact: true }).click()
+  await page.getByRole('button', { name: 'Bỏ qua → Concept', exact: true }).click()
+  await expect(page.getByRole('tab', { name: '4. Concept' })).toHaveAttribute('data-state', 'active')
+  await page.getByText('Ảnh tùy chỉnh · tự chọn trang phục và bối cảnh').click()
+  await page.getByLabel('Trang phục concept').selectOption('denim_shorts')
+  await page.getByLabel('Bối cảnh concept').selectOption('poolside')
+  await page.getByRole('button', { name: 'Tạo 1 ảnh tùy chỉnh', exact: true }).click()
+  await expect(page.locator('img:not([data-source-image])')).toHaveCount(1)
+  const after = await (await request.get(`${base}/workflow`)).json()
+  expect(after.turnarounds).toEqual([])
+  expect(after.approved_turnaround_id).toBeNull()
+})

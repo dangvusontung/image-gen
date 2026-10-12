@@ -35,7 +35,7 @@ function ImageJob({ job, projectId, gallery }: { job: Job; projectId: string; ga
   </div>
 }
 
-export default function CharacterStep({ project, step, onApproved }: { onApproved?: () => void; project: ProjectDetail; step: 'master' | 'turnaround' | 'history' }) {
+export default function CharacterStep({ project, step, onApproved, onSkip }: { onApproved?: () => void; onSkip?: () => void; project: ProjectDetail; step: 'master' | 'turnaround' | 'history' }) {
   const qc = useQueryClient()
   const base = `/projects/${project.id}`
   const key = ['workflow', project.id]
@@ -86,7 +86,10 @@ export default function CharacterStep({ project, step, onApproved }: { onApprove
     {step !== 'history' && <>
       <h2 className="text-xl font-semibold">{step === 'master' ? 'Tạo và duyệt nhân vật gốc' : 'Turnaround sáu góc'}</h2>
       {step === 'master' && selectedAssets.length > 0 && selectedAssets.length < 3 && <p role="status">Nên dùng 3–8 ảnh để giữ nhận diện nhất quán (đang chọn {selectedAssets.length}).</p>}
-      {step === 'turnaround' && <p>Turnaround là suy luận của AI. Nhân vật gốc đã duyệt luôn là nguồn nhận diện chính. Bỏ chọn góc bạn không cần để tiết kiệm chi phí.</p>}
+      {step === 'turnaround' && <div className="space-y-2">
+        <p>Turnaround là bước tùy chọn. Bạn có thể tạo các góc cần thiết hoặc bỏ qua để tạo concept từ nhân vật gốc đã duyệt.</p>
+        <Button variant="outline" disabled={!ready} onClick={onSkip}>Bỏ qua → Concept</Button>
+      </div>}
       {!ready && <p>{!project.rights_confirmed ? 'Xác nhận quyền sử dụng ảnh ở bước 1.' : step === 'master' ? (project.assets.length ? 'Chọn ít nhất một ảnh ở bước 1.' : 'Tải ảnh tham chiếu ở bước 1.') : 'Tạo và duyệt nhân vật gốc ở bước 2.'}</p>}
       {paid && <p className="text-sm">{model?.display_name}{defaultSize ? ` · ${defaultSize}` : ''} · {step === 'master' ? `${selectedAssets.length} ảnh tham chiếu đã chọn sẽ được gửi` : 'Ảnh tham chiếu sẽ được gửi'} tới nhà cung cấp đã chọn.</p>}
       <details className="space-y-3 rounded-lg border p-4"><summary>Chỉnh sửa prompt</summary>
