@@ -54,7 +54,7 @@ def test_hybrid_end_to_end_routing_estimates_and_fallback(client, project, refer
         for job_id in response.json()["job_ids"]:
             job = wait_for_job(client, job_id)
             assert job["status"] == "succeeded"
-            assert job["provider"] == "gemini" and len(job["reference_asset_ids"]) == 3
+            assert job["provider"] == "gemini" and len(job["reference_asset_ids"]) == 2
     concept = client.get(f"{base}/concepts").json()[0]
     path = f"{base}/concepts/{concept['id']}"
     plan = client.get(f"{path}/enhance-plan").json()

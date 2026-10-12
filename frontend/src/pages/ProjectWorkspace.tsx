@@ -92,7 +92,7 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
               <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step={step} onBack={() => pickStep(step === 'master' ? 'references' : 'master')} /></aside>
             </TabsContent>)}
             <TabsContent value="concepts" className="mt-4 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
-              <div className="min-w-0 space-y-5"><PromptEditor projectId={project.id} name="concept" />
+              <div className="min-w-0 space-y-5">
               <ConceptsStep key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} onEnhance={id => { setSelectedConceptId(id); pickStep('enhance') }} /></div>
               <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step="concepts" onBack={() => pickStep('turnaround')} /></aside>
             </TabsContent>

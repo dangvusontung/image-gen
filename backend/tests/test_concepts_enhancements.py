@@ -68,8 +68,8 @@ def test_nine_standalone_concepts_enhance_export_and_restart(client, studio):
         assert c["mood"] == next(p["title"] for p in proposals if p["slot"] == c["slot"])
         assert c["master_version_id"] == master["id"]
         assert c["turnaround_version_id"] == turn["id"]
-        # Master, one randomly chosen turnaround angle, and the built-in template.
-        assert len(c["job"]["reference_asset_ids"]) == 3
+        # Master and one randomly chosen turnaround angle; no style template.
+        assert len(c["job"]["reference_asset_ids"]) == 2
         assert sum("TURNAROUND" in label for label in c["job"]["meta"]["reference_labels"]) == 1
     c = concepts[0]
     plan = client.get(f"{base}/concepts/{c['id']}/enhance-plan").json()
@@ -151,12 +151,15 @@ def test_one_slot_failure_retry_and_regeneration_keep_successes(client, studio):
     assert newest["job"]["output_asset_ids"] != failed["job"]["output_asset_ids"]
 
 
-def test_reference_limit_never_silently_discards_and_enhance_sends_one_image(client, studio):
+def test_reference_limit_never_silently_discards_and_enhance_sends_one_image(client, studio, monkeypatch):
     base, master, _ = studio
     propose(client, base)
     render(client, base)
     concept = client.get(f"{base}/concepts").json()[0]
     client.patch(base, json={"model": "mock-small-refs"})
+    provider = app.state.registry.get("mock")
+    models = provider.models()
+    monkeypatch.setattr(provider, "models", lambda: [replace(model, max_reference_images=1) for model in models])
     before = len(client.get(f"{base}/jobs").json())
     response = client.post(f"{base}/concepts/generate", json={"confirmed": True})
     assert response.status_code == 400 and response.json()["detail"]["code"] == "reference_limit_exceeded"
@@ -251,8 +254,8 @@ def test_concepts_can_exclude_an_approved_turnaround(client, studio):
     rendered = render(client, base, proposals[:1])
     job = wait_for_job(client, rendered["job_ids"][0])
     assert job["status"] == "succeeded"
-    assert job["reference_asset_ids"] == [master["job"]["output_asset_ids"][0], "builtin:concept_reference"]
+    assert job["reference_asset_ids"] == [master["job"]["output_asset_ids"][0]]
     estimate = client.get(f"{base}/generation-estimate", params={"purpose": "concept", "count": 1})
     assert estimate.status_code == 200
-    assert estimate.json()["reference_count"] == 2
+    assert estimate.json()["reference_count"] == 1
     assert client.get(base).json()["step_leads"]["concept"] == "none"

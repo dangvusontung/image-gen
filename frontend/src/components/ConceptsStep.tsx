@@ -7,7 +7,7 @@ import { request, useProviders, type Concept, type ConceptProposal, type Project
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { active, costLabel, DownloadLinks, ImagePreview, JobDetails, JobPlaceholder, useGenerationAction } from '@/components/GenerationUI'
+import { active, costLabel, DownloadLinks, ImagePreview, JobDetails, JobPlaceholder, PromptEditor, useGenerationAction } from '@/components/GenerationUI'
 
 const BRIEF_FIELDS = ['setting', 'activity', 'pose', 'outfit', 'silhouette', 'expression', 'gaze', 'camera', 'framing', 'lighting']
 
@@ -130,6 +130,46 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
 
   return <section className="space-y-5">
     <h2 className="text-xl font-semibold">Concept</h2>
+    {concepts.isPending && <Skeleton className="h-64" />}
+    {!!runs.length && <div className="flex flex-wrap items-center gap-4">
+      <label>Đợt ảnh <select className="ml-2 rounded border p-2" aria-label="Đợt concept" value={run} onChange={e => setSelectedRun(Number(e.target.value))}>
+        {runs.map(n => <option key={n} value={n}>{n}</option>)}
+      </select></label>
+      <Button variant="outline" onClick={() => setCompact(!compact)}>{compact ? 'Xem thẻ chi tiết' : 'Xem bảng ảnh'}</Button>
+      <a className="text-sm underline" href={`/api${base}/contact-sheet?run=${run}`}>Tải bảng ảnh</a>
+      <span className="text-sm">{cards.filter(c => c?.job.status === 'succeeded').length}/{cards.length} hoàn tất</span>
+    </div>}
+    {!!runs.length && <div className={`grid gap-4 ${compact ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1'}`}>
+      {cards.map(c => c ? <article key={c.id} className="space-y-3 rounded-xl border p-4" aria-label={`Concept ${c.slot}`}>
+        <div className={compact ? 'space-y-3' : 'grid gap-4 sm:grid-cols-[10rem_minmax(0,1fr)]'}>
+          <div className="space-y-2">
+        {c.job.output_asset_ids[0] ? <><ImagePreview assetId={c.job.output_asset_ids[0]} title={`Concept ${c.slot} · ${c.mood}`} /><DownloadLinks assetId={c.job.output_asset_ids[0]} /></> : active(c.job) ? <JobPlaceholder job={c.job} /> : <div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-muted text-sm">Chưa có ảnh kết quả</div>}
+          </div>
+          <div className="min-w-0 space-y-3">
+        <h3 className="font-semibold">{c.slot}. {c.mood}</h3>
+        <p className="text-sm text-muted-foreground">{c.camera} · Bản {c.revision}</p>
+        {c.stale && <p className="text-sm text-amber-700">Dựa trên nhân vật gốc cũ</p>}
+
+        {!compact && <>
+          <p className="text-sm">Trang phục: {c.brief.outfit}</p>
+          <p className="text-sm">{c.brief.setting} · {c.brief.activity}</p>
+          <details className="text-xs"><summary>Chi tiết concept và phiên bản trước</summary>
+            <dl className="mt-2 space-y-1">{Object.entries(c.brief).filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="inline font-medium">{BRIEF_LABEL[k] ?? k}: </dt><dd className="inline">{v}</dd></div>)}</dl>
+            {all.filter(p => p.slot === c.slot && p.id !== c.id).map(p => <div key={p.id} className="mt-3 border-t pt-3"><p>Bản {p.revision}</p>{p.job.output_asset_ids[0] && <><ImagePreview assetId={p.job.output_asset_ids[0]} title={`Concept ${p.slot} bản ${p.revision}`} /><Button size="sm" variant="outline" onClick={() => onEnhance(p.id)}>Nâng cấp bản {p.revision}</Button></>}<JobDetails job={p.job} projectId={project.id} /></div>)}
+          </details>
+          <JobDetails job={c.job} projectId={project.id} />
+        </>}
+        {!compact && ['failed', 'cancelled'].includes(c.job.status) &&
+          <FixAndRetry concept={c} projectId={project.id} size={size} choices={choices} disabled={!ready} />}
+        <div className="flex flex-wrap gap-2">
+          <Button size="sm" variant="outline" disabled={pending || active(c.job) || !ready} onClick={() => action.mutate({ path: `${base}/concepts/${c.id}/regenerate`, data: { size: size || null } })}>Tạo lại ô {c.slot}</Button>
+          <Button size="sm" disabled={c.job.status !== 'succeeded'} onClick={() => onEnhance(c.id)}>Nâng cấp ô {c.slot}</Button>
+        </div>
+          </div>
+        </div>
+      </article> : null)}
+    </div>}
+    <PromptEditor projectId={project.id} name="concept" />
     <p className="text-sm text-muted-foreground">
       9 concept lối sống khác nhau, mỗi concept một bối cảnh, hoạt động, trang phục và ánh sáng riêng.
       Chọn concept bạn muốn rồi tạo ảnh — không cần bước nào khác.
@@ -142,7 +182,8 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     {concepts.error && <ErrorAlert error={concepts.error} title="Không tải được concept" />}
     {workflow.error && <ErrorAlert error={workflow.error} title="Không tải được nhân vật gốc" />}
 
-    {list.length > 0 && <div className="space-y-4">
+    {list.length > 0 && <details className="space-y-4 rounded-xl border p-4">
+      <summary className="cursor-pointer font-semibold">9 concept · Mở/đóng danh sách</summary>
       <div className="flex flex-wrap items-center gap-3">
         <h3 className="font-semibold">{builtIn ? '9 concept mặc định' : `Đề xuất đợt ${list[0].run}`}</h3>
         {!builtIn && <time className="text-sm text-muted-foreground" dateTime={list[0].created_at}>{new Date(list[0].created_at).toLocaleString('vi-VN')}</time>}
@@ -200,7 +241,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         </Button>
       </div>
       {estimate.data && <p className="text-xs text-muted-foreground">{estimate.data.note}</p>}
-    </div>}
+    </details>}
 
     {proposals.isPending && <Skeleton className="h-40" />}
 
@@ -235,44 +276,6 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       </div>
     </details>
 
-    {concepts.isPending && <Skeleton className="h-64" />}
-    {!!runs.length && <div className="flex flex-wrap items-center gap-4">
-      <label>Đợt ảnh <select className="ml-2 rounded border p-2" aria-label="Đợt concept" value={run} onChange={e => setSelectedRun(Number(e.target.value))}>
-        {runs.map(n => <option key={n} value={n}>{n}</option>)}
-      </select></label>
-      <Button variant="outline" onClick={() => setCompact(!compact)}>{compact ? 'Xem thẻ chi tiết' : 'Xem bảng ảnh'}</Button>
-      <a className="text-sm underline" href={`/api${base}/contact-sheet?run=${run}`}>Tải bảng ảnh</a>
-      <span className="text-sm">{cards.filter(c => c?.job.status === 'succeeded').length}/{cards.length} hoàn tất</span>
-    </div>}
-    {!!runs.length && <div className={`grid gap-4 ${compact ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1'}`}>
-      {cards.map(c => c ? <article key={c.id} className="space-y-3 rounded-xl border p-4" aria-label={`Concept ${c.slot}`}>
-        <div className={compact ? 'space-y-3' : 'grid gap-4 sm:grid-cols-[10rem_minmax(0,1fr)]'}>
-          <div className="space-y-2">
-        {c.job.output_asset_ids[0] ? <><ImagePreview assetId={c.job.output_asset_ids[0]} title={`Concept ${c.slot} · ${c.mood}`} /><DownloadLinks assetId={c.job.output_asset_ids[0]} /></> : active(c.job) ? <JobPlaceholder job={c.job} /> : <div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-muted text-sm">Chưa có ảnh kết quả</div>}
-          </div>
-          <div className="min-w-0 space-y-3">
-        <h3 className="font-semibold">{c.slot}. {c.mood}</h3>
-        <p className="text-sm text-muted-foreground">{c.camera} · Bản {c.revision}</p>
-        {c.stale && <p className="text-sm text-amber-700">Dựa trên nhân vật gốc cũ</p>}
 
-        {!compact && <>
-          <p className="text-sm">Trang phục: {c.brief.outfit}</p>
-          <p className="text-sm">{c.brief.setting} · {c.brief.activity}</p>
-          <details className="text-xs"><summary>Chi tiết concept và phiên bản trước</summary>
-            <dl className="mt-2 space-y-1">{Object.entries(c.brief).filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="inline font-medium">{BRIEF_LABEL[k] ?? k}: </dt><dd className="inline">{v}</dd></div>)}</dl>
-            {all.filter(p => p.slot === c.slot && p.id !== c.id).map(p => <div key={p.id} className="mt-3 border-t pt-3"><p>Bản {p.revision}</p>{p.job.output_asset_ids[0] && <><ImagePreview assetId={p.job.output_asset_ids[0]} title={`Concept ${p.slot} bản ${p.revision}`} /><Button size="sm" variant="outline" onClick={() => onEnhance(p.id)}>Nâng cấp bản {p.revision}</Button></>}<JobDetails job={p.job} projectId={project.id} /></div>)}
-          </details>
-          <JobDetails job={c.job} projectId={project.id} />
-        </>}
-        {!compact && ['failed', 'cancelled'].includes(c.job.status) &&
-          <FixAndRetry concept={c} projectId={project.id} size={size} choices={choices} disabled={!ready} />}
-        <div className="flex flex-wrap gap-2">
-          <Button size="sm" variant="outline" disabled={pending || active(c.job) || !ready} onClick={() => action.mutate({ path: `${base}/concepts/${c.id}/regenerate`, data: { size: size || null } })}>Tạo lại ô {c.slot}</Button>
-          <Button size="sm" disabled={c.job.status !== 'succeeded'} onClick={() => onEnhance(c.id)}>Nâng cấp ô {c.slot}</Button>
-        </div>
-          </div>
-        </div>
-      </article> : null)}
-    </div>}
   </section>
 }

@@ -1,4 +1,4 @@
-Use the approved MASTER as the identity authority and the TURNAROUND views for angle guidance. Render ONE image of that same character in the concept below.
+Use the approved MASTER as the identity authority and any supplied TURNAROUND views for angle guidance. Render ONE image of that same character in the concept below.
 
 Mood: {mood}. Camera: {camera}.
 Concept: {brief}

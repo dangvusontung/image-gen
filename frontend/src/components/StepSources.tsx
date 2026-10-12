@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { assetUrl, request, useReorderAssets, useSetStepLead, useSetStepTemplate, type GenerationJob, type ProjectDetail, type WorkflowStep } from '@/api/client'
 import { ErrorAlert } from '@/components/ErrorAlert'
@@ -39,7 +39,7 @@ export function LeadPicker({ project, step, options }: {
         </select>
       </label>
       <span className="text-xs text-muted-foreground">
-        {current === 'none' && step === 'concept' ? 'Chỉ dùng nhân vật gốc và ảnh mẫu đã chọn.' : current && !stale ? 'Ảnh này được gửi đầu tiên làm mốc nhận diện.' : 'Ứng dụng tự chọn theo góc máy của concept.'}
+        {current === 'none' && step === 'concept' ? 'Chỉ dùng nhân vật gốc.' : current && !stale ? 'Ảnh này được gửi đầu tiên làm mốc nhận diện.' : 'Ứng dụng tự chọn theo góc máy của concept.'}
       </span>
       {setLead.error && <ErrorAlert error={setLead.error} title="Không lưu được ảnh dẫn hướng" />}
     </div>
@@ -169,6 +169,8 @@ export default function StepSources({ project, step, onBack }: { project: Projec
 
   // Only the master step shows the project's own photos, so only there can order be changed.
   const setConceptLead = useSetStepLead(project.id)
+  const [useTurnaround, setUseTurnaround] = useState(project.step_leads?.concept !== 'none')
+  useEffect(() => { setUseTurnaround(project.step_leads?.concept !== 'none') }, [project.step_leads?.concept])
   const reorder = useReorderAssets(project.id)
   const reorderUsed = (orderedIds: string[]) => {
     const all = [...project.assets].sort((a, b) => a.position - b.position).map((a) => a.id)
@@ -188,16 +190,16 @@ export default function StepSources({ project, step, onBack }: { project: Projec
       onReorder={step === 'master' && used.length > 1 ? reorderUsed : undefined}
       lead={<>
         {step === 'concepts' && <div className="space-y-2">
-          <Button variant={project.step_leads?.concept === 'none' ? 'outline' : 'default'}
-            className="w-full" disabled={setConceptLead.isPending}
-            onClick={() => setConceptLead.mutate({ step: 'concept', lead: project.step_leads?.concept === 'none' ? null : 'none' })}>
-            {project.step_leads?.concept === 'none' ? 'Dùng lại turnaround' : 'Bỏ turnaround'}
-          </Button>
-          <p className="text-xs text-muted-foreground">{project.step_leads?.concept === 'none' ? 'Đã bỏ turnaround khỏi ảnh tham chiếu tạo concept.' : 'Có thể bỏ turnaround và chỉ dùng nhân vật gốc cùng guideline.'}</p>
+          <label className="flex items-center gap-2 text-sm">
+            <input type="checkbox" aria-label="Dùng turnaround" checked={useTurnaround}
+              disabled={setConceptLead.isPending}
+              onChange={e => { const checked = e.target.checked; setUseTurnaround(checked); setConceptLead.mutate({ step: 'concept', lead: checked ? null : 'none' }, { onError: () => setUseTurnaround(!checked) }) }} />
+            Dùng turnaround
+          </label>
+          <Button variant="outline" size="sm" onClick={onBack}>Xem turnaround</Button>
           {setConceptLead.error && <ErrorAlert error={setConceptLead.error} title="Không đổi được lựa chọn turnaround" />}
         </div>}
         <LeadPicker project={project} step={leadStep} options={leadOptions[step]} />
-        <TemplatePicker project={project} step={leadStep} />
       </>}
     />
   </>

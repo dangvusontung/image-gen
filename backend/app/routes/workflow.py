@@ -72,21 +72,8 @@ TEMPLATE_NOTE = (
 
 
 def step_template(db, project, step):
-    """The art-direction reference for this step: the app's built-in one unless overridden.
-
-    A project can pin one of its own photos, or opt out entirely with the sentinel "none".
-    """
-    asset_id = (project.step_templates or {}).get(step)
-    if asset_id == "none":
-        return None
-    if not asset_id:
-        return (DEFAULT_REFERENCE_ID, TEMPLATE_LABEL) if builtin_reference(DEFAULT_REFERENCE_ID) else None
-    if is_builtin(asset_id):
-        return (asset_id, TEMPLATE_LABEL) if builtin_reference(asset_id) else None
-    asset = db.get(Asset, asset_id)
-    if asset is None or asset.project_id != project.id or asset.kind not in SOURCE_KINDS:
-        return None
-    return asset_id, TEMPLATE_LABEL
+    """Style templates are no longer sent to image providers."""
+    return None
 
 
 def snapshot(db, project_id, name, **values):

@@ -1,4 +1,3 @@
-from app.builtin import DEFAULT_REFERENCE_ID
 from app.routes.assets import storage
 from tests.conftest import make_image, wait_for_job
 
@@ -132,12 +131,12 @@ def test_only_selected_photos_reach_the_provider(client, project, reference_ids)
 
     estimate = client.get(f"{base}/generation-estimate?purpose=master").json()
     # One photo dropped, plus the built-in art-direction reference every job carries.
-    assert estimate["reference_count"] == len(reference_ids) - 1 + 1
+    assert estimate["reference_count"] == len(reference_ids) - 1
 
     result = client.post(f"{base}/master/generate", json={})
     assert result.status_code == 201, result.text
     job = wait_for_job(client, result.json()["job_ids"][0])
-    assert job["reference_asset_ids"] == [*reference_ids[1:], DEFAULT_REFERENCE_ID]
+    assert job["reference_asset_ids"] == reference_ids[1:]
 
     # Deselecting everything is a clear refusal, not a request with no references.
     for asset_id in reference_ids:

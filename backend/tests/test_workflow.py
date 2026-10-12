@@ -1,4 +1,3 @@
-from app.builtin import DEFAULT_REFERENCE_ID
 from app.database import SessionLocal
 from app.routes.workflow import TEMPLATE_LABEL
 from app.models import GenerationJob
@@ -17,8 +16,8 @@ def test_full_workflow_preserves_versions(client, project, reference_ids):
     base = f"/api/projects/{project}"
     masters = generate_master(client, project)
     assert len(masters) == 2
-    # Every job also carries the app's built-in art-direction reference.
-    assert masters[0]["job"]["reference_asset_ids"] == [*reference_ids, DEFAULT_REFERENCE_ID]
+    # Only identity photos are sent; no style-template reference.
+    assert masters[0]["job"]["reference_asset_ids"] == reference_ids
     assert client.post(f"{base}/master/{masters[0]['id']}/approve").status_code == 200
     result = client.post(f"{base}/turnaround/generate", json={})
     assert result.status_code == 201, result.text
@@ -27,8 +26,8 @@ def test_full_workflow_preserves_versions(client, project, reference_ids):
     for job_id in turn["job_ids"]:
         job = wait_for_job(client, job_id)
         assert job["status"] == "succeeded"
-        assert job["reference_asset_ids"] == [*masters[0]["job"]["output_asset_ids"], DEFAULT_REFERENCE_ID]
-        assert job["meta"]["reference_labels"] == ["MASTER identity authority", TEMPLATE_LABEL]
+        assert job["reference_asset_ids"] == masters[0]["job"]["output_asset_ids"]
+        assert job["meta"]["reference_labels"] == ["MASTER identity authority"]
     assert client.post(f"{base}/turnaround/{turn['id']}/approve").status_code == 200
     regen = client.post(f"{base}/turnaround/{turn['id']}/views/left90/regenerate")
     assert regen.status_code == 201, regen.text
