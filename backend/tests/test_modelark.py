@@ -217,44 +217,36 @@ def catalogue(items, total=None) -> httpx.Response:
 
 
 ITEMS = [
-    {"Name": "doubao-pro-32k", "PrimaryVersion": "240615", "DisplayName": "Doubao pro"},
-    {"Name": "seedream-4-5", "PrimaryVersion": "251128", "DisplayName": "Seedream 4.5"},
-    {"Name": "seedream-9-9-ultra", "PrimaryVersion": "261231", "DisplayName": "Seedream 9.9 ultra"},
+    {"FoundationModelName": "doubao-pro-32k-240615", "State": "Available", "DisplayName": "Doubao pro"},
+    {"FoundationModelName": "seedream-4-5-251128", "State": "Available", "DisplayName": "Seedream 4.5"},
+    {"FoundationModelName": "seedream-9-9-ultra-261231", "State": "Available", "DisplayName": "Seedream 9.9 ultra"},
 ]
 
 
-def test_control_plane_fetch_normalises_name_and_version_into_model_ids():
+def test_control_plane_fetch_preserves_activated_model_ids():
     provider, seen = control_provider(lambda r: catalogue(ITEMS))
     items = asyncio.run(provider.fetch_catalogue())
 
     sent = seen[0]
     assert sent.method == "POST"
-    assert str(sent.url) == f"https://{CONTROL}/?Action=ListFoundationModels&Version=2024-01-01"
+    assert str(sent.url) == f"https://{CONTROL}/?Action=ListModelActivations&Version=2024-01-01"
     assert sent.headers["authorization"].startswith(f"HMAC-SHA256 Credential={AK}/")
     assert "/ap-southeast-1/ark/request," in sent.headers["authorization"]
-    assert json.loads(sent.content) == {"PageNumber": 1, "PageSize": 100}
+    assert json.loads(sent.content) == {"PageNumber": 1, "PageSize": 100,
+                                         "Filter": {"States": ["Available"], "IncludeDeprecatedModels": False}}
     # LLMs are filtered out when the catalogue is applied, not when it is fetched.
     assert items == [{"id": "doubao-pro-32k-240615", "display_name": "Doubao pro"},
                      {"id": "seedream-4-5-251128", "display_name": "Seedream 4.5"},
                      {"id": "seedream-9-9-ultra-261231", "display_name": "Seedream 9.9 ultra"}]
 
 
-def test_bearer_models_endpoint_is_used_without_control_plane_credentials():
-    payload = {"data": [{"id": "seedream-4-5-251128"}, {"id": "doubao-1-5-pro"}, {"id": "seedream-6-0-x"}]}
-    provider, seen = provider_with(lambda r: httpx.Response(200, json=payload))
-    assert provider.control_plane_configured is False
-    items = asyncio.run(provider.fetch_catalogue())
-    assert seen[0].method == "GET" and str(seen[0].url) == f"{BASE}/models"
-    assert seen[0].headers["authorization"] == f"Bearer {KEY}"
-    assert [i["id"] for i in items] == ["seedream-4-5-251128", "doubao-1-5-pro", "seedream-6-0-x"]
-
-
-def test_missing_models_endpoint_points_at_the_control_plane_credentials():
-    provider, _ = provider_with(lambda r: httpx.Response(404, json={}))
+def test_activated_models_require_control_plane_credentials_without_trying_bearer_models():
+    provider, seen = provider_with(lambda r: httpx.Response(200, json={"data": []}))
     with pytest.raises(ProviderError) as exc:
         asyncio.run(provider.fetch_catalogue())
     assert exc.value.code == "catalogue_unsupported"
     assert "ARK_ACCESS_KEY" in exc.value.message
+    assert seen == []
 
 
 def test_applying_a_catalogue_keeps_known_capabilities_and_drops_absent_models():
@@ -271,7 +263,7 @@ def test_applying_a_catalogue_keeps_known_capabilities_and_drops_absent_models()
     # An unrecognised family still appears, with conservative capabilities and a clear note.
     unknown = provider.get_model("seedream-9-9-ultra-261231")
     assert unknown.sizes == ("1K", "2K") and unknown.status == "preview"
-    assert "ListFoundationModels" in unknown.notes
+    assert "ListModelActivations" in unknown.notes
     # A model the account does not have can no longer be selected.
     with pytest.raises(CapabilityError):
         provider.get_model("seedream-5-0-pro-260628")
@@ -290,7 +282,7 @@ def test_control_plane_paginates_until_the_total_is_reached():
     def handler(request: httpx.Request) -> httpx.Response:
         page = json.loads(request.content)["PageNumber"]
         pages.append(page)
-        batch = [{"Name": f"seedream-p{page}-{i}", "PrimaryVersion": "1"} for i in range(100)]
+        batch = [{"FoundationModelName": f"seedream-p{page}-{i}-1", "State": "Available"} for i in range(100)]
         return catalogue(batch, total=150) if page == 1 else catalogue(batch[:50], total=150)
 
     provider, _ = control_provider(handler)
@@ -322,7 +314,7 @@ def test_connection_test_uses_the_control_plane_when_configured():
     provider, seen = control_provider(lambda r: catalogue(ITEMS))
     message = asyncio.run(provider.test_connection())
     assert "2 model ảnh" in message and "seedream-4-5-251128" in message
-    assert str(seen[0].url).startswith(f"https://{CONTROL}/?Action=ListFoundationModels")
+    assert str(seen[0].url).startswith(f"https://{CONTROL}/?Action=ListModelActivations")
     assert [m.id for m in provider.models()] == ["seedream-4-5-251128", "seedream-9-9-ultra-261231"]
 
 
@@ -346,3 +338,20 @@ def test_dola_pro_catalogue_preserves_invocation_id_and_png_capabilities():
     assert payload["model"] == model_id
     assert payload["output_format"] == "png"
     assert payload["size"] == seedream_size("3:4", "2K", MAX_PIXELS[model_id])
+
+
+def test_activation_catalogue_excludes_unavailable_and_deprecated_models():
+    provider, _ = control_provider(lambda r: catalogue([
+        {"FoundationModelName": "dola-seedream-5-0-pro-260628", "State": "Available", "DisplayName": "Dola pro"},
+        {"FoundationModelName": "seedream-disabled", "State": "Unavailable"},
+        {"FoundationModelName": "seedream-old", "State": "Available", "IsDeprecated": True},
+    ]))
+    assert asyncio.run(provider.fetch_catalogue()) == [
+        {"id": "dola-seedream-5-0-pro-260628", "display_name": "Dola pro"}]
+
+
+def test_no_activated_image_models_is_reported_instead_of_falling_back_to_builtin_models():
+    provider, _ = control_provider(lambda r: catalogue([]))
+    with pytest.raises(ProviderError) as exc:
+        asyncio.run(provider.fetch_catalogue())
+    assert exc.value.code == "no_activated_image_models"

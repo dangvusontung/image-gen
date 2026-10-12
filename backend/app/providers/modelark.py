@@ -11,7 +11,7 @@ exact "WIDTHxHEIGHT", response {created, data:[{url|b64_json}], usage}.
 GET {base}/models is the OpenAI-compatible model listing and takes the same Bearer key; it is
 documented on the sibling Volcengine Ark deployment (ark.cn-beijing.volces.com/api/v3/models)
 and used here for the connection test. Account-level model activation and custom inference
-endpoints live on a separate control-plane API (Action=ListFoundationModels / ListEndpoints,
+endpoints live on a separate control-plane API (Action=ListModelActivations / ListEndpoints,
 Version=2024-01-01) that is HMAC-SHA256 signed with an AccessKey/SecretKey pair, not this key.
 
 UNVERIFIED: per-image pricing is not published in the pages above, so no price ships here —
@@ -158,7 +158,7 @@ FAMILIES = {
     "seedream-5-0-flash": "seedream-5-0-flash-260915",
     "seedream-4-0": "seedream-4-0-250828",
 }
-_UNKNOWN_NOTE = ("Lấy từ ListFoundationModels. Khả năng chi tiết chưa rõ — dùng mặc định thận trọng "
+_UNKNOWN_NOTE = ("Lấy từ ListModelActivations. Khả năng chi tiết chưa rõ — dùng mặc định thận trọng "
                  "(tối đa 10 ảnh tham chiếu, 1K/2K).")
 
 
@@ -264,16 +264,24 @@ class ModelArkProvider(ImageProvider):
         return found
 
     async def fetch_catalogue(self) -> list[dict[str, str]]:
-        """Signed control plane when its credentials exist, else the Bearer /models listing."""
-        if self.control_plane_configured:
-            return [
-                {"id": f"{name}-{version}" if version else name,
-                 "display_name": (item.get("DisplayName") or "").strip()}
-                for item in await self.list_foundation_models()
-                for name, version in [((item.get("Name") or "").strip(), (item.get("PrimaryVersion") or "").strip())]
-                if name
-            ]
-        return await self.list_inference_models()
+        """List models activated for this account, using signed control-plane credentials."""
+        if not self.control_plane_configured:
+            raise ProviderError(
+                "catalogue_unsupported",
+                "Thêm ARK_ACCESS_KEY và ARK_SECRET_KEY để lấy model đã kích hoạt qua ListModelActivations.")
+        items = [
+            {"id": item["FoundationModelName"].strip(),
+             "display_name": (item.get("DisplayName") or "").strip()}
+            for item in await self.list_model_activations()
+            if isinstance(item.get("FoundationModelName"), str)
+            and item["FoundationModelName"].strip()
+            and item.get("State") == "Available"
+            and not item.get("IsDeprecated", False)
+        ]
+        if not any(item["id"].lower().startswith(IMAGE_MODEL_PREFIXES) for item in items):
+            raise ProviderError("no_activated_image_models",
+                                "Tài khoản chưa có model Seedream/SeedEdit nào ở trạng thái Available.")
+        return items
 
     async def list_inference_models(self) -> list[dict[str, str]]:
         """GET {base}/models — the OpenAI-compatible listing, using the Bearer inference key."""
@@ -298,12 +306,15 @@ class ModelArkProvider(ImageProvider):
         return [{"id": str(e.get("id") or "").strip(), "display_name": str(e.get("display_name") or "").strip()}
                 for e in (entries or []) if isinstance(e, dict) and e.get("id")]
 
-    async def list_foundation_models(self) -> list[dict]:
-        """Every page of Action=ListFoundationModels from the signed control-plane API."""
+    async def list_model_activations(self) -> list[dict]:
+        """Every page of Action=ListModelActivations from the signed control-plane API."""
         items: list[dict] = []
         for page in range(1, CONTROL_MAX_PAGES + 1):
-            body = json.dumps({"PageNumber": page, "PageSize": CONTROL_PAGE_SIZE}).encode()
-            query = action_query("ListFoundationModels", CONTROL_VERSION)
+            body = json.dumps({
+                "PageNumber": page, "PageSize": CONTROL_PAGE_SIZE,
+                "Filter": {"States": ["Available"], "IncludeDeprecatedModels": False},
+            }).encode()
+            query = action_query("ListModelActivations", CONTROL_VERSION)
             headers, _ = sign_request(
                 method="POST", host=self._control_host, service=CONTROL_SERVICE, region=self._region,
                 query=query, body=body, content_type="application/json",
@@ -326,13 +337,15 @@ class ModelArkProvider(ImageProvider):
                 code = str(error.get("Code") or "control_plane_error")
                 if "auth" in code.lower() or "signature" in code.lower() or "credential" in code.lower():
                     raise ProviderError("auth_failed", f"ModelArk từ chối chữ ký control plane: {message}")
-                raise ProviderError("control_plane_error", f"ModelArk ListFoundationModels lỗi ({code}): {message}")
+                raise ProviderError("control_plane_error", f"ModelArk ListModelActivations lỗi ({code}): {message}")
             result = payload.get("Result") or payload
             batch = result.get("Items") or []
             items.extend(batch)
             total = result.get("TotalCount")
             if len(batch) < CONTROL_PAGE_SIZE or (isinstance(total, int) and len(items) >= total):
                 break
+        else:
+            raise ProviderError("catalogue_too_large", "Danh sách model vượt giới hạn phân trang; chưa lưu kết quả thiếu.")
         return items
 
     def _control_error(self, resp: httpx.Response) -> ProviderError:

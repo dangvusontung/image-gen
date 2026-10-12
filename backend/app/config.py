@@ -24,12 +24,12 @@ ARK_API_BASE = os.getenv("ARK_API_BASE", "https://ark.ap-southeast.bytepluses.co
 # ModelArk does not publish per-image prices; set this to bring its jobs under the spend cap.
 ARK_PRICE_PER_IMAGE_USD = float(os.getenv("ARK_PRICE_PER_IMAGE_USD", "0"))
 ARK_WATERMARK = os.getenv("ARK_WATERMARK", "0") == "1"
-# Control-plane (ListFoundationModels) credentials: a signed AccessKey/SecretKey pair, separate
+# Control-plane (ListModelActivations) credentials: a signed AccessKey/SecretKey pair, separate
 # from the Bearer inference key. Without them the adapter falls back to its built-in model list.
 ARK_ACCESS_KEY = os.getenv("ARK_ACCESS_KEY", "").strip()
 ARK_SECRET_KEY = os.getenv("ARK_SECRET_KEY", "").strip()
-ARK_CONTROL_HOST = os.getenv("ARK_CONTROL_HOST", "open.byteplusapi.com").strip()
 ARK_REGION = os.getenv("ARK_REGION", "ap-southeast-1").strip()
+ARK_CONTROL_HOST = os.getenv("ARK_CONTROL_HOST", f"ark.{ARK_REGION}.byteplusapi.com").strip()
 # Chat model used for concept proposals. Empty means "discover one from the account's catalogue".
 ARK_TEXT_MODEL = os.getenv("ARK_TEXT_MODEL", "").strip()
 
