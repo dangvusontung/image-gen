@@ -152,6 +152,26 @@ class ImageProvider(ABC):
     def estimate_request_cost_usd(self, model: ModelInfo, size: str | None, reference_sizes: list[tuple[int, int]]) -> float | None:
         return self.estimate_cost_usd(model, size)
 
+    #: Non-None when the provider can enumerate the account's real catalogue; names the source.
+    catalogue_source: str | None = None
+    #: True when the provider can answer with text, not only images.
+    supports_text: bool = False
+
+    async def generate_text(self, prompt: str, references: list[ReferenceImage]) -> str:
+        """Answer a prompt about the given images with text."""
+        raise CapabilityError(
+            "text_unsupported",
+            f"{self.display_name} chỉ tạo ảnh, không trả về văn bản. Chọn nhà cung cấp hỗ trợ văn bản (Gemini).",
+        )
+
+    async def fetch_catalogue(self) -> list[dict[str, str]]:
+        """The account's models as [{"id", "display_name"}], straight from the provider's API."""
+        raise CapabilityError("catalogue_unsupported", f"{self.display_name} không có API liệt kê model")
+
+    def apply_catalogue(self, items: list[dict[str, str]]) -> list[ModelInfo]:
+        """Adopt a fetched catalogue as models(). Returns what models() will now report."""
+        raise CapabilityError("catalogue_unsupported", f"{self.display_name} không có API liệt kê model")
+
     @abstractmethod
     async def submit(self, request: ImageRequest) -> Submission: ...
 

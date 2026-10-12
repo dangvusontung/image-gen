@@ -15,16 +15,24 @@ BFL_KEY = "bfl-SECRET-key-999999999"
 
 def test_lists_all_providers_with_status(client):
     providers = {p["name"]: p for p in client.get("/api/providers").json()}
-    assert list(providers) == ["mock", "gemini", "bfl", "midjourney"]
+    assert list(providers) == ["mock", "gemini", "bfl", "modelark", "openai", "midjourney"]
     assert providers["mock"]["enabled"] is True
     assert providers["gemini"]["key_configured"] is False and providers["gemini"]["enabled"] is False
     assert providers["midjourney"]["selectable"] is False and providers["midjourney"]["models"] == []
     gemini_default = [m for m in providers["gemini"]["models"] if m["default"]]
     assert [m["id"] for m in gemini_default] == ["gemini-nano-banana-2.1"]
     assert providers["bfl"]["models"][0]["max_reference_images"] == 8
+    assert providers["modelark"]["key_configured"] is False and providers["modelark"]["enabled"] is False
+    assert providers["openai"]["key_configured"] is False and providers["openai"]["enabled"] is False
+    assert {m["id"] for m in providers["openai"]["models"]} == {"gpt-image-2.5-sunburst", "gpt-image-2.5-flare", "gpt-image-1"}
 
     models = client.get("/api/providers/bfl/models").json()
     assert {m["id"] for m in models} == {"flux-2-pro", "flux-2-max", "flux-3-image"}
+    ark = client.get("/api/providers/modelark/models").json()
+    assert {m["id"] for m in ark} == {"seedream-4-5-251128", "seedream-5-0-pro-260628",
+                                      "seedream-5-0-flash-260915", "seedream-4-0-250828"}
+    # No published per-image price ships with the adapter; ARK_PRICE_PER_IMAGE_USD supplies it.
+    assert all(m["price_per_image_usd"] is None for m in ark)
     assert client.get("/api/providers/nope/models").status_code == 404
 
 
@@ -83,3 +91,83 @@ def test_secrets_never_leak_to_responses_or_logs(client, project, enqueue, caplo
     everything = "\n".join(bodies) + "\n" + caplog.text
     assert GEMINI_KEY not in everything and BFL_KEY not in everything
     assert png not in caplog.text
+
+
+def test_fetching_models_persists_them_and_survives_a_restart(client):
+    from app.main import app, load_saved_catalogues
+    from app.providers.modelark import ModelArkProvider, MODELS
+
+    class FakeArk(ModelArkProvider):
+        calls = 0
+
+        @property
+        def key_configured(self):
+            return True
+
+        async def fetch_catalogue(self):
+            type(self).calls += 1
+            return [{"id": "seedream-4-5-251128", "display_name": "Seedream 4.5"},
+                    {"id": "doubao-pro-32k", "display_name": "Doubao"}]
+
+    registry = app.state.registry
+    original = registry._providers["modelark"]
+    registry._providers["modelark"] = FakeArk(original._client)
+    try:
+        before = {p["name"]: p for p in client.get("/api/providers").json()}["modelark"]
+        assert before["catalogue_source"] == "modelark" and before["catalogue_fetched_at"] is None
+        assert len(before["models"]) == len(MODELS)
+
+        saved = client.post("/api/providers/modelark/models/fetch")
+        assert saved.status_code == 200, saved.text
+        # The LLM is filtered out; only the account's image model remains selectable.
+        assert [m["id"] for m in saved.json()["models"]] == ["seedream-4-5-251128"]
+
+        listed = {p["name"]: p for p in client.get("/api/providers").json()}["modelark"]
+        assert [m["id"] for m in listed["models"]] == ["seedream-4-5-251128"]
+        assert listed["catalogue_fetched_at"] is not None
+
+        # A restart rebuilds the providers from scratch; the saved catalogue is reapplied.
+        fresh = FakeArk(original._client)
+        registry._providers["modelark"] = fresh
+        assert [m.id for m in fresh.models()] == [m.id for m in MODELS]
+        load_saved_catalogues(registry)
+        assert [m.id for m in fresh.models()] == ["seedream-4-5-251128"]
+        assert FakeArk.calls == 1, "startup must not call the provider's API"
+
+        reset = client.delete("/api/providers/modelark/models/fetch")
+        assert reset.status_code == 200
+        assert [m["id"] for m in reset.json()["models"]] == [m.id for m in MODELS]
+        after = {p["name"]: p for p in client.get("/api/providers").json()}["modelark"]
+        assert after["catalogue_fetched_at"] is None
+    finally:
+        registry._providers["modelark"] = original
+
+
+def test_fetch_reports_provider_errors_and_unsupported_providers(client):
+    from app.main import app
+    from app.providers.base import ProviderError
+    from app.providers.modelark import ModelArkProvider
+
+    class BrokenArk(ModelArkProvider):
+        @property
+        def key_configured(self):
+            return True
+
+        async def fetch_catalogue(self):
+            raise ProviderError("catalogue_unsupported", "không có endpoint /models")
+
+    registry = app.state.registry
+    original = registry._providers["modelark"]
+    registry._providers["modelark"] = BrokenArk(original._client)
+    try:
+        failed = client.post("/api/providers/modelark/models/fetch")
+        assert failed.status_code == 400
+        assert failed.json()["detail"]["code"] == "catalogue_unsupported"
+    finally:
+        registry._providers["modelark"] = original
+
+    # Providers with no catalogue API say so rather than pretending to fetch.
+    assert client.post("/api/providers/mock/models/fetch").json()["detail"]["code"] == "catalogue_unsupported"
+    # Ones that have a catalogue but no key report the missing key instead.
+    assert client.post("/api/providers/gemini/models/fetch").json()["detail"]["code"] == "provider_not_configured"
+    assert client.post("/api/providers/nope/models/fetch").status_code == 404

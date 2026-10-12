@@ -8,6 +8,7 @@ Pricing: https://bfl.ai/pricing?category=flux.2 and https://docs.bfl.ai/quick_st
 """
 
 import math
+from dataclasses import replace
 
 import httpx
 
@@ -29,6 +30,10 @@ _ALLOWED_API_HOSTS = ("bfl.ai",)
 _FLUX2_RATIOS = ("1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9")
 _FLUX3_RATIOS = ("21:9", "2:1", "16:9", "3:2", "7:5", "4:3", "5:4", "1:1", "4:5", "3:4", "5:7", "2:3", "9:16", "1:2", "9:21")
 _CREDIT_USD = 0.01
+# BFL publishes no model list, but its OpenAPI spec documents one POST path per model.
+_OPENAPI_PATH = "/openapi.json"
+# Only the FLUX.2 and FLUX 3 families use the request shapes build_payload produces.
+SUPPORTED_FAMILIES = ("flux-2-", "flux-3-")
 
 MODELS = (
     ModelInfo(
@@ -89,6 +94,7 @@ def flux2_dimensions(aspect_ratio: str, megapixels: float) -> tuple[int, int]:
 class BflProvider(ImageProvider):
     name = "bfl"
     display_name = "Black Forest Labs FLUX"
+    catalogue_source = "bfl"
     info_url = "https://docs.bfl.ai"
     data_notice = (
         "Ảnh tham chiếu và prompt được gửi tới Black Forest Labs. Theo chính sách bảo mật (2026-08-01), dữ liệu vào/ra "
@@ -102,13 +108,70 @@ class BflProvider(ImageProvider):
         self._key = api_key
         self._base = base_url
         self._encoding = image_encoding
+        self._live: list[ModelInfo] | None = None
 
     @property
     def key_configured(self) -> bool:
         return bool(self._key)
 
     def models(self) -> list[ModelInfo]:
-        return list(MODELS)
+        return self._live if self._live is not None else list(MODELS)
+
+    async def fetch_catalogue(self) -> list[dict[str, str]]:
+        """BFL has no models endpoint, so read the model paths out of its OpenAPI spec."""
+        url = f"{self._base}{_OPENAPI_PATH}"
+        try:
+            resp = await self._client.get(url, timeout=30)
+        except httpx.HTTPError as exc:
+            raise transport_error(exc, submitted_is_billable=False) from None
+        if resp.status_code != 200:
+            raise ProviderError("catalogue_unsupported",
+                                f"Không đọc được danh sách model của BFL ({resp.status_code})")
+        try:
+            spec = resp.json()
+        except ValueError:
+            raise ProviderError("bad_response", "BFL trả về openapi.json không hợp lệ") from None
+        items: list[dict[str, str]] = []
+        for path, methods in (spec.get("paths") or {}).items():
+            parts = path.strip("/").split("/")
+            # One POST path per model, directly under /v1 — /v1/flux-tools/* are editing utilities.
+            if len(parts) != 2 or parts[0] != "v1" or "post" not in {k.lower() for k in methods}:
+                continue
+            summary = str((methods.get("post") or {}).get("summary") or "").strip()
+            items.append({"id": parts[1], "display_name": summary})
+        return items
+
+    def apply_catalogue(self, items: list[dict[str, str]]) -> list[ModelInfo]:
+        self._live = self.map_catalogue(items) or None
+        return self.models()
+
+    def map_catalogue(self, items: list[dict[str, str]]) -> list[ModelInfo]:
+        """Keep the families this adapter can actually build requests for."""
+        static = {m.id: m for m in MODELS}
+        found: list[ModelInfo] = []
+        for item in items:
+            model_id = item["id"]
+            if not model_id.startswith(SUPPORTED_FAMILIES) or "video" in model_id:
+                continue
+            template = static.get(model_id)
+            display = item.get("display_name") or ""
+            if template is not None:
+                found.append(replace(template, display_name=display or template.display_name, default=False))
+            else:
+                is_flux3 = model_id.startswith("flux-3-")
+                found.append(ModelInfo(
+                    id=model_id, display_name=display or model_id, max_reference_images=8,
+                    aspect_ratios=_FLUX3_RATIOS if is_flux3 else _FLUX2_RATIOS,
+                    default_aspect_ratio="3:4",
+                    sizes=("1k", "2k") if is_flux3 else ("1MP", "2MP", "4MP"),
+                    default_size="1k" if is_flux3 else "1MP",
+                    status="preview",
+                    notes="Lấy từ openapi.json. Giá và giới hạn chưa rõ — chi phí thực lấy từ phản hồi API."))
+        if not found:
+            return []
+        preferred = next((i for i, m in enumerate(found) if m.id in static), 0)
+        found[preferred] = replace(found[preferred], default=True)
+        return found
 
     def _headers(self) -> dict[str, str]:
         return {"x-key": self._key, "accept": "application/json", "Content-Type": "application/json"}

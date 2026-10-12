@@ -21,6 +21,7 @@ from app.providers.base import (
     SubmissionState,
 )
 from app.providers.registry import ProviderRegistry
+from app.builtin import builtin_reference, is_builtin
 from app.storage.images import prepare_reference
 from app.storage.local import LocalStorage
 from app.storage.validation import InvalidImage, validate_image
@@ -203,6 +204,19 @@ class JobRunner:
             assets = {a.id: a for a in db.query(Asset).filter(Asset.id.in_(snap.reference_asset_ids))}
             refs = []
             for index, asset_id in enumerate(snap.reference_asset_ids, start=1):
+                labels = snap.meta.get("reference_labels") or []
+                if is_builtin(asset_id):
+                    entry = builtin_reference(asset_id)
+                    if entry is None:
+                        raise ProviderError("reference_missing", f"Thiếu ảnh tham chiếu mặc định {asset_id}")
+                    path, default_label = entry
+                    try:
+                        data, mime = prepare_reference(path.read_bytes())
+                    except OSError:
+                        raise ProviderError("reference_invalid", f"Không đọc được {asset_id}") from None
+                    label = labels[index - 1] if index <= len(labels) else default_label
+                    refs.append(ReferenceImage(data=data, mime_type=mime, label=label))
+                    continue
                 asset = assets.get(asset_id)
                 if asset is None:
                     raise ProviderError("reference_missing", "Một ảnh tham chiếu đã bị xoá trước khi job chạy")
@@ -214,7 +228,6 @@ class JobRunner:
                     data, mime = prepare_reference(raw)
                 except OSError:
                     raise ProviderError("reference_invalid", f"Không đọc được ảnh tham chiếu {asset.filename}") from None
-                labels = snap.meta.get("reference_labels") or []
                 if index <= len(labels):
                     label = labels[index - 1]
                 else:

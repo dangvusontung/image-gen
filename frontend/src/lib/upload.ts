@@ -3,7 +3,7 @@ import type { AssetKind } from '@/api/client'
 // Mirrors backend limits in app/routes/assets.py and app/config.py; the server stays authoritative.
 export const ACCEPTED_TYPES = ['image/jpeg', 'image/png', 'image/webp']
 export const MAX_FILE_BYTES = 20 * 1024 * 1024
-export const LIMITS: Record<AssetKind, number> = { reference: 8, side_profile: 4 }
+export const LIMITS: Record<AssetKind, number> = { reference: 8, side_profile: 4, template: 8 }
 export const RECOMMENDED_MIN_REFERENCES = 3
 
 export interface PrevalidationResult {

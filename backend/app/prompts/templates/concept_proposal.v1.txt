@@ -1,0 +1,40 @@
+Study the uploaded MASTER CHARACTER and propose 9 distinct lifestyle concepts that naturally suit this character's appearance, apparent age, personality cues, and established visual style.
+
+Invent the concepts freely. Do not follow a fixed list of moods, locations, outfits, poses, or camera angles. Choose a coherent setting, activity, outfit, expression, lighting, and composition for each concept.
+
+Make the nine concepts meaningfully different, rather than changing only clothing or background. Balance everyday believable moments with a few more imaginative, visually striking ideas.
+
+Keep the same recognizable character and natural body proportions. Choose tasteful, scene-appropriate outfits and manageable poses. Keep the face sufficiently visible for identity checking.
+
+WHAT A GOOD CONCEPT LOOKS LIKE: a candid moment the character is genuinely in the middle of, not a pose held for the camera. Each one needs a real hands-on activity with real props — carrying a wrapped bouquet through a flower market, shaping a bowl on a pottery wheel, wheeling a bicycle along a country lane, watering herbs in a rooftop planter, reading on a library window bench, holding a mug on a sunlit kitchen counter, crossing a boardwalk at sunset, pausing under an umbrella at a rainy tram stop. Give the environment depth: something in the foreground, the activity in the middle, and two or three readable details behind.
+
+SPREAD THE NINE ACROSS:
+- Place: domestic interiors, working studios, shops and markets, streets and transit, countryside, coast. Not more than two concepts in the same kind of place.
+- Time and weather: morning light, flat midday, late-afternoon warmth, golden hour, dusk, after dark, overcast, rain. Make each one specific; at least one night or rain scene and at least one golden-hour or sunset scene.
+- Energy: quiet and still, absorbed in work, walking with purpose, relaxed and social.
+- Shot size: about four full-body (head to feet visible), about three three-quarter-body (framed near the knees), about two closer medium shots where the hands and the activity carry the frame.
+- Camera: vary frontal, left and right three-quarter, profile, slightly low and slightly high, and one or two environmental shots where the setting dominates.
+
+OUTFITS: give each concept a different silhouette, chosen for the place and the weather — a knit with shorts, a shirt with a denim skirt, a tee with tailored shorts, a cardigan over a midi skirt, a tee under a work apron, a strappy summer dress, a blazer with a short skirt, denim overalls, a trench coat over a dress with boots. Favor shorts, skirts and dresses; use long trousers only where the activity or the cold genuinely calls for it, and never twice. Add the small things that make an outfit read as real: the bag, the shoes, a hat, rolled sleeves, an apron. Keep styling tasteful and age-appropriate, and keep clothing opaque.
+
+LIGHT: name a motivated source, not an adjective — window light across a counter, hazy sun over open hills, diffused daylight through tall library windows, low sun on water, warm street lamps on wet pavement. Say where it falls and what it does to the scene.
+
+AVOID: nine variations of standing and smiling; the same stance, head tilt or smile twice; repeating a location type, a silhouette or a time of day; props the character is not actually using; vague adjectives doing the work that a concrete detail should do.
+
+The reference grid defines the variety, staging and composition to aim for — not the rendering medium. The character keeps the medium and finish established by the MASTER.
+
+For each concept, provide:
+- Title
+- Setting and time
+- Activity and pose
+- Outfit and accessories
+- Expression and gaze
+- Camera angle and framing
+- Lighting and atmosphere
+
+Describe concrete visual details rather than generic adjectives.
+Generate concepts only, not images.
+
+OUTPUT FORMAT: Reply with nothing but a JSON array of exactly 9 objects, in concept order, each with these string keys and no others:
+"title", "setting", "activity", "pose", "outfit", "silhouette", "expression", "gaze", "camera", "framing", "lighting".
+Put the time of day in "setting", the garment shape in "silhouette", and the shot size in "framing". Write every value in English as one concise phrase. No markdown fences, no commentary.

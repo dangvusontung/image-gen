@@ -32,7 +32,7 @@ def test_hybrid_end_to_end_routing_estimates_and_fallback(client, project, refer
         "gemini", "gemini-nano-banana-2.1", "1K")
     master = client.get(f"{base}/workflow").json()["masters"][0]
     client.post(f"{base}/master/{master['id']}/approve")
-    # Hybrid mode must still require confirmation for paid batches.
+    # Hybrid mode must still require confirmation for paid runs.
     assert client.post(f"{base}/turnaround/generate", json={}).status_code == 400
     assert not client.get(f"{base}/workflow").json()["turnarounds"]
     response = client.post(f"{base}/turnaround/generate", json={"confirmed": True})
@@ -43,22 +43,24 @@ def test_hybrid_end_to_end_routing_estimates_and_fallback(client, project, refer
         assert job["status"] == "succeeded"
         assert job["provider"] == "gemini" and job["settings"]["size"] == "1K"
     client.post(f"{base}/turnaround/{turn['id']}/approve")
-    # A then B remain independent paid batches of five and four.
-    for batch, count in (("A", 5), ("B", 4)):
-        response = client.post(f"{base}/concepts/generate", json={"batch": batch, "confirmed": True})
+    # Proposals are rendered in whatever groups the user picks.
+    proposals = client.post(f"{base}/concept-proposals").json()
+    assert len(proposals) == 9
+    for chosen, count in ((proposals[:5], 5), (proposals[5:], 4)):
+        response = client.post(f"{base}/concepts/generate",
+                               json={"proposal_ids": [p["id"] for p in chosen], "confirmed": True})
         assert response.status_code == 201, response.text
         assert len(response.json()["job_ids"]) == count
         for job_id in response.json()["job_ids"]:
             job = wait_for_job(client, job_id)
             assert job["status"] == "succeeded"
-            assert job["provider"] == "gemini" and len(job["reference_asset_ids"]) == 7
-    concept = next(c for c in client.get(f"{base}/concepts").json() if "right profile" in c["camera"])
+            assert job["provider"] == "gemini" and len(job["reference_asset_ids"]) == 3
+    concept = client.get(f"{base}/concepts").json()[0]
     path = f"{base}/concepts/{concept['id']}"
     plan = client.get(f"{path}/enhance-plan").json()
     assert (plan["provider"], plan["model"], plan["size"]) == ("bfl", "flux-2-pro", "1MP")
-    assert len(plan["reference_asset_ids"]) == 3
-    assert "right90" in plan["reference_labels"][2]
-    assert plan["estimated_cost_usd"] == pytest.approx(0.075)
+    assert plan["reference_asset_ids"] == [concept["job"]["output_asset_ids"][0]]
+    assert plan["estimated_cost_usd"] == pytest.approx(0.045)
     assert not plan["warning"]
     response = client.post(f"{path}/enhance", json={})
     assert response.status_code == 201, response.text
@@ -72,11 +74,11 @@ def test_hybrid_end_to_end_routing_estimates_and_fallback(client, project, refer
     assert response.status_code == 201, response.text
     fallback = wait_for_job(client, response.json()["job_ids"][0])
     assert fallback["provider"] == "gemini" and fallback["settings"]["size"] == "2K"
-    assert len(fallback["reference_asset_ids"]) == 3
+    assert len(fallback["reference_asset_ids"]) == 1
     client.patch(base, json={"workflow_mode": "manual"})
     response = client.post(f"{path}/enhance", json={})
     manual = wait_for_job(client, response.json()["job_ids"][0])
-    assert manual["provider"] == "mock" and len(manual["reference_asset_ids"]) == 8
+    assert manual["provider"] == "mock" and len(manual["reference_asset_ids"]) == 1
 
 
 def test_hybrid_missing_key_and_invalid_size_are_atomic(client, project, reference_ids):

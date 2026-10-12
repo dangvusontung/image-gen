@@ -1,18 +1,27 @@
 import { generationProject } from '@/lib/generationPolicy'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ArrowLeftIcon } from 'lucide-react'
-import { useProject } from '@/api/client'
+import { request, useProject, type GenerationJob } from '@/api/client'
+import { useQuery } from '@tanstack/react-query'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import ProviderPicker from '@/components/ProviderPicker'
 import StepSources from '@/components/StepSources'
 import ReferencesStep from '@/components/ReferencesStep'
 import CharacterStep from '@/components/CharacterStep'
+import GenerationMonitor from '@/components/GenerationMonitor'
+import PinnedModelSwitcher from '@/components/PinnedModelSwitcher'
+import ProjectSwitcher from '@/components/ProjectSwitcher'
 import ConceptsStep from '@/components/ConceptsStep'
 import EnhanceStep from '@/components/EnhanceStep'
 import HistoryStep from '@/components/HistoryStep'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+
+/** Which tab a finished or running job belongs to. */
+const STEP_OF_PURPOSE: Record<string, string> = {
+  master: 'master', turnaround: 'turnaround', concept: 'concepts', enhance: 'enhance',
+}
 
 const STEPS = [
   { value: 'references', label: '1. Ảnh tham chiếu' },
@@ -28,8 +37,24 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
   const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null)
   const { data: project, isPending, error } = useProject(projectId)
 
+  // Open where the work left off, but never yank the tab out from under the user.
+  const chosen = useRef(false)
+  const latest = useQuery({
+    queryKey: ['latest-job', projectId],
+    queryFn: () => request<GenerationJob[]>(`/projects/${projectId}/jobs?limit=1`),
+  })
+  useEffect(() => {
+    if (chosen.current || !latest.data) return
+    chosen.current = true
+    const resume = STEP_OF_PURPOSE[latest.data[0]?.purpose ?? '']
+    if (resume) setStep(resume)
+  }, [latest.data])
+
+  const pickStep = (value: string) => { chosen.current = true; setStep(value) }
+
   return (
-    <main className="mx-auto max-w-7xl px-6 py-8">
+    // Bottom padding keeps the floating switcher and job monitor clear of page content.
+    <main className="mx-auto max-w-7xl px-6 pt-8 pb-28">
       <Button variant="ghost" onClick={onBack} className="mb-4">
         <ArrowLeftIcon /> Tất cả dự án
       </Button>
@@ -50,7 +75,7 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
             </div>
           </header>
 
-          <Tabs value={step} onValueChange={setStep}>
+          <Tabs value={step} onValueChange={pickStep}>
             <TabsList className="flex-wrap">
               {STEPS.map((s) => (
                 <TabsTrigger key={s.value} value={s.value}>
@@ -60,21 +85,24 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
             </TabsList>
             <TabsContent value="references" className="mt-4">
               <ReferencesStep project={project} />
-              <Button className="mt-5" disabled={!project.rights_confirmed || !project.assets.length} onClick={() => setStep('master')}>Tiếp tục → Nhân vật gốc</Button>
+              <Button className="mt-5" disabled={!project.rights_confirmed || !project.assets.length} onClick={() => pickStep('master')}>Tiếp tục → Nhân vật gốc</Button>
             </TabsContent>
             {(['master', 'turnaround'] as const).map(step => <TabsContent key={step} value={step} className="mt-4">
-              <StepSources project={project} step={step} onBack={() => setStep(step === 'master' ? 'references' : 'master')} />
-              <CharacterStep onApproved={() => setStep(step === 'master' ? 'turnaround' : 'concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} step={step} />
+              <StepSources project={project} step={step} onBack={() => pickStep(step === 'master' ? 'references' : 'master')} />
+              <CharacterStep onApproved={() => pickStep(step === 'master' ? 'turnaround' : 'concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} step={step} />
             </TabsContent>)}
             <TabsContent value="concepts" className="mt-4">
-              <StepSources project={project} step="concepts" onBack={() => setStep('turnaround')} />
-              <ConceptsStep key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} onEnhance={id => { setSelectedConceptId(id); setStep('enhance') }} />
+              <StepSources project={project} step="concepts" onBack={() => pickStep('turnaround')} />
+              <ConceptsStep key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} onEnhance={id => { setSelectedConceptId(id); pickStep('enhance') }} />
             </TabsContent>
             <TabsContent value="enhance" className="mt-4">
-              <EnhanceStep onBack={() => setStep('concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'enhance')} selectedConceptId={selectedConceptId} onSelect={setSelectedConceptId} />
+              <EnhanceStep onBack={() => pickStep('concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'enhance')} selectedConceptId={selectedConceptId} onSelect={setSelectedConceptId} />
             </TabsContent>
             <TabsContent value="history" className="mt-4"><HistoryStep projectId={projectId} /></TabsContent>
           </Tabs>
+          <GenerationMonitor projectId={projectId} />
+          <PinnedModelSwitcher project={project} />
+          <ProjectSwitcher projectId={projectId} onOpen={(id) => { window.location.hash = `/projects/${id}` }} />
         </>
       )}
     </main>

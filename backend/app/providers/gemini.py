@@ -8,6 +8,7 @@ model IDs, generationConfig.imageConfig {aspectRatio, imageSize}, 14 total refer
 
 import base64
 import binascii
+from dataclasses import replace
 
 import httpx
 
@@ -19,6 +20,7 @@ from app.providers.base import (
     ImageRequest,
     ModelInfo,
     ProviderError,
+    ReferenceImage,
     Submission,
     SubmissionState,
 )
@@ -27,6 +29,11 @@ from app.providers.http_utils import b64, error_text, retry_after_seconds, trans
 _FLASH_RATIOS = ("1:1", "1:4", "1:8", "2:3", "3:2", "3:4", "4:1", "4:3", "4:5", "5:4", "8:1", "9:16", "16:9", "21:9")
 _PRO_RATIOS = ("1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9")
 _REF_NOTE = "Tối đa 14 ảnh tham chiếu (≤4 nhân vật khác nhau). Ảnh có watermark SynthID."
+#: Text-only reasoning (concept proposals) goes to the flash tier, not an image model.
+TEXT_MODEL = "gemini-3.1-flash"
+# models.list returns every model on the key, including text, embedding and video.
+IMAGE_HINTS = ("image", "imagen", "banana")
+NOT_IMAGE_HINTS = ("embedding", "embed", "aqa", "tts", "veo", "video", "live", "learnlm")
 
 MODELS = (
     ModelInfo(
@@ -94,17 +101,21 @@ class GeminiProvider(ImageProvider):
         "lạm dụng). Người dùng API phải từ 18 tuổi."
     )
 
+    supports_text = True
+    catalogue_source = "gemini"
+
     def __init__(self, client: httpx.AsyncClient, api_key: str = GEMINI_API_KEY, base_url: str = GEMINI_API_BASE):
         self._client = client
         self._key = api_key
         self._base = base_url
+        self._live: list[ModelInfo] | None = None
 
     @property
     def key_configured(self) -> bool:
         return bool(self._key)
 
     def models(self) -> list[ModelInfo]:
-        return list(MODELS)
+        return self._live if self._live is not None else list(MODELS)
 
     def _headers(self) -> dict[str, str]:
         return {"x-goog-api-key": self._key, "Content-Type": "application/json"}
@@ -189,6 +200,97 @@ class GeminiProvider(ImageProvider):
         except ValueError:
             raise ProviderError("bad_response", "Gemini trả về phản hồi không phải JSON", ErrorKind.AMBIGUOUS) from None
         return self.parse_response(body)
+
+    async def fetch_catalogue(self) -> list[dict[str, str]]:
+        """Every model the key can reach, via models.list. Filtering happens on apply."""
+        if not self._key:
+            raise ProviderError("provider_not_configured", "Chưa cấu hình GEMINI_API_KEY")
+        items: list[dict[str, str]] = []
+        token: str | None = None
+        for _ in range(10):
+            params = {"pageSize": "1000", **({"pageToken": token} if token else {})}
+            try:
+                resp = await self._client.get(f"{self._base}/models", headers=self._headers(),
+                                              params=params, timeout=30)
+            except httpx.HTTPError as exc:
+                raise transport_error(exc, submitted_is_billable=False) from None
+            if resp.status_code != 200:
+                raise self._http_error(resp)
+            try:
+                body = resp.json()
+            except ValueError:
+                raise ProviderError("bad_response", "Gemini trả về danh sách model không phải JSON") from None
+            for entry in body.get("models") or []:
+                name = str(entry.get("name") or "").removeprefix("models/").strip()
+                if name:
+                    items.append({"id": name, "display_name": str(entry.get("displayName") or "").strip()})
+            token = body.get("nextPageToken")
+            if not token:
+                break
+        return items
+
+    def apply_catalogue(self, items: list[dict[str, str]]) -> list[ModelInfo]:
+        self._live = self.map_catalogue(items) or None
+        return self.models()
+
+    def map_catalogue(self, items: list[dict[str, str]]) -> list[ModelInfo]:
+        """Keep the image models, with our verified capability records where we have them."""
+        static = {m.id: m for m in MODELS}
+        found: list[ModelInfo] = []
+        for item in items:
+            model_id = item["id"]
+            lowered = model_id.lower()
+            if not any(hint in lowered for hint in IMAGE_HINTS) or any(bad in lowered for bad in NOT_IMAGE_HINTS):
+                continue
+            template = static.get(model_id)
+            display = item.get("display_name") or ""
+            if template is not None:
+                found.append(replace(template, display_name=display or template.display_name, default=False))
+            else:
+                found.append(ModelInfo(
+                    id=model_id, display_name=display or model_id, max_reference_images=14,
+                    aspect_ratios=_PRO_RATIOS, default_aspect_ratio="3:4", sizes=("1K", "2K"),
+                    default_size="2K", status="preview",
+                    notes="Lấy từ models.list. Khả năng chi tiết chưa rõ — dùng mặc định thận trọng."))
+        if not found:
+            return []
+        preferred = next((i for i, m in enumerate(found) if m.id in static), 0)
+        found[preferred] = replace(found[preferred], default=True)
+        return found
+
+    async def generate_text(self, prompt: str, references: list[ReferenceImage]) -> str:
+        if not self._key:
+            raise ProviderError("provider_not_configured", "Chưa cấu hình GEMINI_API_KEY")
+        parts: list[dict] = [{"text": prompt}]
+        for index, ref in enumerate(references, start=1):
+            parts.append({"text": f"Image {index}: {ref.label}"})
+            parts.append({"inlineData": {"mimeType": ref.mime_type, "data": b64(ref.data)}})
+        payload = {"contents": [{"role": "user", "parts": parts}],
+                   "generationConfig": {"responseModalities": ["TEXT"], "candidateCount": 1}}
+        try:
+            resp = await self._client.post(f"{self._base}/models/{TEXT_MODEL}:generateContent",
+                                           headers=self._headers(), json=payload,
+                                           timeout=httpx.Timeout(180, connect=10))
+        except httpx.HTTPError as exc:
+            raise transport_error(exc) from None
+        if resp.status_code != 200:
+            raise self._http_error(resp)
+        try:
+            body = resp.json()
+        except ValueError:
+            raise ProviderError("bad_response", "Gemini trả về phản hồi không phải JSON", ErrorKind.AMBIGUOUS) from None
+        feedback = _get(body, "promptFeedback", "prompt_feedback") or {}
+        if _get(feedback, "blockReason", "block_reason"):
+            raise ProviderError("content_moderated", "Gemini chặn prompt/ảnh vào")
+        texts = [
+            part["text"]
+            for cand in (body.get("candidates") or [])[:1]
+            for part in (cand.get("content") or {}).get("parts") or []
+            if part.get("text") and not part.get("thought")
+        ]
+        if not texts:
+            raise ProviderError("no_text", "Gemini không trả về văn bản")
+        return "\n".join(texts)
 
     async def test_connection(self) -> str:
         if not self._key:

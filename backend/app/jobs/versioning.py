@@ -12,8 +12,8 @@ def attach_retry(db, old, new):
         db.add(MasterVersion(project_id=old.project_id, job_id=new.id, round=number, variant=1))
     concept = db.query(Concept).filter_by(job_id=old.id).first()
     if concept:
-        number = (db.query(func.max(Concept.revision)).filter_by(project_id=old.project_id, batch=concept.batch, run=concept.run, slot=concept.slot).scalar() or 0) + 1
-        db.add(Concept(project_id=old.project_id, job_id=new.id, batch=concept.batch, run=concept.run, slot=concept.slot,
+        number = (db.query(func.max(Concept.revision)).filter_by(project_id=old.project_id, run=concept.run, slot=concept.slot).scalar() or 0) + 1
+        db.add(Concept(project_id=old.project_id, job_id=new.id, run=concept.run, slot=concept.slot,
                        revision=number, mood=concept.mood, camera=concept.camera, brief=concept.brief,
                        master_version_id=concept.master_version_id, turnaround_version_id=concept.turnaround_version_id))
     enhancement = db.query(EnhancementVersion).filter_by(job_id=old.id).first()

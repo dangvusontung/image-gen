@@ -1,5 +1,6 @@
+from app.builtin import DEFAULT_REFERENCE_ID
 from app.routes.assets import storage
-from tests.conftest import make_image
+from tests.conftest import make_image, wait_for_job
 
 
 def _upload(client, pid, files, kind="reference"):
@@ -111,3 +112,36 @@ def test_delete_project_removes_files(client, project):
     _upload(client, project, [("a.png", make_image(), "image/png")])
     client.delete(f"/api/projects/{project}")
     assert not (storage.base_path / project).exists()
+
+
+def test_photos_default_to_selected_and_can_be_deselected(client, project, reference_ids):
+    assets = client.get(f"/api/projects/{project}/assets").json()
+    assert all(a["selected"] for a in assets), "uploads start in use"
+
+    off = client.patch(f"/api/assets/{reference_ids[0]}", json={"selected": False})
+    assert off.status_code == 200 and off.json()["selected"] is False
+    # Selection is independent of kind, and a kind-only update leaves it alone.
+    kind = client.patch(f"/api/assets/{reference_ids[0]}", json={"kind": "side_profile"})
+    assert kind.status_code == 200 and kind.json() == {**off.json(), "kind": "side_profile"}
+    assert client.patch(f"/api/assets/{reference_ids[0]}", json={"selected": True}).json()["selected"] is True
+
+
+def test_only_selected_photos_reach_the_provider(client, project, reference_ids):
+    base = f"/api/projects/{project}"
+    assert client.patch(f"/api/assets/{reference_ids[0]}", json={"selected": False}).status_code == 200
+
+    estimate = client.get(f"{base}/generation-estimate?purpose=master").json()
+    # One photo dropped, plus the built-in art-direction reference every job carries.
+    assert estimate["reference_count"] == len(reference_ids) - 1 + 1
+
+    result = client.post(f"{base}/master/generate", json={})
+    assert result.status_code == 201, result.text
+    job = wait_for_job(client, result.json()["job_ids"][0])
+    assert job["reference_asset_ids"] == [*reference_ids[1:], DEFAULT_REFERENCE_ID]
+
+    # Deselecting everything is a clear refusal, not a request with no references.
+    for asset_id in reference_ids:
+        client.patch(f"/api/assets/{asset_id}", json={"selected": False})
+    refused = client.post(f"{base}/master/generate", json={})
+    assert refused.status_code == 400
+    assert refused.json()["detail"] == {"code": "references_required", "message": "Chọn ít nhất một ảnh tham chiếu ở bước 1"}

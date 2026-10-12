@@ -30,11 +30,24 @@ SPECS = {
     s.name: s
     for s in (
         TemplateSpec("master", 1, (), "Nhân vật gốc"),
+        TemplateSpec("master_flux", 1, (), "Nhân vật gốc (FLUX)"),
         TemplateSpec("turnaround", 1, ("angle",), "Turnaround"),
+        TemplateSpec("turnaround_flux", 1, ("angle",), "Turnaround (FLUX)"),
         TemplateSpec("concept", 1, ("mood", "camera", "prior_briefs", "brief"), "Concept"),
+        TemplateSpec("concept_proposal", 1, (), "Đề xuất concept"),
         TemplateSpec("enhance", 1, (), "Nâng cấp"),
     )
 }
+
+
+# A provider whose rendering responds to different phrasing can carry its own
+# variant of a template; the base template is used when no variant is registered.
+PROVIDER_VARIANTS = {"bfl": "flux"}
+
+
+def provider_template(name: str, provider: str) -> str:
+    variant = f"{name}_{PROVIDER_VARIANTS.get(provider, provider)}"
+    return variant if variant in SPECS else name
 
 
 class TemplateError(ValueError):

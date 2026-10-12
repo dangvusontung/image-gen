@@ -1,4 +1,6 @@
+from app.builtin import DEFAULT_REFERENCE_ID
 from app.database import SessionLocal
+from app.routes.workflow import TEMPLATE_LABEL
 from app.models import GenerationJob
 from tests.conftest import wait_for_job
 
@@ -15,7 +17,8 @@ def test_full_workflow_preserves_versions(client, project, reference_ids):
     base = f"/api/projects/{project}"
     masters = generate_master(client, project)
     assert len(masters) == 2
-    assert masters[0]["job"]["reference_asset_ids"] == reference_ids
+    # Every job also carries the app's built-in art-direction reference.
+    assert masters[0]["job"]["reference_asset_ids"] == [*reference_ids, DEFAULT_REFERENCE_ID]
     assert client.post(f"{base}/master/{masters[0]['id']}/approve").status_code == 200
     result = client.post(f"{base}/turnaround/generate", json={})
     assert result.status_code == 201, result.text
@@ -24,8 +27,8 @@ def test_full_workflow_preserves_versions(client, project, reference_ids):
     for job_id in turn["job_ids"]:
         job = wait_for_job(client, job_id)
         assert job["status"] == "succeeded"
-        assert job["reference_asset_ids"] == masters[0]["job"]["output_asset_ids"]
-        assert job["meta"]["reference_labels"] == ["MASTER identity authority"]
+        assert job["reference_asset_ids"] == [*masters[0]["job"]["output_asset_ids"], DEFAULT_REFERENCE_ID]
+        assert job["meta"]["reference_labels"] == ["MASTER identity authority", TEMPLATE_LABEL]
     assert client.post(f"{base}/turnaround/{turn['id']}/approve").status_code == 200
     regen = client.post(f"{base}/turnaround/{turn['id']}/views/left90/regenerate")
     assert regen.status_code == 201, regen.text
@@ -63,9 +66,9 @@ def test_prompt_snapshot_and_reset(client, project, reference_ids):
     assert client.put(path, json={"body": "Invalid {unknown}"}).status_code == 400
     assert client.put(path, json={"body": "Custom master identity prompt"}).status_code == 200
     masters = generate_master(client, project)
-    assert all(m["job"]["prompt"] == "Custom master identity prompt" for m in masters)
+    assert all(m["job"]["prompt"].startswith("Custom master identity prompt") for m in masters)
     assert client.put(path, json={"body": None}).json()["body"] == original
-    assert client.get(f"/api/projects/{project}/workflow").json()["masters"][0]["job"]["prompt"] == "Custom master identity prompt"
+    assert client.get(f"/api/projects/{project}/workflow").json()["masters"][0]["job"]["prompt"].startswith("Custom master identity prompt")
 
 
 def test_failed_angle_does_not_block_other_results(client, project, reference_ids):
@@ -83,3 +86,56 @@ def test_failed_angle_does_not_block_other_results(client, project, reference_id
     assert client.post(f"{base}/turnaround/{result['id']}/approve").status_code == 409
     state = client.get(f"{base}/workflow").json()
     assert sum(v["job"]["status"] == "succeeded" for v in state["turnarounds"][0]["views"]) == 5
+
+
+def test_every_registered_template_has_a_loadable_file():
+    # A typo in a spec's name or version would otherwise only surface at generation time.
+    from app.prompts import SPECS, default_body, validate_body
+    for name, spec in SPECS.items():
+        assert spec.path.exists(), f"missing template file for {name}"
+        validate_body(name, default_body(name))
+
+
+def test_provider_template_prefers_a_registered_variant():
+    from app.prompts import provider_template
+    assert provider_template("master", "bfl") == "master_flux"
+    assert provider_template("master", "gemini") == "master"
+    assert provider_template("master", "mock") == "master"
+    # No variant is registered for these, so the base template stands.
+    assert provider_template("concept", "bfl") == "concept"
+    assert provider_template("enhance", "bfl") == "enhance"
+
+
+def test_flux_projects_render_the_master_from_the_flux_prompt(client, project, reference_ids):
+    from dataclasses import replace
+
+    from app.main import app
+    from app.providers.mock import MockProvider
+
+    class FakeFlux(MockProvider):
+        name = "bfl"
+
+        def models(self):
+            return [replace(super().models()[0], id="flux-2-pro", display_name="FLUX.2 [pro]")]
+
+    base = f"/api/projects/{project}"
+    original = app.state.registry._providers.get("bfl")
+    app.state.registry._providers["bfl"] = FakeFlux(delay_seconds=0)
+    try:
+        assert client.patch(base, json={"provider": "bfl", "model": "flux-2-pro"}).status_code == 200
+        flux = client.post(f"{base}/master/generate", json={}).json()["job_ids"][0]
+        assert wait_for_job(client, flux)["status"] == "succeeded"
+        job = client.get(f"/api/jobs/{flux}").json()
+        assert job["meta"]["template_name"] == "master_flux"
+        assert "PRIMARY GOAL — FACIAL LIKENESS" in job["prompt"]
+
+        # Switching back to a provider without a variant restores the base prompt.
+        assert client.patch(base, json={"provider": "mock", "model": "mock-v1"}).status_code == 200
+        plain = client.post(f"{base}/master/generate", json={}).json()["job_ids"][0]
+        assert wait_for_job(client, plain)["status"] == "succeeded"
+        plain_job = client.get(f"/api/jobs/{plain}").json()
+        assert plain_job["meta"]["template_name"] == "master"
+        assert "IDENTITY — HIGHEST PRIORITY" in plain_job["prompt"]
+    finally:
+        if original is not None:
+            app.state.registry._providers["bfl"] = original

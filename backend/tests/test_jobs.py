@@ -15,7 +15,7 @@ from app.main import app
 from app.models import GenerationJob, JobStatus
 from app.providers.base import ImageRequest, Submission, SubmissionState
 from app.providers.mock import MockProvider
-from tests.conftest import wait_for_job
+from tests.conftest import make_image, wait_for_job
 
 
 def test_job_succeeds_and_stores_generated_asset(client, project, enqueue):
@@ -193,3 +193,20 @@ def test_deleting_project_while_job_runs_is_safe(client, project, enqueue):
 def test_mock_request_dataclass_roundtrip():
     sub = Submission(SubmissionState.PENDING, "id", "mock://id")
     assert ImageRequest(model="m", prompt="p").aspect_ratio == "1:1" and sub.images == []
+
+
+def test_global_history_lists_every_project_with_its_name(client, project, reference_ids):
+    other = client.post("/api/projects", json={"name": "Dự án khác"}).json()["id"]
+    client.patch(f"/api/projects/{other}", json={"rights_confirmed": True})
+    files = [("files", ("r.png", make_image(), "image/png"))]
+    client.post(f"/api/projects/{other}/assets", files=files)
+    for pid in (project, other):
+        assert client.post(f"/api/projects/{pid}/master/generate", json={}).status_code == 201
+
+    history = client.get("/api/jobs?limit=50").json()
+    assert {row["project_name"] for row in history} == {"Dự án thử", "Dự án khác"}
+    assert all(row["purpose"] == "master" and row["project_id"] for row in history)
+    # Newest first, so the popup opens on what just happened.
+    assert [r["created_at"] for r in history] == sorted((r["created_at"] for r in history), reverse=True)
+    assert client.get("/api/jobs?purpose=enhance").json() == []
+    assert len(client.get("/api/jobs?limit=1").json()) == 1

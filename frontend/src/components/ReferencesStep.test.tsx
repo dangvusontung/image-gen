@@ -10,6 +10,9 @@ const baseProject: ProjectDetail = {
   name: 'Test',
   description: null,
   rights_confirmed: false,
+  step_leads: {},
+  step_templates: {},
+  preset_id: null,
   provider: 'mock',
   model: 'mock-v1',
   created_at: '2026-10-08T00:00:00Z',
@@ -26,6 +29,7 @@ const asset = (id: string, position: number) => ({
   width: 10,
   height: 10,
   position,
+  selected: true,
   created_at: '2026-10-08T00:00:00Z',
 })
 
@@ -80,7 +84,8 @@ describe('ReferencesStep', () => {
     renderStep(baseProject)
 
     const inputs = document.querySelectorAll<HTMLInputElement>('input[type=file]')
-    expect(inputs).toHaveLength(2)
+    // Reference photos, side profiles, and the style template.
+    expect(inputs).toHaveLength(3)
     inputs.forEach((i) => expect(i).toBeDisabled())
     expect(screen.getByText(/xác nhận quyền sử dụng ảnh ở trên/)).toBeInTheDocument()
 

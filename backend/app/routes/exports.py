@@ -55,18 +55,16 @@ def download(asset_id: str, format: Literal["original", "png", "jpeg"] = "origin
                     headers={"Content-Disposition": f'attachment; filename="{asset.id}.{format}"', "X-Content-Type-Options": "nosniff"})
 
 
-def contact_sheet(db, project_id, batch=None, run=None):
+def contact_sheet(db, project_id, run=None):
     concepts = db.query(Concept).filter_by(project_id=project_id).order_by(Concept.run.desc(), Concept.revision.desc()).all()
-    batches = [batch] if batch else ["A", "B"]
+    target_run = run or max((c.run for c in concepts), default=0)
     selected = {}
-    for b in batches:
-        target_run = run or max((c.run for c in concepts if c.batch == b), default=0)
-        for c in concepts:
-            if c.batch == b and c.run == target_run and c.slot not in selected:
-                selected[c.slot] = c
+    for c in concepts:
+        if c.run == target_run and c.slot not in selected:
+            selected[c.slot] = c
     if not selected:
         fail("no_concepts", "Chưa có concept để xuất bảng ảnh", 400)
-    slots = list(range(1, 6)) if batch == "A" else list(range(6, 10)) if batch == "B" else list(range(1, 10))
+    slots = list(range(1, 10))
     width, height, pad, caption, cols = 384, 512, 16, 40, 3
     rows = (len(slots) + cols - 1) // cols
     sheet = Image.new("RGB", (cols * (width + pad) + pad, rows * (height + caption + pad) + pad), "#f1f0ed")
@@ -84,7 +82,7 @@ def contact_sheet(db, project_id, batch=None, run=None):
         else:
             draw.rectangle((x, y, x + width, y + height), fill="#dedbd5")
             draw.text((x + 16, y + 30), concept.job.status if concept else "empty", fill="#404040")
-        label = f"{concept.batch}{slot} - {concept.mood}" if concept else f"Slot {slot}"
+        label = f"{slot}. {concept.mood}" if concept else f"Slot {slot}"
         draw.text((x, y + height + 12), label, fill="#202020")
     data = io.BytesIO()
     sheet.save(data, format="PNG")
@@ -92,11 +90,10 @@ def contact_sheet(db, project_id, batch=None, run=None):
 
 
 @router.get("/api/projects/{project_id}/contact-sheet")
-def download_sheet(project_id: str, batch: Literal["A", "B"] | None = None,
-                   run: int | None = Query(default=None, ge=1), db: Session = Depends(get_db)):
+def download_sheet(project_id: str, run: int | None = Query(default=None, ge=1), db: Session = Depends(get_db)):
     get_project_or_404(db, project_id)
-    return Response(contact_sheet(db, project_id, batch, run), media_type="image/png",
-                    headers={"Content-Disposition": f'attachment; filename="concepts-{batch or "all"}.png"'})
+    return Response(contact_sheet(db, project_id, run), media_type="image/png",
+                    headers={"Content-Disposition": 'attachment; filename="concepts.png"'})
 
 
 @router.get("/api/projects/{project_id}/export")

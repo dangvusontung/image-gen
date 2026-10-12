@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, selectinload
 
+from app.builtin import is_builtin
 from app.database import get_db
-from app.models import GenerationJob, JobStatus, MasterVersion, Project
+from app.models import SOURCE_KINDS, Asset, GenerationJob, JobStatus, MasterVersion, Preset, Project
 from app.providers.base import CapabilityError
 from app.providers.registry import ProviderRegistry, get_registry
 from app.routes.assets import storage
-from app.schemas import AssetResponse, ProjectCreate, ProjectDetail, ProjectSummary, ProjectUpdate
+from app.schemas import (AssetResponse, ProjectCreate, ProjectDetail, ProjectSummary, ProjectUpdate,
+                         StepLeadUpdate, StepTemplateUpdate)
 
 router = APIRouter(prefix="/api/projects", tags=["projects"])
 
@@ -27,6 +29,9 @@ def _detail(project: Project) -> ProjectDetail:
         provider=project.provider,
         model=project.model,
         workflow_mode=project.workflow_mode,
+        step_leads=project.step_leads or {},
+        step_templates=project.step_templates or {},
+        preset_id=project.preset_id,
         created_at=project.created_at,
         updated_at=project.updated_at,
         assets=[AssetResponse.model_validate(a) for a in project.source_assets],
@@ -82,6 +87,40 @@ def get_project(project_id: str, db: Session = Depends(get_db)):
     return _detail(get_project_or_404(db, project_id))
 
 
+@router.put("/{project_id}/step-lead", response_model=ProjectDetail)
+def set_step_lead(project_id: str, data: StepLeadUpdate, db: Session = Depends(get_db)):
+    """Pin which reference leads one step, or clear it to go back to the automatic choice."""
+    project = get_project_or_404(db, project_id)
+    leads = dict(project.step_leads or {})
+    if data.lead:
+        leads[data.step] = data.lead
+    else:
+        leads.pop(data.step, None)
+    project.step_leads = leads
+    db.commit()
+    db.refresh(project)
+    return _detail(project)
+
+
+@router.put("/{project_id}/step-template", response_model=ProjectDetail)
+def set_step_template(project_id: str, data: StepTemplateUpdate, db: Session = Depends(get_db)):
+    """Pin the template image that steers one step's art direction, or clear it."""
+    project = get_project_or_404(db, project_id)
+    if data.asset_id and data.asset_id != "none" and not is_builtin(data.asset_id):
+        asset = db.get(Asset, data.asset_id)
+        if asset is None or asset.project_id != project_id or asset.kind not in SOURCE_KINDS:
+            raise HTTPException(404, detail={"code": "template_not_found", "message": "Không tìm thấy ảnh mẫu"})
+    templates = dict(project.step_templates or {})
+    if data.asset_id:
+        templates[data.step] = data.asset_id
+    else:
+        templates.pop(data.step, None)
+    project.step_templates = templates
+    db.commit()
+    db.refresh(project)
+    return _detail(project)
+
+
 @router.patch("/{project_id}", response_model=ProjectDetail)
 def update_project(
     project_id: str,
@@ -106,6 +145,9 @@ def update_project(
         except CapabilityError as exc:
             raise HTTPException(status_code=400, detail={"code": exc.code, "message": exc.message})
         changes["provider"], changes["model"] = provider_name, model_id
+
+    if changes.get("preset_id") and db.get(Preset, changes["preset_id"]) is None:
+        raise HTTPException(status_code=404, detail={"code": "preset_not_found", "message": "Không tìm thấy bộ cấu hình"})
 
     for field, value in changes.items():
         setattr(project, field, value.strip() if field == "name" else value)

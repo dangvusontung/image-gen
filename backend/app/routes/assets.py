@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 from sqlalchemy.orm import Session
 
+from app.builtin import builtin_reference, is_builtin
 from app.config import UPLOAD_MAX_SIZE
 from app.database import get_db
 from app.models import SOURCE_KINDS, Asset, Project
@@ -14,7 +15,9 @@ storage = LocalStorage()
 
 MAX_REFERENCE_PHOTOS = 8
 MAX_SIDE_PROFILE_PHOTOS = 4
-_LIMITS = {"reference": MAX_REFERENCE_PHOTOS, "side_profile": MAX_SIDE_PROFILE_PHOTOS}
+MAX_TEMPLATE_PHOTOS = 8
+_LIMITS = {"reference": MAX_REFERENCE_PHOTOS, "side_profile": MAX_SIDE_PROFILE_PHOTOS,
+           "template": MAX_TEMPLATE_PHOTOS}
 
 
 def _error(status: int, code: str, message: str) -> HTTPException:
@@ -120,11 +123,17 @@ def reorder_assets(project_id: str, data: AssetOrderUpdate, db: Session = Depend
 @router.patch("/api/assets/{asset_id}", response_model=AssetResponse)
 def update_asset(asset_id: str, data: AssetUpdate, db: Session = Depends(get_db)):
     asset = _source_asset(db, asset_id)
-    if data.kind != asset.kind:
+    changed = False
+    if data.kind is not None and data.kind != asset.kind:
         count = sum(1 for a in asset.project.source_assets if a.kind == data.kind)
         if count >= _LIMITS[data.kind]:
             raise _error(400, "too_many_photos", f"Tối đa {_LIMITS[data.kind]} ảnh loại này")
         asset.kind = data.kind
+        changed = True
+    if data.selected is not None and data.selected != asset.selected:
+        asset.selected = data.selected
+        changed = True
+    if changed:
         db.commit()
         db.refresh(asset)
     return asset
@@ -132,6 +141,19 @@ def update_asset(asset_id: str, data: AssetUpdate, db: Session = Depends(get_db)
 
 @router.get("/api/assets/{asset_id}/content")
 def download_asset(asset_id: str, db: Session = Depends(get_db)):
+    # References shipped with the app are files, not rows, but still have to display.
+    if is_builtin(asset_id):
+        entry = builtin_reference(asset_id)
+        if entry is None:
+            raise _error(404, "asset_not_found", "Không tìm thấy ảnh")
+        path, label = entry
+        return FileResponse(
+            path,
+            media_type=f"image/{path.suffix.lstrip('.').replace('jpg', 'jpeg')}",
+            filename=path.name,
+            content_disposition_type="inline",
+            headers={"X-Content-Type-Options": "nosniff", "Cache-Control": "private, max-age=3600"},
+        )
     asset = _asset(db, asset_id)
     try:
         path = storage.path_for(asset.file_path)

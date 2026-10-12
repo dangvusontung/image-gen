@@ -12,6 +12,10 @@ os.environ.update(
         # Explicit empty values win over anything in the developer's .env.
         "GEMINI_API_KEY": "",
         "BFL_API_KEY": "",
+        "ARK_API_KEY": "",
+        "ARK_ACCESS_KEY": "",
+        "ARK_SECRET_KEY": "",
+        "OPENAI_API_KEY": "",
         "MOCK_DELAY_SECONDS": "0.2",
         "JOB_POLL_INTERVAL_SECONDS": "0.05",
         "JOB_BACKOFF_BASE_SECONDS": "0.05",

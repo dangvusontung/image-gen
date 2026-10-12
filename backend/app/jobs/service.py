@@ -5,6 +5,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.config import JOB_MAX_ATTEMPTS, SPEND_LIMIT_USD_PER_DAY
+from app.builtin import builtin_reference, builtin_size, is_builtin
 from app.models import Asset, GenerationJob, JobStatus, Project
 from app.providers.base import CapabilityError
 from app.providers.registry import ProviderRegistry
@@ -45,7 +46,10 @@ def check_spend(db: Session, additional_usd: float, limit: float = SPEND_LIMIT_U
 
 def estimate_job_cost(db, provider, model, reference_asset_ids, size=None):
     refs = db.query(Asset).filter(Asset.id.in_(reference_asset_ids)).all()
-    return provider.estimate_request_cost_usd(model, size, [(a.width or 2048, a.height or 2048) for a in refs])
+    sizes = [(a.width or 2048, a.height or 2048) for a in refs]
+    # Built-in references are files, not rows, but still count toward input-priced providers.
+    sizes += [builtin_size(i) for i in reference_asset_ids if is_builtin(i)]
+    return provider.estimate_request_cost_usd(model, size, sizes)
 
 
 def enqueue_job(
@@ -85,7 +89,8 @@ def enqueue_job(
         a.id
         for a in db.query(Asset.id).filter(Asset.id.in_(reference_asset_ids), Asset.project_id == project.id)
     }
-    missing = [i for i in reference_asset_ids if i not in found]
+    missing = [i for i in reference_asset_ids
+               if i not in found and not (is_builtin(i) and builtin_reference(i))]
     if missing:
         raise JobRequestError("reference_not_found", f"Không tìm thấy {len(missing)} ảnh tham chiếu trong dự án")
 
@@ -131,11 +136,21 @@ def request_cancel(db: Session, job: GenerationJob) -> GenerationJob:
     return job
 
 
-def retry_job(db: Session, registry: ProviderRegistry, job: GenerationJob) -> GenerationJob:
-    """Manual retry creates a fresh job so history (and any billed attempt) stays visible."""
+def retry_job(db: Session, registry: ProviderRegistry, job: GenerationJob,
+              provider_name: str | None = None, model_id: str | None = None) -> GenerationJob:
+    """Manual retry creates a fresh job so history (and any billed attempt) stays visible.
+
+    A different provider or model can be chosen, so a refusal on one can be retried on another.
+    """
     if job.status not in (JobStatus.FAILED, JobStatus.CANCELLED):
         raise JobRequestError("job_not_retryable", "Chỉ thử lại được job đã lỗi hoặc đã huỷ", 409)
     project = db.get(Project, job.project_id)
+    # Switching provider without naming a model picks that provider's default.
+    if provider_name and provider_name != job.provider and not model_id:
+        try:
+            model_id = registry.get(provider_name).default_model().id
+        except CapabilityError as exc:
+            raise JobRequestError(exc.code, exc.message) from None
     new_job = enqueue_job(
         db,
         registry,
@@ -148,8 +163,8 @@ def retry_job(db: Session, registry: ProviderRegistry, job: GenerationJob) -> Ge
         seed=job.settings.get("seed"),
         options=job.settings.get("options"),
         meta={**job.meta, "retry_of": job.id},
-        provider_name=job.provider,
-        model_id=job.model,
+        provider_name=provider_name or job.provider,
+        model_id=model_id or (job.model if not provider_name or provider_name == job.provider else None),
     )
     from app.jobs.versioning import attach_retry
     attach_retry(db, job, new_job)

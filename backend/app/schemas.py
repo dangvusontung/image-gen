@@ -5,7 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 WorkflowMode = Literal["manual", "hybrid", "hybrid_gemini"]
 
-AssetKind = Literal["reference", "side_profile"]
+AssetKind = Literal["reference", "side_profile", "template"]
 
 
 class AssetResponse(BaseModel):
@@ -20,6 +20,7 @@ class AssetResponse(BaseModel):
     width: Optional[int]
     height: Optional[int]
     position: int
+    selected: bool = True
     created_at: datetime
 
 
@@ -35,6 +36,7 @@ class ProjectUpdate(BaseModel):
     provider: Optional[str] = None
     model: Optional[str] = None
     workflow_mode: WorkflowMode = "manual"
+    preset_id: Optional[str] = None
 
 
 class ProjectSummary(BaseModel):
@@ -63,9 +65,27 @@ class ProjectDetail(BaseModel):
     provider: str
     model: str
     workflow_mode: WorkflowMode = "manual"
+    step_leads: dict[str, str] = {}
+    step_templates: dict[str, str] = {}
+    preset_id: Optional[str] = None
     created_at: datetime
     updated_at: datetime
     assets: list[AssetResponse]
+
+
+WorkflowStep = Literal["master", "turnaround", "concept", "enhance"]
+
+
+class StepLeadUpdate(BaseModel):
+    step: WorkflowStep
+    #: None clears the override and returns the step to its automatic choice.
+    lead: Optional[str] = None
+
+
+class StepTemplateUpdate(BaseModel):
+    step: WorkflowStep
+    #: None clears the template, so the step uses prompt text alone for art direction.
+    asset_id: Optional[str] = None
 
 
 class AssetOrderUpdate(BaseModel):
@@ -73,7 +93,8 @@ class AssetOrderUpdate(BaseModel):
 
 
 class AssetUpdate(BaseModel):
-    kind: AssetKind
+    kind: Optional[AssetKind] = None
+    selected: Optional[bool] = None
 
 
 class ModelOut(BaseModel):
@@ -92,6 +113,26 @@ class ModelOut(BaseModel):
     price_table: dict[str, float] = {}
 
 
+class PresetStep(BaseModel):
+    provider: str
+    model: str
+    size: Optional[str] = None
+
+
+class PresetIn(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    #: Only the steps you want to pin; anything missing falls back to the project's own settings.
+    steps: dict[WorkflowStep, PresetStep] = {}
+
+
+class PresetOut(BaseModel):
+    id: str
+    name: str
+    steps: dict[str, PresetStep]
+    created_at: datetime
+    updated_at: datetime
+
+
 class ProviderOut(BaseModel):
     name: str
     display_name: str
@@ -101,6 +142,10 @@ class ProviderOut(BaseModel):
     info_url: Optional[str]
     data_notice: Optional[str]
     models: list[ModelOut]
+    #: Set when the provider can list the account's own models; names where the list came from.
+    catalogue_source: Optional[str] = None
+    catalogue_fetched_at: Optional[datetime] = None
+    supports_text: bool = False
 
 
 class ConnectionTestResult(BaseModel):
@@ -139,14 +184,29 @@ class JobOut(BaseModel):
     finished_at: Optional[datetime]
 
 
+class JobHistoryOut(JobOut):
+    """A job plus the project it belongs to, for the cross-project history view."""
+
+    project_name: str
+
+
 class HealthResponse(BaseModel):
     status: str
     message: str
 
 
+class ConceptProposalOut(BaseModel):
+    id: str
+    run: int
+    slot: int
+    title: str
+    brief: dict[str, str]
+    master_version_id: str
+    created_at: datetime
+
+
 class ConceptOut(BaseModel):
     id: str
-    batch: Literal["A", "B"]
     run: int
     slot: int
     revision: int

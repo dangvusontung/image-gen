@@ -1,3 +1,4 @@
+import logging
 import os
 from contextlib import asynccontextmanager
 
@@ -9,11 +10,24 @@ from app import config
 from app.database import SessionLocal
 from app.jobs.runner import JobRunner
 from app.logging_setup import configure_logging
+from app.models import ProviderCatalog
+from app.providers.base import ProviderError
 from app.providers.registry import build_registry
-from app.routes import assets, jobs, projects, providers, workflow, concepts, exports
+from app.routes import assets, jobs, presets, projects, providers, workflow, concepts, exports
 from app.schemas import HealthResponse
 
 configure_logging()
+
+
+def load_saved_catalogues(registry) -> None:
+    """Restore model lists fetched from provider APIs, so a restart keeps what was saved."""
+    log = logging.getLogger("app.providers")
+    with SessionLocal() as db:
+        for row in db.query(ProviderCatalog):
+            try:
+                registry.get(row.provider).apply_catalogue(row.items or [])
+            except ProviderError as exc:
+                log.warning("skipped saved catalogue for %s: %s", row.provider, exc.code)
 
 
 @asynccontextmanager
@@ -21,6 +35,7 @@ async def lifespan(app: FastAPI):
     async with httpx.AsyncClient(follow_redirects=False) as client:
         app.state.http = client
         app.state.registry = build_registry(client)
+        load_saved_catalogues(app.state.registry)
         app.state.runner = None
         if config.JOBS_AUTOSTART:
             runner = JobRunner(
@@ -59,6 +74,7 @@ app.add_middleware(
 app.include_router(projects.router)
 app.include_router(assets.router)
 app.include_router(providers.router)
+app.include_router(presets.router)
 app.include_router(jobs.router)
 app.include_router(workflow.router)
 app.include_router(concepts.router)

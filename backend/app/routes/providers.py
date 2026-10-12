@@ -1,3 +1,5 @@
+from datetime import datetime, timezone
+
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -5,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.config import SPEND_LIMIT_USD_PER_DAY
 from app.database import get_db
 from app.jobs.service import spent_last_24h
+from app.models import ProviderCatalog
 from app.providers.base import CapabilityError, ImageProvider, ModelInfo, ProviderError
 from app.providers.registry import ProviderRegistry, get_registry
 from app.schemas import ConnectionTestResult, ModelOut, ProviderOut
@@ -30,7 +33,7 @@ def _model_out(m: ModelInfo) -> ModelOut:
     )
 
 
-def _provider_out(p: ImageProvider) -> ProviderOut:
+def _provider_out(p: ImageProvider, saved: "ProviderCatalog | None" = None) -> ProviderOut:
     return ProviderOut(
         name=p.name,
         display_name=p.display_name,
@@ -40,7 +43,17 @@ def _provider_out(p: ImageProvider) -> ProviderOut:
         info_url=p.info_url,
         data_notice=p.data_notice,
         models=[_model_out(m) for m in p.models()],
+        supports_text=p.supports_text,
+        catalogue_source=p.catalogue_source,
+        catalogue_fetched_at=saved.fetched_at if saved else None,
     )
+
+
+class CatalogueOut(BaseModel):
+    provider: str
+    source: str | None
+    fetched_at: datetime | None
+    models: list[ModelOut]
 
 
 def _provider(registry: ProviderRegistry, name: str) -> ImageProvider:
@@ -51,13 +64,46 @@ def _provider(registry: ProviderRegistry, name: str) -> ImageProvider:
 
 
 @router.get("/providers", response_model=list[ProviderOut])
-def list_providers(registry: ProviderRegistry = Depends(get_registry)):
-    return [_provider_out(p) for p in registry.all()]
+def list_providers(registry: ProviderRegistry = Depends(get_registry), db: Session = Depends(get_db)):
+    saved = {c.provider: c for c in db.query(ProviderCatalog)}
+    return [_provider_out(p, saved.get(p.name)) for p in registry.all()]
 
 
 @router.get("/providers/{provider}/models", response_model=list[ModelOut])
 def list_models(provider: str, registry: ProviderRegistry = Depends(get_registry)):
     return [_model_out(m) for m in _provider(registry, provider).models()]
+
+
+@router.post("/providers/{provider}/models/fetch", response_model=CatalogueOut)
+async def fetch_models(provider: str, registry: ProviderRegistry = Depends(get_registry),
+                       db: Session = Depends(get_db)):
+    """Ask the provider which models this account has, then persist the answer."""
+    p = _provider(registry, provider)
+    try:
+        items = await p.fetch_catalogue()
+        models = p.apply_catalogue(items)
+    except ProviderError as exc:
+        raise HTTPException(400, detail={"code": exc.code, "message": exc.message})
+    row = db.get(ProviderCatalog, p.name) or ProviderCatalog(provider=p.name)
+    row.items, row.source, row.fetched_at = items, p.catalogue_source or "provider", datetime.now(timezone.utc)
+    db.merge(row)
+    db.commit()
+    return CatalogueOut(provider=p.name, source=row.source, fetched_at=row.fetched_at,
+                        models=[_model_out(m) for m in models])
+
+
+@router.delete("/providers/{provider}/models/fetch", response_model=CatalogueOut)
+def reset_models(provider: str, registry: ProviderRegistry = Depends(get_registry),
+                 db: Session = Depends(get_db)):
+    """Drop the saved catalogue and go back to the adapter's built-in list."""
+    p = _provider(registry, provider)
+    row = db.get(ProviderCatalog, p.name)
+    if row is not None:
+        db.delete(row)
+        db.commit()
+    models = p.apply_catalogue([]) if p.catalogue_source else p.models()
+    return CatalogueOut(provider=p.name, source=None, fetched_at=None,
+                        models=[_model_out(m) for m in models])
 
 
 @router.post("/providers/{provider}/test", response_model=ConnectionTestResult)

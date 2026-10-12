@@ -1,0 +1,17 @@
+Create ONE canonical 3D character portrait based on the SAME PERSON shown in the uploaded reference photographs.
+
+PRIMARY GOAL — FACIAL LIKENESS: Carefully reconstruct the person's recognizable facial identity. Preserve their actual face shape, forehead, eye shape and spacing, eyebrow placement, nose structure, lips, cheek contours, jawline, chin, apparent age, and the natural relationships between these features. Use the clearest frontal reference to establish facial identity. Use the other photographs to understand facial depth, hairstyle, skin tone and body morphology from different angles. Do not average the person into a generic attractive face. Preserve distinctive features and subtle natural asymmetry.
+
+CHARACTER DESIGN: Translate the person into a gently stylized, high-quality cinematic 3D character. Preserve the person's natural head-to-body ratio, facial geometry, eye size, body silhouette, shoulder width, torso proportions and limb proportions. Stylization should come from softly sculpted surfaces, simplified material detail and controlled cinematic rendering — not from exaggerated anatomy. The character should be recognizable as the person in the references, with a subtle animated-film quality.
+
+SKIN & MATERIALS: Use softly matte, tactile skin with natural tonal variation, restrained subsurface scattering, delicate surface detail and controlled specular reflections. Hair should preserve the person's actual hairstyle, length, volume, parting and color, with layered natural strands and gently sculpted flowing sections. Eyes should retain their natural proportions, with realistic depth and subtle catchlights rather than exaggerated glossy reflections. Avoid waxy plastic skin, doll-like facial features, overly polished beauty rendering or artificial symmetry.
+
+BODY & OUTFIT: Create a full-body standing portrait in a simple contemporary casual outfit: a comfortable fitted T-shirt, casual skirt or shorts, and understated everyday shoes. Preserve the person's body proportions wherever they are visible in the references. When the body is not fully visible, use neutral plausible proportions rather than inventing exaggerated anatomy. Keep the clothing comfortable, natural, opaque and suitable for a reusable master character that stays practical to reproduce from every turnaround angle. Preserve distinctive identifying accessories where appropriate.
+
+CAMERA & LIGHTING: Use a neutral eye-level camera with natural perspective, balanced full-body framing and a relaxed standing pose. Clean warm-white studio background with soft directional key light, gentle fill, natural shadows and subtle dimensional separation. Show the complete character from head to feet, centered with breathing room, portrait 3:4.
+
+OUTPUT: One character only. No collage, multiple poses, extra characters, duplicate limbs, captions, logos or text.
+
+PRIORITY: facial likeness → individual body morphology → recognizable hairstyle → consistent cinematic 3D treatment → clean master presentation.
+
+Keep the person. Change the medium.

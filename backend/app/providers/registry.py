@@ -5,6 +5,8 @@ from app.providers.base import CapabilityError, ImageProvider, ImageRequest, Mod
 from app.providers.bfl import BflProvider
 from app.providers.gemini import GeminiProvider
 from app.providers.mock import MockProvider
+from app.providers.modelark import ModelArkProvider
+from app.providers.openai_images import OpenAIImageProvider
 
 
 class MidjourneyInfo(ImageProvider):
@@ -46,7 +48,8 @@ class ProviderRegistry:
 
 
 def build_registry(client: httpx.AsyncClient) -> ProviderRegistry:
-    return ProviderRegistry([MockProvider(), GeminiProvider(client), BflProvider(client), MidjourneyInfo()])
+    return ProviderRegistry([MockProvider(), GeminiProvider(client), BflProvider(client),
+                         ModelArkProvider(client), OpenAIImageProvider(client), MidjourneyInfo()])
 
 
 def get_registry(request: Request) -> ProviderRegistry:

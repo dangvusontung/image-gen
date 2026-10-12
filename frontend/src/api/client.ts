@@ -2,7 +2,8 @@ import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/re
 
 const API_BASE = '/api'
 
-export type AssetKind = 'reference' | 'side_profile'
+
+export type AssetKind = 'reference' | 'side_profile' | 'template'
 
 export interface Asset {
   id: string
@@ -13,6 +14,8 @@ export interface Asset {
   width: number | null
   height: number | null
   position: number
+  /** Deselected photos stay in the project but are never sent to a provider. */
+  selected: boolean
   created_at: string
 }
 
@@ -33,6 +36,16 @@ export interface ProjectSummary {
   recent_activity: string | null
 }
 
+export type WorkflowStep = 'master' | 'turnaround' | 'concept' | 'enhance'
+
+export interface PresetStep { provider: string; model: string; size: string | null }
+
+export interface Preset {
+  id: string; name: string
+  steps: Partial<Record<WorkflowStep, PresetStep>>
+  created_at: string; updated_at: string
+}
+
 export interface ProjectDetail {
   workflow_mode?: "manual" | "hybrid" | "hybrid_gemini"
   id: string
@@ -43,6 +56,12 @@ export interface ProjectDetail {
   model: string
   created_at: string
   updated_at: string
+  /** Which reference leads each step; missing keys mean the automatic choice. */
+  step_leads: Partial<Record<WorkflowStep, string>>
+  /** Template image steering each step's art direction. */
+  step_templates: Partial<Record<WorkflowStep, string>>
+  /** When set, this preset decides provider/model/size per step. */
+  preset_id: string | null
   assets: Asset[]
 }
 
@@ -70,6 +89,18 @@ export interface ProviderInfo {
   enabled: boolean
   info_url: string | null
   data_notice: string | null
+  models: ModelInfo[]
+  /** Set when the provider can list the account's own models. */
+  catalogue_source: string | null
+  catalogue_fetched_at: string | null
+  /** True when the provider can answer with text, not only images. */
+  supports_text: boolean
+}
+
+export interface CatalogueResult {
+  provider: string
+  source: string | null
+  fetched_at: string | null
   models: ModelInfo[]
 }
 
@@ -126,16 +157,22 @@ export const assetUrl = (assetId: string) => `${API_BASE}/assets/${assetId}/cont
 export const downloadUrl = (assetId: string, format = 'original') => `${API_BASE}/assets/${assetId}/download?format=${format}`
 
 export interface GenerationJob {
-  id: string; purpose: string; provider: string; model: string; status: string
-  output_asset_ids: string[]; reference_asset_ids: string[]; error_message: string | null
+  id: string; project_id: string; purpose: string; provider: string; model: string; status: string
+  output_asset_ids: string[]; reference_asset_ids: string[]
+  error_message: string | null; error_code: string | null
   prompt: string; meta: Record<string, unknown>; settings: Record<string, unknown>
   estimated_cost_usd: number | null; actual_cost_usd: number | null
   attempts: number; max_attempts: number; cancel_requested: boolean
   created_at: string; updated_at: string
 }
 
+export interface ConceptProposal {
+  id: string; run: number; slot: number; title: string
+  brief: Record<string, string>; master_version_id: string; created_at: string
+}
+
 export interface Concept {
-  id: string; batch: 'A' | 'B'; run: number; slot: number; revision: number
+  id: string; run: number; slot: number; revision: number
   mood: string; camera: string; brief: Record<string, string>; stale: boolean
   master_version_id: string; turnaround_version_id: string | null; job: GenerationJob
 }
@@ -157,7 +194,7 @@ export const api = {
     request<ProjectDetail>('/projects', json('POST', data)),
   updateProject: (
     id: string,
-    data: Partial<Pick<ProjectDetail, 'name' | 'description' | 'rights_confirmed' | 'provider' | 'model' | 'workflow_mode'>>,
+    data: Partial<Pick<ProjectDetail, 'name' | 'description' | 'rights_confirmed' | 'provider' | 'model' | 'workflow_mode' | 'preset_id'>>,
   ) =>
     request<ProjectDetail>(`/projects/${id}`, json('PATCH', data)),
   deleteProject: (id: string) => request<void>(`/projects/${id}`, { method: 'DELETE' }),
@@ -169,10 +206,24 @@ export const api = {
   },
   reorderAssets: (projectId: string, assetIds: string[]) =>
     request<Asset[]>(`/projects/${projectId}/assets/order`, json('PUT', { asset_ids: assetIds })),
-  updateAsset: (assetId: string, kind: AssetKind) => request<Asset>(`/assets/${assetId}`, json('PATCH', { kind })),
+  setStepLead: (projectId: string, step: WorkflowStep, lead: string | null) =>
+    request<ProjectDetail>(`/projects/${projectId}/step-lead`, json('PUT', { step, lead })),
+  copyPrompts: (projectId: string, sourceProjectId: string) =>
+    request<unknown>(`/projects/${projectId}/prompts/copy`, json('POST', { source_project_id: sourceProjectId })),
+  setStepTemplate: (projectId: string, step: WorkflowStep, assetId: string | null) =>
+    request<ProjectDetail>(`/projects/${projectId}/step-template`, json('PUT', { step, asset_id: assetId })),
+  updateAsset: (assetId: string, patch: { kind?: AssetKind; selected?: boolean }) =>
+    request<Asset>(`/assets/${assetId}`, json('PATCH', patch)),
   deleteAsset: (assetId: string) => request<void>(`/assets/${assetId}`, { method: 'DELETE' }),
+  listPresets: () => request<Preset[]>('/presets'),
+  savePreset: (preset: { id?: string; name: string; steps: Partial<Record<WorkflowStep, PresetStep>> }) =>
+    request<Preset>(preset.id ? `/presets/${preset.id}` : '/presets',
+      json(preset.id ? 'PUT' : 'POST', { name: preset.name, steps: preset.steps })),
+  deletePreset: (id: string) => request<void>(`/presets/${id}`, { method: 'DELETE' }),
   listProviders: () => request<ProviderInfo[]>('/providers'),
   testProvider: (name: string) => request<ConnectionTestResult>(`/providers/${name}/test`, { method: 'POST' }),
+  fetchProviderModels: (name: string) => request<CatalogueResult>(`/providers/${name}/models/fetch`, { method: 'POST' }),
+  resetProviderModels: (name: string) => request<CatalogueResult>(`/providers/${name}/models/fetch`, { method: 'DELETE' }),
   getSpend: () => request<SpendInfo>('/spend'),
 }
 
@@ -189,12 +240,36 @@ export const useProjects = () => useQuery({ queryKey: keys.projects, queryFn: ap
 
 export const useProject = (id: string) => useQuery({ queryKey: keys.project(id), queryFn: () => api.getProject(id) })
 
+export const usePresets = () => useQuery({ queryKey: ['presets'], queryFn: api.listPresets })
+
+function usePresetMutation<T>(fn: (input: T) => Promise<unknown>) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: fn,
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['presets'] })
+      qc.invalidateQueries({ queryKey: keys.projects })
+    },
+  })
+}
+
+export const useSavePreset = () => usePresetMutation(api.savePreset)
+export const useDeletePreset = () => usePresetMutation(api.deletePreset)
+
 export const useProviders = () =>
   useQuery({ queryKey: ['providers'], queryFn: api.listProviders, staleTime: 5 * 60_000 })
 
 export const useSpend = () => useQuery({ queryKey: ['spend'], queryFn: api.getSpend })
 
 export const useTestProvider = () => useMutation({ mutationFn: api.testProvider })
+
+function useCatalogueMutation(fn: (name: string) => Promise<CatalogueResult>) {
+  const qc = useQueryClient()
+  return useMutation({ mutationFn: fn, onSuccess: () => qc.invalidateQueries({ queryKey: ['providers'] }) })
+}
+
+export const useFetchProviderModels = () => useCatalogueMutation(api.fetchProviderModels)
+export const useResetProviderModels = () => useCatalogueMutation(api.resetProviderModels)
 
 export function useCreateProject() {
   const qc = useQueryClient()
@@ -243,7 +318,37 @@ export const useDeleteAsset = () => useInvalidatingMutation(api.deleteAsset)
 
 export const useUpdateAssetKind = () =>
   useInvalidatingMutation(({ assetId, kind }: { assetId: string; kind: AssetKind }) =>
-    api.updateAsset(assetId, kind),
+    api.updateAsset(assetId, { kind }),
+  )
+
+export function useSetStepLead(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ step, lead }: { step: WorkflowStep; lead: string | null }) => api.setStepLead(projectId, step, lead),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.project(projectId) }),
+  })
+}
+
+export function useCopyPrompts(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (sourceProjectId: string) => api.copyPrompts(projectId, sourceProjectId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['prompt', projectId] }),
+  })
+}
+
+export function useSetStepTemplate(projectId: string) {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ step, assetId }: { step: WorkflowStep; assetId: string | null }) =>
+      api.setStepTemplate(projectId, step, assetId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: keys.project(projectId) }),
+  })
+}
+
+export const useSelectAsset = () =>
+  useInvalidatingMutation(({ assetId, selected }: { assetId: string; selected: boolean }) =>
+    api.updateAsset(assetId, { selected }),
   )
 
 export function useReorderAssets(projectId: string) {

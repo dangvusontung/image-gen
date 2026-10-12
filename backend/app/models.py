@@ -1,12 +1,12 @@
 import uuid
 from datetime import datetime, timezone
 
-from sqlalchemy import JSON, Boolean, Column, Float, ForeignKey, Index, Integer, String, Text, and_
+from sqlalchemy import JSON, Boolean, Column, Float, ForeignKey, Index, Integer, String, Text, and_, true
 from sqlalchemy.orm import foreign, relationship
 
 from app.database import Base, UTCDateTime
 
-SOURCE_KINDS = ("reference", "side_profile")
+SOURCE_KINDS = ("reference", "side_profile", "template")
 
 
 def _now() -> datetime:
@@ -27,6 +27,13 @@ class Project(Base):
     provider = Column(String(32), nullable=False, default="mock")
     model = Column(String(128), nullable=False, default="mock-v1")
     workflow_mode = Column(String(32), nullable=False, default="manual", server_default="manual")
+    # Which reference leads each step: {"master": asset_id, "turnaround": asset_id,
+    # "concept": angle, "enhance": angle}. Missing keys keep the automatic choice.
+    step_leads = Column(JSON, nullable=False, default=dict, server_default="{}")
+    # Which uploaded template image steers each step's art direction: {step: asset_id}.
+    step_templates = Column(JSON, nullable=False, default=dict, server_default="{}")
+    #: When set, the preset decides provider/model/size per step instead of workflow_mode.
+    preset_id = Column(String(36), ForeignKey("presets.id", ondelete="SET NULL"), nullable=True)
     # Plain pointers (no FK) to avoid a projects<->versions FK cycle; maintained by the approval routes.
     approved_master_id = Column(String(36), nullable=True)
     approved_turnaround_id = Column(String(36), nullable=True)
@@ -34,6 +41,7 @@ class Project(Base):
     updated_at = Column(UTCDateTime(), default=_now, onupdate=_now, nullable=False)
 
     assets = relationship("Asset", back_populates="project", cascade="all, delete-orphan", order_by="Asset.position")
+    preset = relationship("Preset", lazy="joined")
     source_assets = relationship(
         "Asset",
         primaryjoin=lambda: and_(Project.id == foreign(Asset.project_id), Asset.kind.in_(SOURCE_KINDS)),
@@ -58,6 +66,8 @@ class Asset(Base):
     width = Column(Integer, nullable=True)
     height = Column(Integer, nullable=True)
     position = Column(Integer, nullable=False, default=0)
+    # Deselected source photos stay in the project but are never sent to a provider.
+    selected = Column(Boolean, nullable=False, default=True, server_default=true())
     created_at = Column(UTCDateTime(), default=_now, nullable=False)
 
     project = relationship("Project", back_populates="assets")
@@ -192,7 +202,6 @@ class Concept(Base):
 
     id = Column(String(36), primary_key=True, default=_uuid)
     project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
-    batch = Column(String(1), nullable=False)
     run = Column(Integer, nullable=False)
     slot = Column(Integer, nullable=False)
     revision = Column(Integer, nullable=False, default=1)
@@ -205,6 +214,34 @@ class Concept(Base):
     created_at = Column(UTCDateTime(), default=_now, nullable=False)
 
     job = relationship("GenerationJob")
+
+
+class Preset(Base):
+    """A reusable per-step choice of provider, model and size, shared by every project."""
+
+    __tablename__ = "presets"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    name = Column(String(120), nullable=False)
+    # {step: {"provider": ..., "model": ..., "size": ...}} for master/turnaround/concept/enhance.
+    steps = Column(JSON, nullable=False, default=dict)
+    created_at = Column(UTCDateTime(), default=_now, nullable=False)
+    updated_at = Column(UTCDateTime(), default=_now, onupdate=_now, nullable=False)
+
+
+class ConceptProposal(Base):
+    """One model-proposed concept brief, awaiting the user's choice to render it."""
+
+    __tablename__ = "concept_proposals"
+
+    id = Column(String(36), primary_key=True, default=_uuid)
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
+    master_version_id = Column(String(36), ForeignKey("master_versions.id", ondelete="CASCADE"), nullable=False)
+    run = Column(Integer, nullable=False)
+    slot = Column(Integer, nullable=False)
+    title = Column(String(255), nullable=False)
+    brief = Column(JSON, nullable=False)
+    created_at = Column(UTCDateTime(), default=_now, nullable=False)
 
 
 class EnhancementVersion(Base):
@@ -220,3 +257,14 @@ class EnhancementVersion(Base):
     created_at = Column(UTCDateTime(), default=_now, nullable=False)
 
     job = relationship("GenerationJob")
+
+
+class ProviderCatalog(Base):
+    """A provider's model list as fetched from that provider's own API, so it survives restarts."""
+
+    __tablename__ = "provider_catalogs"
+
+    provider = Column(String(32), primary_key=True)
+    items = Column(JSON, nullable=False, default=list)  # [{"id": ..., "display_name": ...}]
+    source = Column(String(32), nullable=False)
+    fetched_at = Column(UTCDateTime(), default=_now, nullable=False)

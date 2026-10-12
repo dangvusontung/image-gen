@@ -1,5 +1,6 @@
 import asyncio
 import hashlib
+import json
 import io
 import os
 import textwrap
@@ -107,9 +108,38 @@ class MockProvider(ImageProvider):
         self._tasks: dict[str, tuple[float, ImageRequest]] = {}
         self._transient_counts: dict[str, int] = {}
 
+    supports_text = True
+
     @property
     def key_configured(self) -> bool:
         return True
+
+    async def generate_text(self, prompt: str, references) -> str:
+        """Nine plausible briefs in the requested JSON shape, so the flow works offline."""
+        settings = ["a sunlit kitchen", "a rainy tram stop", "a rooftop garden", "a second-hand bookshop",
+                    "a tide pool at dawn", "a neon arcade", "a potter's courtyard", "a mountain switchback",
+                    "a lantern-lit night market"]
+        # Cameras vary like a real proposal would, so angle-matching logic gets exercised.
+        cameras = ["front-facing", "left three-quarter", "right profile", "over-the-shoulder", "high-angle candid",
+                   "right three-quarter", "low-angle environmental", "wide full-body", "left profile"]
+        framings = ["full-body", "three-quarter-body", "full-body", "three-quarter-body", "medium candid",
+                    "three-quarter-body", "medium environmental", "full-body", "full-body"]
+        return json.dumps([
+            {
+                "title": f"Mock concept {i + 1}",
+                "setting": f"{place}, late afternoon",
+                "activity": "a believable everyday action suited to the setting",
+                "pose": "a relaxed natural stance",
+                "outfit": "a simple contemporary outfit suited to the scene",
+                "silhouette": "casual everyday separates",
+                "expression": "a warm unforced expression",
+                "gaze": "toward the activity",
+                "camera": cameras[i],
+                "framing": framings[i],
+                "lighting": "soft directional daylight with gentle shadows",
+            }
+            for i, place in enumerate(settings)
+        ], ensure_ascii=False)
 
     def models(self) -> list[ModelInfo]:
         return [

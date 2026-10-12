@@ -25,6 +25,18 @@ test('provider settings show key status, capabilities and connection test', asyn
   await card('Google Gemini').getByRole('button', { name: 'Kiểm tra kết nối' }).click()
   await expect(card('Google Gemini').getByRole('status')).toHaveText('Chưa cấu hình GEMINI_API_KEY')
 
+  // Models are grouped by generation, newest first, and a single-generation provider gets no header.
+  // Generation header rows span the table; model rows never do.
+  const headers = (name: string) => card(name).locator('td[colspan="4"]')
+  await expect(headers('Black Forest Labs')).toHaveText([/^FLUX 3\s*1 model$/, /^FLUX 2\s*2 model$/])
+  await expect(headers('BytePlus ModelArk')).toHaveText([
+    /^Seedream 5\.0\s*2 model$/,
+    /^Seedream 4\.5\s*1 model$/,
+    /^Seedream 4\.0\s*1 model$/,
+  ])
+  // Mock has a single generation, so it gets no header row at all.
+  await expect(headers('Mock (offline)')).toHaveCount(0)
+
   // Keys must never reach the browser.
   const providersJson = await page.evaluate(() => fetch('/api/providers').then((r) => r.text()))
   expect(providersJson).not.toMatch(/AIza|x-key|api_key/i)
@@ -35,7 +47,11 @@ test('project model picker persists and warns when references exceed the model l
   await page.getByRole('button', { name: 'Tạo dự án mới' }).click()
   await page.getByLabel('Tên dự án').fill('Chọn model')
   await page.getByRole('button', { name: 'Tạo dự án', exact: true }).click()
-  await page.getByRole('checkbox').click()
+  // Uploads are rejected until rights are confirmed, so wait for that PATCH to land first.
+  await Promise.all([
+    page.waitForResponse((r) => r.request().method() === 'PATCH' && r.url().includes('/api/projects/') && r.ok()),
+    page.getByRole('checkbox').click(),
+  ])
   await page
     .locator('input[type=file]')
     .first()
