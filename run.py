@@ -29,6 +29,10 @@ def main():
                 probe.bind(("127.0.0.1", port))
             except OSError:
                 raise SystemExit(f"Port {port} is already in use. Stop the existing app before running this launcher.") from None
+    print("Applying database migrations…", flush=True)
+    migrated = subprocess.run([str(python), "-m", "alembic", "upgrade", "head"], cwd=ROOT / "backend")
+    if migrated.returncode:
+        raise SystemExit("Database migration failed; servers were not started. Check the logs above.")
     processes = []
     group_options = {"creationflags": subprocess.CREATE_NEW_PROCESS_GROUP} if sys.platform == "win32" else {"start_new_session": True}
     try:
