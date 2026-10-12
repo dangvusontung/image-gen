@@ -50,7 +50,7 @@ def test_submit_posts_openai_shaped_request_and_returns_the_image_synchronously(
     assert payload["response_format"] == "b64_json"
     assert payload["watermark"] is False
     # 3:4 at the lowest 1K tier, not a squared-off preset.
-    assert payload["size"] == "880x1168"
+    assert payload["size"] == "1760x2352"
     assert len(payload["image"]) == 2
     assert payload["image"][0].startswith("data:image/png;base64,")
     # Never sent: both 400 on the 5.0 pro/flash models and this app wants exactly one image.
@@ -259,10 +259,10 @@ def test_applying_a_catalogue_keeps_known_capabilities_and_drops_absent_models()
     assert [m.id for m in models] == ["seedream-4-5-251128", "seedream-9-9-ultra-261231"]
 
     known = provider.get_model("seedream-4-5-251128")
-    assert known.max_reference_images == 10 and known.sizes == ("1K", "2K", "4K") and known.default is True
+    assert known.max_reference_images == 10 and known.sizes == ("2K", "4K") and known.default is True
     # An unrecognised family still appears, with conservative capabilities and a clear note.
     unknown = provider.get_model("seedream-9-9-ultra-261231")
-    assert unknown.sizes == ("1K", "2K") and unknown.status == "preview"
+    assert unknown.sizes == ("2K",) and unknown.status == "preview"
     assert "ListModelActivations" in unknown.notes
     # A model the account does not have can no longer be selected.
     with pytest.raises(CapabilityError):
@@ -355,3 +355,12 @@ def test_no_activated_image_models_is_reported_instead_of_falling_back_to_builti
     with pytest.raises(ProviderError) as exc:
         asyncio.run(provider.fetch_catalogue())
     assert exc.value.code == "no_activated_image_models"
+
+
+def test_seedream_45_upgrades_old_1k_requests_to_valid_minimum():
+    provider, seen = provider_with(lambda r: ok_response())
+    asyncio.run(provider.submit(req(options={"size": "1K"})))
+    payload = json.loads(seen[0].content)
+    width, height = map(int, payload["size"].split("x"))
+    assert width * height >= 3_686_400
+    assert provider.get_model("seedream-4-5-251128").default_size == "2K"

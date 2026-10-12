@@ -79,6 +79,8 @@ def enqueue_job(
         provider = registry.get(provider_name)
         model_id = model_id or provider.default_model().id
         aspect_ratio = aspect_ratio or provider.get_model(model_id).default_aspect_ratio
+        if provider_name == "modelark" and size == "1K" and "1K" not in provider.get_model(model_id).sizes:
+            size = provider.get_model(model_id).default_size
         model = provider.check_request(model_id, len(reference_asset_ids), aspect_ratio, size)
     except CapabilityError as exc:
         raise JobRequestError(exc.code, exc.message) from None

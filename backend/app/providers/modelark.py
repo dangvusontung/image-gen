@@ -95,7 +95,7 @@ MODELS = (
         max_reference_images=10,
         aspect_ratios=_RATIOS,
         default_aspect_ratio="3:4",
-        sizes=("1K", "2K", "4K"),
+        sizes=("2K", "4K"),
         default_size="2K",
         price_note=_PRICE_NOTE,
         status="ga",
@@ -255,7 +255,7 @@ class ModelArkProvider(ImageProvider):
             else:
                 found.append(ModelInfo(
                     id=model_id, display_name=display or model_id, max_reference_images=10,
-                    aspect_ratios=_RATIOS, default_aspect_ratio="3:4", sizes=("1K", "2K"),
+                    aspect_ratios=_RATIOS, default_aspect_ratio="3:4", sizes=("2K",),
                     default_size="2K", price_note=_PRICE_NOTE, status="preview", notes=_UNKNOWN_NOTE))
         if not found:
             return []
@@ -420,6 +420,9 @@ class ModelArkProvider(ImageProvider):
         raise ProviderError("no_image", "ModelArk không trả về ảnh nào")
 
     async def submit(self, request: ImageRequest) -> Submission:
+        model = self.get_model(request.model)
+        if request.options.get("size") == "1K" and "1K" not in model.sizes:
+            request.options = {**request.options, "size": model.default_size}
         model = self.validate(request)
         try:
             resp = await self._client.post(
