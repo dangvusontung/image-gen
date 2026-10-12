@@ -125,6 +125,8 @@ def preferred_angle(camera="", lead=None):
     """The angle a concept's camera wording implies, or None when nothing matches."""
     if lead:
         return lead
+    if "frontal" in camera or "straight-on" in camera:
+        return "front"
     for fragment, angle in (("left three", "left45"), ("right three", "right45"), ("right profile", "right90"),
                             ("left profile", "left90"), ("over-the-shoulder", "back")):
         if fragment in camera:
@@ -147,6 +149,8 @@ def concept_turn_ref(turn, camera="", lead=None):
         match = [ref for ref in turn_refs(turn, camera, lead) if f"TURNAROUND {wanted}," in ref[1]]
         if match:
             return match[:1]
+        if wanted == "front":
+            return []
     return [random.SystemRandom().choice(available)]
 
 

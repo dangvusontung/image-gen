@@ -6,3 +6,5 @@ Concept: {brief}
 Keep the master's face, hair, skin tone, body proportions and rendering style exactly as they are. Follow the concept's head angle and gaze: do not reuse the master's head pose, and do not make the character look at the camera unless the concept says so. Follow the concept's setting, activity, pose, outfit, framing and lighting as written. Keep the face clearly visible, the hands coherent, and the clothing opaque.
 
 One portrait 3:4 image. No collage, panels, borders, captions or watermark.
+
+Camera direction for the nine default concepts: straight-on frontal view at eye level. The character faces the camera with both shoulders and facial features seen head-on, eyes open and looking directly into the lens. No profile, side, three-quarter, rear, or over-the-shoulder camera angle; no looking down, away, or closed eyes.
