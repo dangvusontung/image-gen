@@ -1,6 +1,7 @@
 """The nine default lifestyle concepts the concept step renders straight from the prompt.
 
-All nine use direct eye contact and a frontal, eye-level camera.
+Five concepts use direct eye contact; four use a subtle off-camera gaze and 5-10 degree head turn.
+All keep the camera in front at eye level.
 A project that has model-proposed concepts uses those instead.
 """
 
@@ -35,11 +36,11 @@ DEFAULT_CONCEPTS = (
         "title": "Balcony sunset",
         "setting": "an apartment balcony above the street, sunset",
         "activity": "resting at the balcony railing while posing toward the camera",
-        "pose": "forearms resting lightly on the railing, barefoot, torso and face square to the camera",
+        "pose": "forearms resting lightly on the railing, barefoot, torso facing the camera, head turned only 8 degrees to her left; both eyes visible",
         "outfit": "a light summer dress, barefoot",
         "silhouette": "a light summer dress",
         "expression": "relaxed and unhurried",
-        "gaze": "looking directly into the camera lens, eyes open",
+        "gaze": "looking just to the left of the camera lens by about 8 degrees, eyes open",
         "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
         "framing": "three-quarter-body",
         "lighting": "low golden sun, hair lifting in the breeze",
@@ -61,11 +62,11 @@ DEFAULT_CONCEPTS = (
         "title": "Cozy bedroom",
         "setting": "a bed with rumpled pastel bedding, warm evening lamp light",
         "activity": "leaning back against the pillows",
-        "pose": "sitting on the bed, barefoot, one knee drawn up, head upright, shoulders and face square to the camera",
+        "pose": "sitting on the bed, barefoot, one knee drawn up, shoulders facing the camera, head turned only 5 degrees to her right; both eyes visible",
         "outfit": "a pastel tee with cotton shorts, barefoot",
         "silhouette": "cotton shorts",
         "expression": "contented gentle smile, eyes open",
-        "gaze": "looking directly into the camera lens, eyes open",
+        "gaze": "looking just to the right of the camera lens by about 5 degrees, eyes open",
         "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
         "framing": "medium shot",
         "lighting": "warm bedroom lamp light, soft shadows",
@@ -73,12 +74,12 @@ DEFAULT_CONCEPTS = (
     {
         "title": "Garden picnic",
         "setting": "a picnic blanket on garden grass, mid-afternoon",
-        "activity": "smiling warmly toward the camera",
-        "pose": "sitting on the blanket, barefoot, head upright, shoulders and face square to the camera",
+        "activity": "smiling warmly while relaxing on the picnic blanket",
+        "pose": "sitting on the blanket, barefoot, shoulders facing the camera, head turned only 10 degrees to her left; both eyes visible",
         "outfit": "a floral sundress, barefoot",
         "silhouette": "a floral sundress",
         "expression": "open laughter",
-        "gaze": "looking directly into the camera lens, eyes open",
+        "gaze": "looking slightly past the camera to her left by about 10 degrees, eyes open",
         "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
         "framing": "three-quarter-body",
         "lighting": "dappled afternoon light through leaves",
@@ -112,12 +113,12 @@ DEFAULT_CONCEPTS = (
     {
         "title": "Quiet reading",
         "setting": "a cushioned window seat, gentle daylight",
-        "activity": "pausing with an open book resting in her lap to look at the camera",
-        "pose": "sitting comfortably on the window seat, barefoot, torso and face square to the camera, chin level",
+        "activity": "pausing with an open book resting in her lap",
+        "pose": "sitting comfortably on the window seat, barefoot, torso facing the camera, chin level, head turned only 5 degrees to her right; both eyes visible",
         "outfit": "a soft cardigan with a casual skirt, barefoot",
         "silhouette": "a casual skirt",
         "expression": "calm gentle smile, eyes open",
-        "gaze": "looking directly into the camera lens, eyes open",
+        "gaze": "looking slightly past the camera to her right by about 5 degrees, eyes open",
         "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
         "framing": "medium shot",
         "lighting": "gentle window light across the page and her face",

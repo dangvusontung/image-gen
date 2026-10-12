@@ -261,12 +261,17 @@ def test_concepts_can_exclude_an_approved_turnaround(client, studio):
     assert client.get(base).json()["step_leads"]["concept"] == "none"
 
 
-def test_all_nine_default_concepts_use_direct_gaze_and_frontal_camera():
+def test_default_concepts_mix_direct_and_slightly_off_camera_gaze():
     from app.concept_defaults import DEFAULT_CONCEPTS
     from app.routes.concepts import preferred_angle
     assert len(DEFAULT_CONCEPTS) == 9
+    direct = [c for c in DEFAULT_CONCEPTS if c["gaze"] == "looking directly into the camera lens, eyes open"]
+    assert len(direct) == 5
+    off_camera = [c for c in DEFAULT_CONCEPTS if c not in direct]
+    assert len(off_camera) == 4
+    for concept in off_camera:
+        assert "degrees" in concept["gaze"] and "both eyes visible" in concept["pose"]
     for concept in DEFAULT_CONCEPTS:
-        assert concept["gaze"] == "looking directly into the camera lens, eyes open"
         assert concept["camera"].startswith("straight-on frontal view at eye level")
         assert preferred_angle(concept["camera"]) == "front"
         assert "eyes closed" not in concept["expression"]

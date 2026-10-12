@@ -7,4 +7,4 @@ Keep the master's face, hair, skin tone, body proportions and rendering style ex
 
 One portrait 3:4 image. No collage, panels, borders, captions or watermark.
 
-Camera direction for the nine default concepts: straight-on frontal view at eye level. The character faces the camera with both shoulders and facial features seen head-on, eyes open and looking directly into the lens. No profile, side, three-quarter, rear, or over-the-shoulder camera angle; no looking down, away, or closed eyes.
+Camera direction for the nine default concepts: keep the camera directly in front at eye level and the body facing it. Follow each concept's gaze and head pose: direct eye contact where requested, or a subtle 5-10 degree head turn and gaze just beside the lens where specified. Keep both eyes and the full face clearly visible. Do not force all concepts to stare into the lens. No profile, side, three-quarter, rear, or over-the-shoulder camera position and no large head turns.
