@@ -77,7 +77,7 @@ def test_submit_builds_documented_payload_and_parses_image():
 def test_default_size_comes_from_model():
     provider, seen = provider_with(lambda r: image_response())
     asyncio.run(provider.submit(request()))
-    assert json.loads(seen[0].content)["generationConfig"]["imageConfig"]["imageSize"] == "2K"
+    assert json.loads(seen[0].content)["generationConfig"]["imageConfig"]["imageSize"] == "1K"
 
 
 def test_snake_case_response_is_accepted():

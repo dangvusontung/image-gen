@@ -115,7 +115,8 @@ class BflProvider(ImageProvider):
         return bool(self._key)
 
     def models(self) -> list[ModelInfo]:
-        return self._live if self._live is not None else list(MODELS)
+        return [replace(m, default_size=m.sizes[0] if m.sizes else m.default_size)
+                for m in (self._live if self._live is not None else MODELS)]
 
     async def fetch_catalogue(self) -> list[dict[str, str]]:
         """BFL has no models endpoint, so read the model paths out of its OpenAPI spec."""

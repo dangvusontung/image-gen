@@ -7,13 +7,11 @@ export function useImageSize(projectId: string) {
   const [size, setSizeState] = useState(() => {
     try {
       const saved = localStorage.getItem(key(projectId)) ?? ''
-      const migrationKey = `image-quality-low-default:${projectId}`
+      const migrationKey = `all-models-low-default:${projectId}`
       if (!localStorage.getItem(migrationKey)) {
         localStorage.setItem(migrationKey, '1')
-        if (['high', 'xhigh', 'max', 'auto'].includes(saved)) {
-          localStorage.setItem(key(projectId), 'low')
-          return 'low'
-        }
+        localStorage.removeItem(key(projectId))
+        return ''
       }
       return saved
     } catch { return '' }

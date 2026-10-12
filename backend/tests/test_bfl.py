@@ -72,7 +72,7 @@ def test_flux3_payload_uses_images_list_and_disables_grounding():
     body = json.loads(seen[0].content)
     assert len(body["images"]) == 10
     assert body["grounding"] is False
-    assert body["aspect_ratio"] == "3:4" and body["resolution"] == "1k"
+    assert body["aspect_ratio"] == "3:4" and body["resolution"] == "768sq"
     assert "seed" not in body and "output_format" not in body and "input_image" not in body
 
 

@@ -220,7 +220,8 @@ class ModelArkProvider(ImageProvider):
         return bool(self._key)
 
     def models(self) -> list[ModelInfo]:
-        return self._priced(self._live if self._live is not None else list(MODELS))
+        return self._priced([replace(m, default_size=m.sizes[0] if m.sizes else m.default_size)
+                             for m in (self._live if self._live is not None else MODELS)])
 
     def _priced(self, models: list[ModelInfo]) -> list[ModelInfo]:
         if not self._price:

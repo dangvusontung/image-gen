@@ -49,8 +49,8 @@ def test_submit_posts_openai_shaped_request_and_returns_the_image_synchronously(
     assert payload["prompt"] == "một nhân vật 3D"
     assert payload["response_format"] == "b64_json"
     assert payload["watermark"] is False
-    # 3:4 at the 2K tier, not a squared-off preset.
-    assert payload["size"] == "1760x2352"
+    # 3:4 at the lowest 1K tier, not a squared-off preset.
+    assert payload["size"] == "880x1168"
     assert len(payload["image"]) == 2
     assert payload["image"][0].startswith("data:image/png;base64,")
     # Never sent: both 400 on the 5.0 pro/flash models and this app wants exactly one image.
@@ -68,8 +68,8 @@ def test_png_output_is_requested_only_for_the_five_series():
     asyncio.run(provider.submit(req(model="seedream-5-0-pro-260628", n_refs=1)))
     payload = json.loads(seen[0].content)
     assert payload["output_format"] == "png"
-    # The pro model's documented 4.19M pixel ceiling scales the 2K tier down.
-    assert payload["size"] == seedream_size("3:4", "2K", MAX_PIXELS["seedream-5-0-pro-260628"])
+    # The default uses the lowest supported tier.
+    assert payload["size"] == seedream_size("3:4", "1K", MAX_PIXELS["seedream-5-0-pro-260628"])
 
 
 def test_seed_and_watermark_are_passed_through_when_set():
@@ -337,7 +337,7 @@ def test_dola_pro_catalogue_preserves_invocation_id_and_png_capabilities():
     payload = json.loads(seen[0].content)
     assert payload["model"] == model_id
     assert payload["output_format"] == "png"
-    assert payload["size"] == seedream_size("3:4", "2K", MAX_PIXELS[model_id])
+    assert payload["size"] == seedream_size("3:4", "1K", MAX_PIXELS[model_id])
 
 
 def test_activation_catalogue_excludes_unavailable_and_deprecated_models():

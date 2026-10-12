@@ -115,7 +115,8 @@ class GeminiProvider(ImageProvider):
         return bool(self._key)
 
     def models(self) -> list[ModelInfo]:
-        return self._live if self._live is not None else list(MODELS)
+        return [replace(m, default_size=m.sizes[0] if m.sizes else m.default_size)
+                for m in (self._live if self._live is not None else MODELS)]
 
     def _headers(self) -> dict[str, str]:
         return {"x-goog-api-key": self._key, "Content-Type": "application/json"}
