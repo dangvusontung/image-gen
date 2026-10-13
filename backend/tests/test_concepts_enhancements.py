@@ -276,3 +276,20 @@ def test_default_concepts_mix_direct_and_slightly_off_camera_gaze():
         assert preferred_angle(concept["camera"]) == "front"
         assert "eyes closed" not in concept["expression"]
         assert "side profile" not in concept["pose"]
+
+
+def test_regenerate_uses_exact_edited_prompt_and_keeps_it_for_next_revision(client, studio):
+    base, _, _ = studio
+    proposals = propose(client, base)
+    result = render(client, base, proposals[:1])
+    wait_for_job(client, result['job_ids'][0])
+    concept_id = result['concept_ids'][0]
+    edited = 'Render this same character at the pool, wearing a blue shirt.'
+    response = client.post(f'{base}/concepts/{concept_id}/regenerate', json={'prompt': edited})
+    assert response.status_code == 201
+    job = wait_for_job(client, response.json()['job_ids'][0])
+    assert job['prompt'] == edited and job['meta']['prompt_edited']
+    again = client.post(f"{base}/concepts/{response.json()['id']}/regenerate", json={})
+    assert again.status_code == 201
+    assert wait_for_job(client, again.json()['job_ids'][0])['prompt'] == edited
+    assert client.get(f'{base}/concepts').json()[0]['revision'] == 3

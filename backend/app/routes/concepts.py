@@ -47,6 +47,7 @@ class ImageSettings(BaseModel):
 
 
 class RegenerateRequest(ImageSettings):
+    prompt: str | None = Field(default=None, min_length=1, max_length=50000)
     choices: ConceptChoices | None = None
     #: Edited brief fields, merged over the concept's own. Used to get past a moderation block.
     brief: dict[str, str] | None = None
@@ -187,7 +188,7 @@ def list_concepts(project_id: str, db: Session = Depends(get_db)):
     return [concept_out(c, project) for c in rows if not c.job.dismissed]
 
 
-def new_concept(db, registry, project, run, slot, mood, camera, revision, size, choices=None, brief=None):
+def new_concept(db, registry, project, run, slot, mood, camera, revision, size, choices=None, brief=None, prompt_override=None):
     master, master_asset, turn = identity(db, project)
     prior = db.query(Concept).filter_by(project_id=project.id).order_by(Concept.created_at).all()
     # An all-auto menu must leave each concept exactly as written.
@@ -209,6 +210,11 @@ def new_concept(db, registry, project, run, slot, mood, camera, revision, size, 
     if template:
         prompt += TEMPLATE_NOTE
         refs.append(template)
+    if prompt_override is not None:
+        if not prompt_override.strip():
+            fail("empty_prompt", "Prompt không được để trống", 400)
+        prompt = prompt_override.strip()
+        meta["prompt_edited"] = True
     meta.update(master_version_id=master.id, turnaround_version_id=turn.id if turn else None,
                 slot=slot, run=run, revision=revision, mood=mood, camera=camera, brief=brief,
                 reference_labels=[label for _, label in refs])
@@ -399,7 +405,7 @@ def regenerate(project_id: str, concept_id: str, data: RegenerateRequest, reques
     concept, job = new_concept(db, registry, project, old.run, old.slot, (data.title or old.mood).strip(), camera,
                                revision, data.size,
                                data.choices or (ConceptChoices.model_validate(old.job.meta["concept_choices"]) if old.job.meta.get("concept_choices") else None),
-                               brief=brief)
+                               brief=brief, prompt_override=data.prompt if data.prompt is not None else (old.job.prompt if old.job.meta.get("prompt_edited") else None))
     finish(db, request, [job], True)
     return GenerationResult(id=concept.id, job_ids=[job.id], concept_ids=[concept.id])
 

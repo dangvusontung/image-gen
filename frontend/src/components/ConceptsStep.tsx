@@ -1,3 +1,4 @@
+import EditConceptPrompt from '@/components/EditConceptPrompt'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import CopyConceptConfiguration from '@/components/CopyConceptConfiguration'
 import { ConceptMenu, useConceptChoices } from '@/components/ConceptMenu'
@@ -165,6 +166,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         {!compact && ['failed', 'cancelled'].includes(c.job.status) &&
           <FixAndRetry concept={c} projectId={project.id} size={size} choices={choices} disabled={!ready} />}
         <div className="flex flex-wrap gap-2">
+          <EditConceptPrompt key={c.id} concept={c} projectId={project.id} size={size} disabled={pending || active(c.job) || !ready} />
           <Button size="sm" variant="outline" disabled={pending || active(c.job) || !ready} onClick={() => action.mutate({ path: `${base}/concepts/${c.id}/regenerate`, data: { size: size || null } })}>Tạo lại ô {c.slot}</Button>
           <Button size="sm" disabled={c.job.status !== 'succeeded'} onClick={() => onEnhance(c.id)}>Nâng cấp ô {c.slot}</Button>
         </div>
