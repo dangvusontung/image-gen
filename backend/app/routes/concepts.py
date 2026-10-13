@@ -29,7 +29,7 @@ class GenerateRequest(BaseModel):
     """Render the picked concepts; empty means all nine."""
     proposal_ids: list[str] = Field(default_factory=list, max_length=9)
     #: Slot numbers, used when rendering the built-in concepts rather than proposed ones.
-    slots: list[int] = Field(default_factory=list, max_length=9)
+    slots: list[int] = Field(default_factory=list, max_length=len(DEFAULT_CONCEPTS))
     #: Per-slot edits to the concept wording, merged over whatever that slot would otherwise use.
     briefs: dict[int, dict[str, str]] = Field(default_factory=dict)
     #: Per-slot title overrides.
@@ -78,7 +78,7 @@ class EstimateOut(BaseModel):
 
 @router.get("/generation-estimate", response_model=EstimateOut)
 def generation_estimate(project_id: str, purpose: Literal["master", "turnaround", "concept"],
-                        count: int = Query(default=1, ge=1, le=9), size: str | None = None,
+                        count: int = Query(default=1, ge=1, le=len(DEFAULT_CONCEPTS)), size: str | None = None,
                         db: Session = Depends(get_db), registry=Depends(get_registry)):
     project = get_project_or_404(db, project_id)
     if purpose == "master":

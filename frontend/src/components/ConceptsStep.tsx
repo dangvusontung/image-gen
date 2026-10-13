@@ -177,7 +177,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     </div>}
     <PromptEditor projectId={project.id} name="concept" />
     <p className="text-sm text-muted-foreground">
-      9 concept lối sống khác nhau, mỗi concept một bối cảnh, hoạt động, trang phục và ánh sáng riêng.
+      {list.length} concept lối sống khác nhau, mỗi concept một bối cảnh, hoạt động, trang phục và ánh sáng riêng.
       Chọn concept bạn muốn rồi tạo ảnh — không cần bước nào khác.
     </p>
 
@@ -194,9 +194,9 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       setConfirmed(false)
     }} />
     {list.length > 0 && <details className="space-y-4 rounded-xl border p-4">
-      <summary className="cursor-pointer font-semibold">9 concept · Mở/đóng danh sách</summary>
+      <summary className="cursor-pointer font-semibold">{list.length} concept · Mở/đóng danh sách</summary>
       <div className="flex flex-wrap items-center gap-3">
-        <h3 className="font-semibold">{builtIn ? '9 concept mặc định' : `Đề xuất đợt ${list[0].run}`}</h3>
+        <h3 className="font-semibold">{builtIn ? `${list.length} concept mặc định` : `Đề xuất đợt ${list[0].run}`}</h3>
         {!builtIn && <time className="text-sm text-muted-foreground" dateTime={list[0].created_at}>{new Date(list[0].created_at).toLocaleString('vi-VN')}</time>}
         <Button size="sm" variant="outline" onClick={() => setPicked(null)} disabled={picked === null}>Chọn tất cả</Button>
         <Button size="sm" variant="outline" onClick={() => { setPicked([]); setConfirmed(false) }} disabled={chosen.length === 0}>Bỏ chọn tất cả</Button>
@@ -242,7 +242,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     <details className="rounded-lg border p-4">
       <summary className="font-medium">Ảnh tùy chỉnh · tự chọn trang phục và bối cảnh</summary>
       <p className="mt-2 text-sm text-muted-foreground">
-        Tạo ảnh riêng từ menu bên dưới, không liên quan tới 9 concept ở trên.
+        Tạo ảnh riêng từ menu bên dưới, không liên quan tới các concept ở trên.
       </p>
       <div className="mt-3 space-y-3">
         <ConceptMenu projectId={project.id} choices={choices} onChange={value => { setChoices(value); setCustomConfirmed(false) }} />
