@@ -1,3 +1,4 @@
+import CopyConceptConfiguration from '@/components/CopyConceptConfiguration'
 import { ConceptMenu, useConceptChoices } from '@/components/ConceptMenu'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
 import { useImageSize } from '@/lib/imageSize'
@@ -182,6 +183,11 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     {concepts.error && <ErrorAlert error={concepts.error} title="Không tải được concept" />}
     {workflow.error && <ErrorAlert error={workflow.error} title="Không tải được nhân vật gốc" />}
 
+    <CopyConceptConfiguration projectId={project.id} labels={BRIEF_LABEL} onCopy={next => {
+      saveEdits(next)
+      setPicked(null)
+      setConfirmed(false)
+    }} />
     {list.length > 0 && <details className="space-y-4 rounded-xl border p-4">
       <summary className="cursor-pointer font-semibold">9 concept · Mở/đóng danh sách</summary>
       <div className="flex flex-wrap items-center gap-3">
