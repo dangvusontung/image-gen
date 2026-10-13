@@ -1,5 +1,6 @@
+import { useImageSize } from '@/lib/imageSize'
 import { useMemo, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { request, useProjects, type ConceptProposal } from '@/api/client'
 import { Button } from '@/components/ui/button'
 import { ErrorAlert } from '@/components/ErrorAlert'
@@ -10,12 +11,30 @@ export default function CopyConceptConfiguration({ projectId, labels, onCopy }: 
   onCopy: (edits: Record<number, Record<string, string>>) => void
 }) {
   const projects = useProjects()
+  const qc = useQueryClient()
+  const [, setSize] = useImageSize(projectId)
   const [sourceId, setSourceId] = useState('')
   const [copied, setCopied] = useState(false)
   const source = useQuery({
     queryKey: ['copy-concept-configuration', sourceId],
     enabled: Boolean(sourceId),
     queryFn: () => request<ConceptProposal[]>(`/projects/${sourceId}/concept-proposals`),
+  })
+  const configuration = useQuery({
+    queryKey: ['copy-project-configuration', sourceId], enabled: Boolean(sourceId),
+    queryFn: () => request<{ provider: string; model: string; workflow_mode: string; preset_name: string | null; preset_steps: Record<string, { provider: string; model: string; size?: string }>; prompts: Record<string, string> }>(`/projects/${sourceId}/configuration`),
+  })
+  const copy = useMutation({
+    mutationFn: () => request(`/projects/${projectId}/prompts/copy`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source_project_id: sourceId, include_configuration: true }),
+    }),
+    onSuccess: async () => {
+      onCopy(Object.fromEntries(configurations.map(({ slot, fields }) => [slot, fields])))
+      try { setSize(localStorage.getItem(`image-size:${sourceId}`) ?? '') } catch { setSize('') }
+      setCopied(true)
+      await qc.invalidateQueries()
+    },
   })
   const configurations = useMemo(() => {
     let drafts: Record<number, Record<string, string>> = {}
@@ -28,7 +47,7 @@ export default function CopyConceptConfiguration({ projectId, labels, onCopy }: 
   }, [source.data, sourceId])
 
   return <details className="space-y-3 rounded-xl border p-4">
-    <summary className="cursor-pointer font-semibold">Xem và chép cấu hình concept từ dự án khác</summary>
+    <summary className="cursor-pointer font-semibold">Xem và chép cấu hình từ dự án khác</summary>
     <label className="grid gap-1 text-sm">Dự án nguồn
       <select aria-label="Dự án nguồn cho cấu hình concept" className="max-w-full rounded border p-2"
         value={sourceId} onChange={e => { setSourceId(e.target.value); setCopied(false) }}>
@@ -39,6 +58,17 @@ export default function CopyConceptConfiguration({ projectId, labels, onCopy }: 
     </label>
     {projects.error && <ErrorAlert error={projects.error} title="Không tải được dự án" />}
     {sourceId && source.isPending && <p className="text-sm">Đang tải cấu hình…</p>}
+    {configuration.error && <ErrorAlert error={configuration.error} title="Không tải được cấu hình dự án" />}
+    {configuration.data && <div className="space-y-2 rounded-lg bg-muted p-3 text-sm">
+      <p>{configuration.data.provider} · {configuration.data.model}</p>
+      <p>Quy trình: {configuration.data.workflow_mode}</p>
+      {configuration.data.preset_name && <p>Preset: {configuration.data.preset_name}</p>}
+      {Object.entries(configuration.data.preset_steps).map(([step, value]) => <p key={step}>{step}: {value.provider} · {value.model} · {value.size || 'mặc định'}</p>)}
+      {Object.entries(configuration.data.prompts).map(([name, body]) => <details key={name}>
+        <summary className="cursor-pointer">Prompt {name}</summary><p className="whitespace-pre-wrap break-words">{body}</p>
+      </details>)}
+    </div>}
+    {copy.error && <ErrorAlert error={copy.error} title="Không chép được cấu hình" />}
     {source.error && <ErrorAlert error={source.error} title="Không tải được cấu hình concept" />}
     {sourceId && !source.isPending && !source.error && !configurations.length && <p>Chưa có cấu hình concept.</p>}
     {configurations.length > 0 && <>
@@ -51,11 +81,11 @@ export default function CopyConceptConfiguration({ projectId, labels, onCopy }: 
           </dl>
         </details>)}
       </div>
-      <p className="text-xs text-muted-foreground">Chép sẽ thay thế mô tả concept đang chỉnh ở dự án này. Ảnh đã tạo giữ nguyên.</p>
-      <Button onClick={() => { onCopy(Object.fromEntries(configurations.map(({ slot, fields }) => [slot, fields]))); setCopied(true) }}>
-        Chép {configurations.length} concept vào dự án này
+      <p className="text-xs text-muted-foreground">Chép sẽ thay thế mô tả concept, provider/model, preset và toàn bộ prompt của dự án này. Ảnh đã tạo giữ nguyên.</p>
+      <Button disabled={copy.isPending || !configuration.data || configuration.isError || source.isError} onClick={() => copy.mutate()}>
+        Chép toàn bộ cấu hình vào dự án này
       </Button>
     </>}
-    {copied && <p role="status" className="text-sm">Đã chép cấu hình concept. Có thể chỉnh thêm trước khi tạo ảnh.</p>}
+    {copied && <p role="status" className="text-sm">Đã chép concept, model và prompt. Có thể chỉnh thêm trước khi tạo ảnh.</p>}
   </details>
 }

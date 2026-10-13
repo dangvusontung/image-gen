@@ -139,15 +139,21 @@ def put_prompt(name: str, data: PromptUpdate, project_id: str | None = None, db:
 
 class PromptCopy(BaseModel):
     source_project_id: str
+    include_configuration: bool = False
 
 
 @router.post("/api/projects/{project_id}/prompts/copy", response_model=list[PromptOut])
 def copy_prompts(project_id: str, data: PromptCopy, db: Session = Depends(get_db)):
     """Reuse another project's prompts here, saved as this project's own overrides."""
-    get_project_or_404(db, project_id)
+    project = get_project_or_404(db, project_id)
     if data.source_project_id == project_id:
         fail("same_project", "Chọn một dự án khác để chép prompt", 400)
-    get_project_or_404(db, data.source_project_id)
+    source_project = get_project_or_404(db, data.source_project_id)
+    if data.include_configuration:
+        project.provider = source_project.provider
+        project.model = source_project.model
+        project.workflow_mode = source_project.workflow_mode
+        project.preset_id = source_project.preset_id
     copied = []
     for name in SPECS:
         source = resolve(db, name, data.source_project_id)
@@ -345,3 +351,13 @@ def approve_turnaround(project_id: str, version_id: str, data: ApproveTurnaround
         turn.approved_at = datetime.now(timezone.utc)
         db.commit()
     return {"approved_turnaround_id": turn.id}
+
+
+@router.get("/api/projects/{project_id}/configuration")
+def project_configuration(project_id: str, db: Session = Depends(get_db)):
+    project = get_project_or_404(db, project_id)
+    return {"provider": project.provider, "model": project.model,
+            "workflow_mode": project.workflow_mode, "preset_id": project.preset_id,
+            "preset_name": project.preset.name if project.preset else None,
+            "preset_steps": project.preset.steps if project.preset else {},
+            "prompts": {name: resolve(db, name, project_id).body for name in SPECS}}

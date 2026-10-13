@@ -152,3 +152,23 @@ def test_turnaround_uses_selected_reference_photos_and_estimates_same_inputs(cli
     job = wait_for_job(client, result.json()["job_ids"][0])
     assert job["status"] == "succeeded"
     assert job["reference_asset_ids"] == [*masters[0]["job"]["output_asset_ids"], *reference_ids[1:]]
+
+
+def test_copy_configuration_includes_models_and_prompts_without_copying_assets(client, project, reference_ids):
+    source = client.post('/api/projects', json={'name': 'Source configuration'}).json()['id']
+    assert client.patch(f'/api/projects/{source}', json={'provider': 'mock', 'model': 'mock-small-refs'}).status_code == 200
+    original = client.get(f'/api/prompts/master?project_id={source}').json()['body']
+    body = 'Source-specific direction.\n' + original
+    assert client.put(f'/api/prompts/master?project_id={source}', json={'body': body}).status_code == 200
+    preview = client.get(f'/api/projects/{source}/configuration').json()
+    assert preview['model'] == 'mock-small-refs'
+    assert preview['prompts']['master'] == body
+    response = client.post(f'/api/projects/{project}/prompts/copy', json={
+        'source_project_id': source, 'include_configuration': True})
+    assert response.status_code == 200
+    target = client.get(f'/api/projects/{project}').json()
+    assert target['model'] == 'mock-small-refs'
+    assert target['rights_confirmed'] is True
+    assert {asset['id'] for asset in target['assets']} == set(reference_ids)
+    assert client.get(f'/api/prompts/master?project_id={project}').json()['body'] == body
+    assert client.get(f'/api/projects/{project}/jobs').json() == []
