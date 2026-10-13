@@ -80,7 +80,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const [confirmed, setConfirmed] = useState(false)
   const [size] = useImageSize(project.id)
   // null = every concept; an array = exactly those slots, including none at all.
-  const [picked, setPicked] = useState<number[] | null>(null)
+  const [picked, setPicked] = useState<number[] | null>([])
   const [customCount, setCustomCount] = useState(1)
   const [customConfirmed, setCustomConfirmed] = useState(false)
   const editsKey = `concept-edits:${project.id}`
@@ -190,7 +190,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
 
     <CopyConceptConfiguration projectId={project.id} labels={BRIEF_LABEL} onCopy={next => {
       saveEdits(next)
-      setPicked(null)
+      setPicked([])
       setConfirmed(false)
     }} />
     {list.length > 0 && <details className="space-y-4 rounded-xl border p-4">
