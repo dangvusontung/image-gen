@@ -172,3 +172,20 @@ def test_copy_configuration_includes_models_and_prompts_without_copying_assets(c
     assert {asset['id'] for asset in target['assets']} == set(reference_ids)
     assert client.get(f'/api/prompts/master?project_id={project}').json()['body'] == body
     assert client.get(f'/api/projects/{project}/jobs').json() == []
+
+
+def test_copy_one_prompt_leaves_other_prompts_and_model_unchanged(client, project):
+    source = client.post('/api/projects', json={'name': 'Single prompt source'}).json()['id']
+    previous_master = client.get(f'/api/prompts/master?project_id={project}').json()['body']
+    previous_concept = client.get(f'/api/prompts/concept?project_id={project}').json()['body']
+    source_concept = 'Source concept instructions.\n' + previous_concept
+    source_master = 'Source master instructions.\n' + previous_master
+    client.put(f'/api/prompts/concept?project_id={source}', json={'body': source_concept})
+    client.put(f'/api/prompts/master?project_id={source}', json={'body': source_master})
+    client.patch(f'/api/projects/{source}', json={'model': 'mock-small-refs'})
+    response = client.post(f'/api/projects/{project}/prompts/copy', json={'source_project_id': source, 'prompt_names': ['concept']})
+    assert response.status_code == 200
+    assert len(response.json()) == 1
+    assert client.get(f'/api/prompts/concept?project_id={project}').json()['body'] == source_concept
+    assert client.get(f'/api/prompts/master?project_id={project}').json()['body'] == previous_master
+    assert client.get(f'/api/projects/{project}').json()['model'] == 'mock-v1'

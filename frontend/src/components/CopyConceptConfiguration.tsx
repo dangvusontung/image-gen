@@ -27,7 +27,7 @@ export default function CopyConceptConfiguration({ projectId, labels, onCopy }: 
   const copy = useMutation({
     mutationFn: () => request(`/projects/${projectId}/prompts/copy`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ source_project_id: sourceId, include_configuration: true }),
+      body: JSON.stringify({ source_project_id: sourceId, include_configuration: true, prompt_names: [] }),
     }),
     onSuccess: async () => {
       onCopy(Object.fromEntries(configurations.map(({ slot, fields }) => [slot, fields])))
@@ -35,6 +35,14 @@ export default function CopyConceptConfiguration({ projectId, labels, onCopy }: 
       setCopied(true)
       await qc.invalidateQueries()
     },
+  })
+  const [copiedPrompt, setCopiedPrompt] = useState('')
+  const copyPrompt = useMutation({
+    mutationFn: (name: string) => request(`/projects/${projectId}/prompts/copy`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ source_project_id: sourceId, prompt_names: [name] }),
+    }),
+    onSuccess: async (_, name) => { setCopiedPrompt(name); await qc.invalidateQueries({ queryKey: ['prompt', projectId] }) },
   })
   const configurations = useMemo(() => {
     let drafts: Record<number, Record<string, string>> = {}
@@ -65,9 +73,12 @@ export default function CopyConceptConfiguration({ projectId, labels, onCopy }: 
       {configuration.data.preset_name && <p>Preset: {configuration.data.preset_name}</p>}
       {Object.entries(configuration.data.preset_steps).map(([step, value]) => <p key={step}>{step}: {value.provider} · {value.model} · {value.size || 'mặc định'}</p>)}
       {Object.entries(configuration.data.prompts).map(([name, body]) => <details key={name}>
-        <summary className="cursor-pointer">Prompt {name}</summary><p className="whitespace-pre-wrap break-words">{body}</p>
+        <summary className="cursor-pointer">Prompt {name}</summary>
+        <Button className="my-2" size="sm" disabled={copyPrompt.isPending} onClick={() => copyPrompt.mutate(name)}>Chép riêng prompt {name}</Button><p className="whitespace-pre-wrap break-words">{body}</p>
       </details>)}
     </div>}
+    {copiedPrompt && <p role="status">Đã chép riêng prompt {copiedPrompt}.</p>}
+    {copyPrompt.error && <ErrorAlert error={copyPrompt.error} title="Không chép được prompt" />}
     {copy.error && <ErrorAlert error={copy.error} title="Không chép được cấu hình" />}
     {source.error && <ErrorAlert error={source.error} title="Không tải được cấu hình concept" />}
     {sourceId && !source.isPending && !source.error && !configurations.length && <p>Chưa có cấu hình concept.</p>}
@@ -81,11 +92,11 @@ export default function CopyConceptConfiguration({ projectId, labels, onCopy }: 
           </dl>
         </details>)}
       </div>
-      <p className="text-xs text-muted-foreground">Chép sẽ thay thế mô tả concept, provider/model, preset và toàn bộ prompt của dự án này. Ảnh đã tạo giữ nguyên.</p>
+      <p className="text-xs text-muted-foreground">Chép sẽ thay thế mô tả concept, provider/model, preset. Prompt được chép riêng bằng nút ở từng mục của dự án này. Ảnh đã tạo giữ nguyên.</p>
       <Button disabled={copy.isPending || !configuration.data || configuration.isError || source.isError} onClick={() => copy.mutate()}>
-        Chép toàn bộ cấu hình vào dự án này
+        Chép concept và cài đặt model
       </Button>
     </>}
-    {copied && <p role="status" className="text-sm">Đã chép concept, model và prompt. Có thể chỉnh thêm trước khi tạo ảnh.</p>}
+    {copied && <p role="status" className="text-sm">Đã chép concept và cài đặt model. Có thể chỉnh thêm trước khi tạo ảnh.</p>}
   </details>
 }

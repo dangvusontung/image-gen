@@ -49,9 +49,9 @@ export default function ProviderPicker({ project }: { project: ProjectDetail }) 
       {others.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <label>
-            Chép prompt từ dự án
+            Chép prompt concept từ dự án
             <select
-              aria-label="Chép prompt từ dự án"
+              aria-label="Chép prompt concept từ dự án"
               className="max-w-full rounded border p-2"
               value=""
               disabled={copyPrompts.isPending}

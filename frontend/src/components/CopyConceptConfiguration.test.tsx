@@ -23,7 +23,7 @@ it('previews source edits and copies fields without starting a generation', asyn
   await user.selectOptions(screen.getByLabelText('Dự án nguồn cho cấu hình concept'), 'source')
   await user.click(await screen.findByText('4. Poolside'))
   expect(screen.getByText('custom outfit')).toBeVisible()
-  await user.click(screen.getByRole('button', { name: 'Chép toàn bộ cấu hình vào dự án này' }))
+  await user.click(screen.getByRole('button', { name: 'Chép concept và cài đặt model' }))
   await waitFor(() => expect(onCopy).toHaveBeenCalledWith({ 4: { title: 'Poolside', outfit: 'custom outfit', gaze: 'slightly left', setting: 'pool' } }))
   expect(fetchMock.mock.calls.map(([url]) => url)).toContain('/api/projects/source/concept-proposals')
   expect(fetchMock.mock.calls.map(([url]) => url).some(url => url.includes('/generate'))).toBe(false)

@@ -209,7 +209,7 @@ export const api = {
   setStepLead: (projectId: string, step: WorkflowStep, lead: string | null) =>
     request<ProjectDetail>(`/projects/${projectId}/step-lead`, json('PUT', { step, lead })),
   copyPrompts: (projectId: string, sourceProjectId: string) =>
-    request<unknown>(`/projects/${projectId}/prompts/copy`, json('POST', { source_project_id: sourceProjectId })),
+    request<unknown>(`/projects/${projectId}/prompts/copy`, json('POST', { source_project_id: sourceProjectId, prompt_names: ['concept'] })),
   setStepTemplate: (projectId: string, step: WorkflowStep, assetId: string | null) =>
     request<ProjectDetail>(`/projects/${projectId}/step-template`, json('PUT', { step, asset_id: assetId })),
   updateAsset: (assetId: string, patch: { kind?: AssetKind; selected?: boolean }) =>

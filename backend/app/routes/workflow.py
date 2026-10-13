@@ -140,6 +140,7 @@ def put_prompt(name: str, data: PromptUpdate, project_id: str | None = None, db:
 class PromptCopy(BaseModel):
     source_project_id: str
     include_configuration: bool = False
+    prompt_names: list[str] | None = None
 
 
 @router.post("/api/projects/{project_id}/prompts/copy", response_model=list[PromptOut])
@@ -154,8 +155,11 @@ def copy_prompts(project_id: str, data: PromptCopy, db: Session = Depends(get_db
         project.model = source_project.model
         project.workflow_mode = source_project.workflow_mode
         project.preset_id = source_project.preset_id
+    names = data.prompt_names if data.prompt_names is not None else list(SPECS)
+    if any(name not in SPECS for name in names):
+        fail("unknown_prompt", "Prompt không hợp lệ", 400)
     copied = []
-    for name in SPECS:
+    for name in dict.fromkeys(names):
         source = resolve(db, name, data.source_project_id)
         target = resolve(db, name, project_id)
         if source.body != target.body:

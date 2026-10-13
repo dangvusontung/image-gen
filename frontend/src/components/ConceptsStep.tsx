@@ -151,6 +151,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
           </div>
           <div className="min-w-0 space-y-3">
         <h3 className="font-semibold">{c.slot}. {c.mood}</h3>
+        <p className="break-words text-xs text-muted-foreground">{c.job.provider} · {c.job.model}{c.job.settings.size ? ` · ${c.job.settings.size}` : ''}</p>
         <p className="text-sm text-muted-foreground">{c.camera} · Bản {c.revision}</p>
         {c.stale && <p className="text-sm text-amber-700">Dựa trên nhân vật gốc cũ</p>}
 
