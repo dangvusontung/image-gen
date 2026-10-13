@@ -185,3 +185,37 @@ test('turnaround can be skipped without generating any angle jobs', async ({ pag
   await page.getByRole('button', { name: 'Xem turnaround', exact: true }).click()
   await expect(page.getByRole('tab', { name: '3. Turnaround (tùy chọn)', exact: true })).toHaveAttribute('data-state', 'active')
 })
+
+
+test('compact concept selection creates an edited concept with its title', async ({ page, request }) => {
+  const created = await request.post('http://127.0.0.1:8100/api/projects', { data: { name: 'Concept grid E2E' } })
+  const project = await created.json()
+  const base = `http://127.0.0.1:8100/api/projects/${project.id}`
+  await request.patch(base, { data: { rights_confirmed: true } })
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGM8kWLEwMDAxMDAwMDAAAARKAFipiAqoAAAAABJRU5ErkJggg==', 'base64')
+  await request.post(`${base}/assets`, { multipart: { files: { name: 'face.png', mimeType: 'image/png', buffer: png }, kind: 'reference' } })
+  await request.post(`${base}/master/generate`, { data: { variants: 1 } })
+  await expect.poll(async () => {
+    const workflow = await (await request.get(`${base}/workflow`)).json()
+    return workflow.masters[0]?.job.status
+  }).toBe('succeeded')
+  const workflow = await (await request.get(`${base}/workflow`)).json()
+  await request.post(`${base}/master/${workflow.masters[0].id}/approve`)
+  await page.goto('/')
+  await page.evaluate(({ id }) => localStorage.setItem(`concept-edits:${id}`, JSON.stringify({ 1: { title: 'Copied title', outfit: 'blue shirt' } })), { id: project.id })
+  await page.goto(`/#/projects/${project.id}`)
+  await page.getByRole('tab', { name: '4. Concept' }).click()
+  await expect(page.getByRole('button', { name: 'Tạo ảnh cho 9 concept', exact: true })).toBeVisible()
+  await page.getByText('9 concept · Mở/đóng danh sách', { exact: true }).click()
+  await page.getByRole('button', { name: 'Bỏ chọn tất cả', exact: true }).click()
+  await page.getByRole('checkbox', { name: 'Chọn concept 1', exact: true }).check()
+  await page.getByRole('button', { name: 'Xem chi tiết concept 1', exact: true }).click()
+  await expect(page.getByRole('dialog').getByLabel('Tiêu đề', { exact: true })).toHaveValue('Copied title')
+  await page.keyboard.press('Escape')
+  await page.getByRole('button', { name: 'Tạo ảnh cho 1 concept', exact: true }).click()
+  await expect(page.getByRole('img', { name: 'Concept 1 · Copied title', exact: true })).toBeVisible()
+  const concepts = await (await request.get(`${base}/concepts`)).json()
+  expect(concepts).toHaveLength(1)
+  expect(concepts[0].brief.outfit).toBe('blue shirt')
+  expect(concepts[0].mood).toBe('Copied title')
+})

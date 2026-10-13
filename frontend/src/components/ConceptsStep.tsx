@@ -1,3 +1,4 @@
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import CopyConceptConfiguration from '@/components/CopyConceptConfiguration'
 import { ConceptMenu, useConceptChoices } from '@/components/ConceptMenu'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
@@ -73,7 +74,8 @@ function FixAndRetry({ concept, projectId, size, choices, disabled }: {
 
 export default function ConceptsStep({ project, onEnhance }: { project: ProjectDetail; onEnhance: (id: string) => void }) {
   const [selectedRun, setSelectedRun] = useState<number | null>(null)
-  const [compact, setCompact] = useState(false)
+  const [compact, setCompact] = useState(true)
+  const [detailSlot, setDetailSlot] = useState<number | null>(null)
   const [confirmed, setConfirmed] = useState(false)
   const [size] = useImageSize(project.id)
   // null = every concept; an array = exactly those slots, including none at all.
@@ -123,7 +125,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         ...(builtIn ? { slots: chosen.map(p => p.slot) } : { proposal_ids: chosen.map(p => p.id) }),
         confirmed, size: size || null,
         // Only the edited slots travel; everything else keeps its stored wording.
-        briefs: Object.fromEntries(chosen.filter(p => edits[p.slot]).map(p => [p.slot, edits[p.slot]])),
+        briefs: Object.fromEntries(chosen.filter(p => edits[p.slot]).map(p => [p.slot, Object.fromEntries(Object.entries(edits[p.slot]).filter(([field]) => field !== 'title'))])),
         titles: Object.fromEntries(chosen.filter(p => edits[p.slot]?.title).map(p => [p.slot, edits[p.slot].title])),
       },
     },
@@ -197,57 +199,39 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         <Button size="sm" variant="outline" onClick={() => { setPicked([]); setConfirmed(false) }} disabled={chosen.length === 0}>Bỏ chọn tất cả</Button>
         <span className="text-sm text-muted-foreground">Đang chọn {chosen.length}/{list.length}</span>
       </div>
-      <ul className="space-y-3">
-        {list.map(p => <li key={p.id} className={`rounded-xl border p-3 text-sm ${picked !== null && !picked.includes(p.slot) ? 'opacity-60' : ''}`}>
-          <label className="flex items-start gap-2 font-medium">
-            <input type="checkbox" aria-label={`Chọn concept ${p.slot}`} className="mt-1"
+      <ul className="grid gap-3 grid-cols-2 md:grid-cols-3">
+        {list.map(p => <li key={p.id} className={`min-w-0 rounded-xl border p-3 text-sm ${picked !== null && !picked.includes(p.slot) ? 'opacity-60' : ''}`}>
+          <label className="flex items-center gap-2 text-xs">
+            <input type="checkbox" aria-label={`Chọn concept ${p.slot}`}
               checked={picked === null || picked.includes(p.slot)}
               onChange={e => {
                 const current = picked ?? list.map(x => x.slot)
-                const next = e.target.checked ? [...new Set([...current, p.slot])] : current.filter(s => s !== p.slot)
+                const next = e.target.checked ? [...new Set([...current, p.slot])] : current.filter(slot => slot !== p.slot)
                 setPicked(next.length === list.length ? null : next)
                 setConfirmed(false)
-              }} />
-            <span>{p.slot}. {fieldOf(p.slot, 'title', p.title)}{edits[p.slot] ? ' · đã sửa' : ''}</span>
+              }} />Chọn
           </label>
-          <dl className="mt-2 space-y-0.5 pl-6 text-xs text-muted-foreground">
-            {Object.entries(p.brief).filter(([, v]) => v).map(([k, v]) => <div key={k}>
-              <dt className="inline font-medium">{BRIEF_LABEL[k] ?? k}: </dt>
-              <dd className="inline">{fieldOf(p.slot, k, v)}</dd>
-            </div>)}
-          </dl>
-          <details className="mt-2 pl-6 text-xs">
-            <summary className="cursor-pointer">Sửa concept này</summary>
-            <div className="mt-2 grid gap-2">
-              {Object.entries(p.brief).filter(([, v]) => v).map(([k, v]) => (
-                <label key={k} className="grid gap-1">{BRIEF_LABEL[k] ?? k}
-                  <input
-                    className="rounded border p-1.5 text-sm"
-                    aria-label={`${BRIEF_LABEL[k] ?? k} của concept ${p.slot}`}
-                    value={fieldOf(p.slot, k, v)}
-                    onChange={e => editField(p.slot, k, e.target.value)}
-                  />
-                </label>
-              ))}
-              {edits[p.slot] && <Button size="sm" variant="ghost" className="justify-self-start"
-                onClick={() => { const next = { ...edits }; delete next[p.slot]; saveEdits(next) }}>
-                Hoàn tác về mặc định
-              </Button>}
-            </div>
-          </details>
+          <button type="button" className="mt-2 w-full space-y-2 text-left" onClick={() => setDetailSlot(p.slot)} aria-label={`Xem chi tiết concept ${p.slot}`}>
+            <span className="block font-semibold">{p.slot}. {fieldOf(p.slot, 'title', p.title)}</span>
+            <span className="block line-clamp-2 text-xs text-muted-foreground">{fieldOf(p.slot, 'setting', p.brief.setting)}</span>
+            <span className="block text-xs underline">Xem / sửa chi tiết{edits[p.slot] ? ' · đã sửa' : ''}</span>
+          </button>
         </li>)}
       </ul>
 
 
+
+    </details>}
+    {list.length > 0 && <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
         <p className="text-sm">{costLabel(estimate.data ? estimate.data.total_usd : unitPrice == null ? null : unitPrice * chosen.length)} / {chosen.length} ảnh</p>
         {paid && <label className="text-sm"><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} /> Xác nhận chi phí và gửi ảnh tới nhà cung cấp</label>}
-        <Button disabled={pending || !ready || !chosen.length || (paid && !confirmed) || (choices.outfit === 'custom' && !choices.custom_outfit.trim()) || (choices.scene === 'custom' && !choices.custom_scene.trim())} onClick={generate}>
+        <Button disabled={pending || !ready || !chosen.length || (paid && !confirmed)} onClick={generate}>
           Tạo ảnh cho {chosen.length} concept
         </Button>
       </div>
       {estimate.data && <p className="text-xs text-muted-foreground">{estimate.data.note}</p>}
-    </details>}
+    </div>}
 
     {proposals.isPending && <Skeleton className="h-40" />}
 
@@ -283,5 +267,21 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     </details>
 
 
+    <Dialog open={detailSlot !== null} onOpenChange={open => { if (!open) setDetailSlot(null) }}>
+      <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-2xl">
+        <DialogTitle>Chi tiết concept {detailSlot}</DialogTitle>
+        <DialogDescription>Xem và chỉnh mô tả trước khi tạo ảnh.</DialogDescription>
+        {list.filter(p => p.slot === detailSlot).map(p => <div key={p.id} className="grid gap-3">
+          <label className="grid gap-1 text-sm">Tiêu đề
+            <input className="rounded border p-2" value={fieldOf(p.slot, 'title', p.title)} onChange={e => editField(p.slot, 'title', e.target.value)} />
+          </label>
+          {Object.entries(p.brief).map(([field, value]) => <label key={field} className="grid gap-1 text-sm">{BRIEF_LABEL[field] ?? field}
+            <input className="rounded border p-2" aria-label={`${BRIEF_LABEL[field] ?? field} của concept ${p.slot}`}
+              value={fieldOf(p.slot, field, value)} onChange={e => editField(p.slot, field, e.target.value)} />
+          </label>)}
+          <Button variant="outline" onClick={() => { const next = { ...edits }; delete next[p.slot]; saveEdits(next) }}>Hoàn tác về mặc định</Button>
+        </div>)}
+      </DialogContent>
+    </Dialog>
   </section>
 }
