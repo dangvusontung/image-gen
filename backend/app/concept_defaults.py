@@ -464,3 +464,22 @@ DEFAULT_CONCEPTS += tuple(
         ),
     )
 )
+
+# A fixed palette keeps each scene's outfit consistent across previews and reruns.
+_BIKINI_PALETTE = (
+    "soft coral", "powder blue", "terracotta", "turquoise",
+    "lavender", "sage green with a small white floral print", "navy blue", "burgundy",
+    "butter yellow", "blush pink", "dusty lilac", "mint green",
+    "peach with cream stripes", "sky blue with white polka dots", "rose pink", "teal",
+    "cobalt blue", "cream with a delicate blue floral print", "olive green", "soft mauve",
+    "cherry red", "emerald green", "dusty rose", "charcoal gray",
+    "warm rust", "champagne beige", "seafoam green", "sunflower yellow",
+    "coral red", "aqua blue", "lemon yellow with white stripes", "pastel pink with small daisies",
+    "deep turquoise", "tangerine orange", "royal blue", "lilac",
+    "bright teal", "raspberry pink", "lime green", "deep plum",
+)
+
+DEFAULT_CONCEPTS = tuple(
+    {**concept, "outfit": f"an opaque {color} two-piece bikini, barefoot"}
+    for concept, color in zip(DEFAULT_CONCEPTS, _BIKINI_PALETTE, strict=True)
+)

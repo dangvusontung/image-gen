@@ -338,6 +338,7 @@ def test_reference_concepts_use_bikini_outfits(client, studio):
     for concept in defaults:
         assert 'bikini' in concept['brief']['outfit']
         assert 'bikini' in concept['brief']['silhouette']
+    assert len({c['brief']['outfit'] for c in defaults}) == len(defaults)
     result = client.post(f'{base}/concepts/generate', json={'slots': [24, 25, 26], 'confirmed': True})
     assert result.status_code == 201, result.text
     for job_id in result.json()['job_ids']:
