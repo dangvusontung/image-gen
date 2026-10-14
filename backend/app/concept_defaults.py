@@ -373,3 +373,94 @@ DEFAULT_CONCEPTS += (
         "lighting": "soft cool diffused window light with muted film-like tones",
     },
 )
+
+# Pool scenes keep distinct actions, compositions and gaze directions.
+DEFAULT_CONCEPTS += tuple(
+    {
+        "title": title,
+        "setting": setting,
+        "activity": activity,
+        "pose": pose,
+        "outfit": "an opaque two-piece bikini, barefoot",
+        "silhouette": "a two-piece bikini",
+        "expression": expression,
+        "gaze": gaze,
+        "camera": camera,
+        "framing": framing,
+        "lighting": lighting,
+    }
+    for title, setting, activity, pose, expression, gaze, camera, framing, lighting in (
+        (
+            "Pool deck portrait", "a turquoise swimming pool with pale stone decking and tropical greenery",
+            "pausing beside the water", "standing upright with weight resting on one leg, one hand on her hip and the other relaxed at her side",
+            "a relaxed confident smile", "looking directly into the camera",
+            "frontal view at eye level", "full-body", "bright morning daylight with soft reflected pool light",
+        ),
+        (
+            "Feet in the pool", "a quiet swimming pool edge with clear blue water",
+            "gently moving her feet through the water", "sitting upright on the pool edge, legs dangling into the water, hands resting beside her hips",
+            "a gentle smile", "looking slightly past the camera",
+            "front three-quarter view at seated eye level", "full-body seated portrait", "soft late-afternoon daylight",
+        ),
+        (
+            "Poolside lounge", "a poolside reclining chair with a white towel and striped parasol",
+            "relaxing on a sun lounger", "reclining on her back with the lounger raised, one knee softly bent, hands resting naturally on the chair arms",
+            "peaceful and contented", "looking toward the pool",
+            "slightly elevated front diagonal view", "full-body including the lounger", "soft dappled shade beneath the parasol",
+        ),
+        (
+            "Poolside reading", "a shaded sun lounger beside a resort swimming pool",
+            "reading an open book", "sitting on the lounger with knees loosely drawn up and the book resting in her lap, both hands holding its pages",
+            "quietly absorbed", "down at the book",
+            "near-frontal view at seated eye level", "three-quarter-body", "diffused midday shade with turquoise reflections",
+        ),
+        (
+            "Pool steps", "wide submerged steps leading into a clear swimming pool with a metal handrail",
+            "walking carefully down the pool steps", "one foot on the next submerged step, one hand holding the rail, torso upright and balanced",
+            "a small cheerful smile", "down toward the next step",
+            "front three-quarter view from the pool deck", "full-body showing the steps through the water", "crisp morning light with rippling water patterns",
+        ),
+        (
+            "Pool ladder pause", "a stainless-steel swimming pool ladder beside pale stone coping",
+            "pausing while climbing out of the pool", "holding both ladder rails, one foot on a rung, shoulders upright above the water, natural balanced posture",
+            "refreshed and relaxed", "toward the camera",
+            "frontal view from the deck at shoulder height", "three-quarter-body including ladder and visible waterline", "gentle golden-hour light",
+        ),
+        (
+            "Shallow-water stroll", "the shallow end of a turquoise pool with palm trees reflected on the surface",
+            "wading slowly through the water", "walking through thigh-deep water, arms relaxed with fingertips lightly grazing the surface",
+            "a soft unhurried smile", "slightly to the side toward the palms",
+            "near-frontal view at eye level", "three-quarter-body with clear waterline", "warm late-afternoon sunlight",
+        ),
+        (
+            "Floating afternoon", "a calm swimming pool with gentle ripples and open blue water",
+            "floating peacefully on her back", "lying buoyantly on the water with arms extended loosely to the sides and legs relaxed, face above the surface",
+            "peaceful, eyes gently closed", "eyes closed while floating",
+            "overhead view centered above the body", "full-body surrounded by water", "soft diffused daylight with subtle reflected patterns",
+        ),
+        (
+            "Gentle breaststroke", "an open swimming lane in a clear blue outdoor pool",
+            "swimming a relaxed breaststroke", "head and shoulders above the surface during a breathing phase, both arms sweeping outward naturally beneath the water",
+            "focused and comfortable", "forward along the swimming lane",
+            "front diagonal view close to water level", "environmental portrait showing upper body and surrounding ripples", "bright soft daylight with small sparkling highlights",
+        ),
+        (
+            "Rest at the pool wall", "a quiet corner of a swimming pool beside a pale tiled wall",
+            "taking a break at the pool edge", "in chest-deep water with forearms resting on the coping, shoulders relaxed and chin raised naturally",
+            "a friendly relaxed smile", "looking directly into the camera",
+            "frontal view from across the coping at face height", "medium portrait with water and pool edge visible", "soft evening light with warm skin tones and cool water reflections",
+        ),
+        (
+            "Playful pool splash", "a sunlit shallow pool beside a tropical garden",
+            "making a small playful splash with one hand", "standing in waist-deep water, one hand lightly sweeping the surface and the other relaxed, torso angled gently toward the camera",
+            "a spontaneous laughing smile", "toward the small splash beside her",
+            "front three-quarter view at eye level", "three-quarter-body environmental portrait", "warm daylight catching the small water droplets",
+        ),
+        (
+            "Infinity-edge sunset", "an infinity swimming pool overlooking a distant coastline at sunset",
+            "enjoying the view at the infinity edge", "standing in waist-deep water, forearms resting lightly on the edge, torso facing the horizon and head turned gently back toward the camera",
+            "calm and reflective", "toward the camera over her shoulder",
+            "rear three-quarter view with her face visible", "wide environmental portrait including pool edge and horizon", "warm sunset rim light balanced with soft reflected fill on the face",
+        ),
+    )
+)
