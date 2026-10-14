@@ -5,6 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 class ConceptChoices(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    glasses: bool = False
     style: Literal["auto", "cute", "glamour"] = "auto"
     outfit: Literal["auto", "denim_mix", "denim_shorts", "denim_skirt", "pleated_skirt", "tennis_skirt",
                     "wide_trousers", "straight_jeans", "cargo_shorts", "sundress", "midi_dress", "knit_dress",
@@ -20,7 +21,7 @@ class ConceptChoices(BaseModel):
 
     def overrides_concept(self) -> bool:
         """True when the user picked something that should replace the concept's own wording."""
-        return any((self.outfit != "auto", self.top != "auto", self.scene != "auto",
+        return any((self.glasses, self.outfit != "auto", self.top != "auto", self.scene != "auto",
                     self.lighting != "auto", self.style != "auto", self.activity.strip()))
 
     @model_validator(mode="after")
@@ -186,6 +187,8 @@ def apply_choices(brief, choices, slot, prior):
         if choices.top == "auto" and outfit in bottoms:
             result["outfit"] = f"a fitted ribbed tank top and {bottoms[outfit]}, with coordinated scene-appropriate shoes"
             result["silhouette"] = bottoms[outfit]
+    if choices.glasses:
+        result["outfit"] += "; wearing clear-lens eyeglasses with a simple thin frame, eyes clearly visible"
     return result
 
 

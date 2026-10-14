@@ -4,14 +4,15 @@ import { request } from '@/api/client'
 import { ErrorAlert } from '@/components/ErrorAlert'
 
 export interface ConceptChoices {
+  glasses?: boolean
   style: string; outfit: string; top: string; scene: string; lighting: string
   custom_outfit: string; custom_scene: string; activity: string
 }
 // Everything defaults to "auto": the menu must never silently rewrite a concept's own wording.
-export const CONCEPT_DEFAULTS: ConceptChoices = { style: 'auto', outfit: 'auto', top: 'auto', scene: 'auto', lighting: 'auto', custom_outfit: '', custom_scene: '', activity: '' }
+export const CONCEPT_DEFAULTS: ConceptChoices = { glasses: false, style: 'auto', outfit: 'auto', top: 'auto', scene: 'auto', lighting: 'auto', custom_outfit: '', custom_scene: '', activity: '' }
 
 export const overridesConcept = (c: ConceptChoices) =>
-  c.style !== 'auto' || c.outfit !== 'auto' || c.top !== 'auto' || c.scene !== 'auto' ||
+  Boolean(c.glasses) || c.style !== 'auto' || c.outfit !== 'auto' || c.top !== 'auto' || c.scene !== 'auto' ||
   c.lighting !== 'auto' || Boolean(c.activity.trim())
 
 export function useConceptChoices(projectId: string) {
@@ -37,6 +38,7 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
         Dùng mô tả gốc của từng concept
       </button>
     </div>}
+    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(choices.glasses)} onChange={e => onChange({ ...choices, glasses: e.target.checked })} />+ Kính (tùy chọn)</label>
     {menu.error && <ErrorAlert error={menu.error} title="Không tải được menu concept" />}
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
       {(['style', 'outfit', 'top', 'scene', 'lighting'] as const).map(key => <label key={key} className="grid gap-2 text-sm">
