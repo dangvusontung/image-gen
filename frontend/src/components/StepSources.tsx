@@ -132,7 +132,7 @@ export function SourceImages({ images, onBack, lead, onReorder }: {
     >
       <div className="relative">
         <img data-source-image src={assetUrl(image.id)} alt={image.label} className="aspect-[3/4] w-full rounded-lg border bg-muted object-contain" />
-        {onReorder && <span className="absolute top-1 left-1 rounded bg-background/90 px-1 text-xs">#{index + 1}</span>}
+        <span className="absolute top-1 left-1 rounded bg-background/90 px-1 text-xs">#{index + 1}</span>
       </div>
       <figcaption className="break-words text-xs text-muted-foreground">{image.label}</figcaption>
     </figure>)}</div>
@@ -151,18 +151,19 @@ export default function StepSources({ project, step, onBack }: { project: Projec
   const master = data?.masters.find(m => m.id === data.approved_master_id)
   const turn = data?.turnarounds.find(t => t.id === data.approved_turnaround_id && t.master_version_id === master?.id)
   // Deselected photos are never sent, so they are not shown as sources either.
-  const used = project.assets.filter(a => a.selected)
+  const used = project.assets.filter(a => a.selected).sort((a, b) => a.position - b.position)
   const images = step === 'master' ? used.map(a => ({ id: a.id, label: `${a.kind === 'side_profile' ? 'Ảnh nghiêng' : 'Ảnh tham chiếu'} · ${a.filename}` })) : [
     ...(master?.job.output_asset_ids[0] ? [{ id: master.job.output_asset_ids[0], label: `Master đã duyệt · Lần ${master.round}, bản ${master.variant}` }] : []),
     ...(step === 'turnaround' ? used.filter(a => a.kind !== 'template').map(a => ({ id: a.id, label: `${a.kind === 'side_profile' ? 'Ảnh nghiêng' : 'Ảnh tham chiếu'} · ${a.filename}` })) : project.step_leads?.concept === 'none' ? [] : turn?.views.filter(v => v.job.status === 'succeeded' && v.job.output_asset_ids[0]).map(v => ({ id: v.job.output_asset_ids[0], label: `Turnaround ${turn.number} · ${v.angle}` })) ?? []),
   ]
   const angles = (turn?.views ?? [])
+    .filter(v => images.some(image => image.id === v.job.output_asset_ids[0]))
     .filter(v => v.job.status === 'succeeded' && v.job.output_asset_ids[0])
-    .map(v => ({ value: v.angle, label: ANGLE_LABEL[v.angle] ?? v.angle }))
+    .map(v => ({ value: v.angle, label: `#${images.findIndex(image => image.id === v.job.output_asset_ids[0]) + 1} · ${ANGLE_LABEL[v.angle] ?? v.angle}` }))
   const leadOptions: Record<typeof step, { value: string; label: string }[]> = {
     // Step 2 leads with one of the uploaded photos; step 3 with one of the side profiles.
-    master: used.map(a => ({ value: a.id, label: a.filename })),
-    turnaround: used.filter(a => a.kind !== 'template').map(a => ({ value: a.id, label: a.filename })),
+    master: used.map(a => ({ value: a.id, label: `#${images.findIndex(image => image.id === a.id) + 1} · ${a.filename}` })),
+    turnaround: used.filter(a => a.kind !== 'template').map(a => ({ value: a.id, label: `#${images.findIndex(image => image.id === a.id) + 1} · ${a.filename}` })),
     concepts: angles,
   }
   const leadStep: WorkflowStep = step === 'concepts' ? 'concept' : step
