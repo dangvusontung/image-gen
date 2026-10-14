@@ -326,24 +326,24 @@ def test_latest_reference_scenes_generate_only_selected_slots(client, studio):
     for job_id in response.json()['job_ids']:
         job = wait_for_job(client, job_id)
         assert job['status'] == 'succeeded'
-        assert 'bikini' not in job['prompt']
+        assert 'bikini' in job['prompt']
     assert {c['slot'] for c in client.get(f'{base}/concepts').json()} == {17, 23}
 
 
-def test_clothed_reference_concepts_keep_their_own_outfits(client, studio):
+def test_reference_concepts_use_bikini_outfits(client, studio):
     base, _, _ = studio
     defaults = client.get(f'{base}/concept-proposals').json()
     added = defaults[23:26]
     assert [p['slot'] for p in added] == [24, 25, 26]
-    for concept, clothing in zip(added, ['long dress', 'corduroy trousers', 'slip dress'], strict=True):
-        assert clothing in concept['brief']['outfit']
-        assert 'bikini' not in concept['brief']['outfit']
+    for concept in defaults:
+        assert 'bikini' in concept['brief']['outfit']
+        assert 'bikini' in concept['brief']['silhouette']
     result = client.post(f'{base}/concepts/generate', json={'slots': [24, 25, 26], 'confirmed': True})
     assert result.status_code == 201, result.text
     for job_id in result.json()['job_ids']:
         job = wait_for_job(client, job_id)
         assert job['status'] == 'succeeded'
-        assert 'bikini' not in job['prompt']
+        assert 'bikini' in job['prompt']
 
 
 def test_optional_glasses_are_added_to_prompt_without_replacing_outfit(client, studio):
@@ -356,4 +356,4 @@ def test_optional_glasses_are_added_to_prompt_without_replacing_outfit(client, s
         job = wait_for_job(client, result.json()['job_ids'][0])
         assert job['status'] == 'succeeded'
         assert ('clear-lens eyeglasses' in job['prompt']) == (slot == 27)
-        assert 'jeans' in job['prompt']
+        assert 'bikini' in job['prompt']
