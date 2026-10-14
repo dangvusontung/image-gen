@@ -78,7 +78,8 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const [compact, setCompact] = useState(true)
   const [detailSlot, setDetailSlot] = useState<number | null>(null)
   const [confirmed, setConfirmed] = useState(false)
-  const [size] = useImageSize(project.id)
+  const [savedSize] = useImageSize(project.id)
+  const size = project.generation_size || (project.preset_steps?.concept ? '' : savedSize)
   // null = every concept; an array = exactly those slots, including none at all.
   const [picked, setPicked] = useState<number[] | null>([])
   const [customCount, setCustomCount] = useState(1)

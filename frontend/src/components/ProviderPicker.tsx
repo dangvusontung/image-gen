@@ -42,7 +42,7 @@ export default function ProviderPicker({ project }: { project: ProjectDetail }) 
             </select>
           </label>
           {preset && <span className="text-xs text-muted-foreground">
-            Quyết định model cho: {Object.keys(preset.steps).join(', ') || 'chưa bước nào'}
+            {Object.entries(preset.steps).map(([step, target]) => `${step}: ${target.model}${target.size ? ` · ${target.size}` : ''}`).join(' / ') || 'Chưa cấu hình bước nào'}
           </span>}
         </div>
       )}

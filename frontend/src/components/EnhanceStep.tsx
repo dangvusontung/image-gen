@@ -9,7 +9,8 @@ import { active, costLabel, DownloadLinks, ImagePreview, JobDetails, JobPlacehol
 
 export default function EnhanceStep({ project, selectedConceptId, onSelect, onBack }: { project: ProjectDetail; selectedConceptId: string | null; onSelect: (id: string) => void; onBack?: () => void }) {
   const base = `/projects/${project.id}`
-  const [size] = useImageSize(project.id)
+  const [savedSize] = useImageSize(project.id)
+  const size = project.generation_size || (project.preset_steps?.enhance ? '' : savedSize)
   const [prompt, setPrompt] = useState('')
   // Empty = polish the concept itself; otherwise iterate on that earlier enhancement.
   const [fromEnhancement, setFromEnhancement] = useState('')

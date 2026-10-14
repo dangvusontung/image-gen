@@ -1,7 +1,7 @@
 import { generationProject } from '@/lib/generationPolicy'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeftIcon } from 'lucide-react'
-import { request, useProject, type GenerationJob } from '@/api/client'
+import { request, usePresets, useProject, type GenerationJob } from '@/api/client'
 import { useQuery } from '@tanstack/react-query'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { PromptEditor } from '@/components/GenerationUI'
@@ -35,7 +35,10 @@ const STEPS = [
 export default function ProjectWorkspace({ projectId, onBack }: { projectId: string; onBack: () => void }) {
   const [step, setStep] = useState('references')
   const [selectedConceptId, setSelectedConceptId] = useState<string | null>(null)
-  const { data: project, isPending, error } = useProject(projectId)
+  const { data: savedProject, isPending, error } = useProject(projectId)
+
+  const { data: presets } = usePresets()
+  const project = savedProject ? { ...savedProject, preset_steps: presets?.find(p => p.id === savedProject.preset_id)?.steps } : undefined
 
   // Open where the work left off, but never yank the tab out from under the user.
   const chosen = useRef(false)
@@ -88,22 +91,22 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
             </TabsContent>
             {(['master', 'turnaround'] as const).map(step => <TabsContent key={step} value={step} className="mt-4 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
               <div className="min-w-0 space-y-5"><PromptEditor projectId={project.id} name={step} />
-              <CharacterStep onSkip={step === 'turnaround' ? () => pickStep('concepts') : undefined} onApproved={() => pickStep(step === 'master' ? 'turnaround' : 'concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} step={step} /></div>
+              <CharacterStep onSkip={step === 'turnaround' ? () => pickStep('concepts') : undefined} onApproved={() => pickStep(step === 'master' ? 'turnaround' : 'concepts')} key={`${project.preset_id}/${JSON.stringify(project.preset_steps)}/${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, step === 'turnaround' ? 'turnaround' : 'master')} step={step} /></div>
               <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step={step} onBack={() => pickStep(step === 'master' ? 'references' : 'master')} /></aside>
             </TabsContent>)}
             <TabsContent value="concepts" className="mt-4 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
               <div className="min-w-0 space-y-5">
-              <ConceptsStep key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'draft')} onEnhance={id => { setSelectedConceptId(id); pickStep('enhance') }} /></div>
+              <ConceptsStep key={`${project.preset_id}/${JSON.stringify(project.preset_steps)}/${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'concept')} onEnhance={id => { setSelectedConceptId(id); pickStep('enhance') }} /></div>
               <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step="concepts" onBack={() => pickStep('turnaround')} /></aside>
             </TabsContent>
             <TabsContent value="enhance" className="mt-4 space-y-5">
               <PromptEditor projectId={project.id} name="enhance" />
-              <EnhanceStep onBack={() => pickStep('concepts')} key={`${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'enhance')} selectedConceptId={selectedConceptId} onSelect={setSelectedConceptId} />
+              <EnhanceStep onBack={() => pickStep('concepts')} key={`${project.preset_id}/${JSON.stringify(project.preset_steps)}/${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'enhance')} selectedConceptId={selectedConceptId} onSelect={setSelectedConceptId} />
             </TabsContent>
             <TabsContent value="history" className="mt-4"><HistoryStep projectId={projectId} /></TabsContent>
           </Tabs>
           <GenerationMonitor projectId={projectId} projectName={project.name} />
-          <PinnedModelSwitcher project={project} />
+          <PinnedModelSwitcher project={project} purpose={step === 'concepts' ? 'concept' : step === 'enhance' ? 'enhance' : step === 'turnaround' ? 'turnaround' : 'master'} />
           <ProjectSwitcher projectId={projectId} onOpen={(id) => { window.location.hash = `/projects/${id}` }} />
         </>
       )}

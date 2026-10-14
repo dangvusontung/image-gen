@@ -62,6 +62,8 @@ export interface ProjectDetail {
   step_templates: Partial<Record<WorkflowStep, string>>
   /** When set, this preset decides provider/model/size per step. */
   preset_id: string | null
+  preset_steps?: Partial<Record<WorkflowStep, PresetStep>>
+  generation_size?: string | null
   assets: Asset[]
 }
 

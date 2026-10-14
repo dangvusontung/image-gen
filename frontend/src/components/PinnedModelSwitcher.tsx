@@ -2,7 +2,7 @@ import ProviderPicker from '@/components/ProviderPicker'
 import { useState } from 'react'
 import { ChevronDownIcon, SettingsIcon, StarIcon } from 'lucide-react'
 import { generationProject } from '@/lib/generationPolicy'
-import { useProviders, useUpdateProject, type ProjectDetail } from '@/api/client'
+import { useProviders, useUpdateProject, type WorkflowStep, type ProjectDetail } from '@/api/client'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { Button } from '@/components/ui/button'
 import { useFavouriteModels } from '@/lib/favourites'
@@ -10,7 +10,7 @@ import { useImageSize } from '@/lib/imageSize'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
 
 /** Always-reachable provider/model switcher, so it is not lost above the fold on long steps. */
-export default function PinnedModelSwitcher({ project }: { project: ProjectDetail }) {
+export default function PinnedModelSwitcher({ project, purpose = 'master' }: { project: ProjectDetail; purpose?: WorkflowStep }) {
   const [open, setOpen] = useState(false)
   const { data: providers } = useProviders()
   const update = useUpdateProject(project.id)
@@ -19,8 +19,8 @@ export default function PinnedModelSwitcher({ project }: { project: ProjectDetai
 
   if (!providers) return null
   // Hybrid modes pick the model per step, so there is nothing here to switch.
-  const hybrid = Boolean(project.workflow_mode && project.workflow_mode !== 'manual')
-  const draft = generationProject(project, 'draft')
+  const hybrid = Boolean(project.preset_steps?.[purpose] || (project.workflow_mode && project.workflow_mode !== 'manual'))
+  const draft = generationProject(project, purpose)
   const provider = providers.find((p) => p.name === draft.provider)
   const model = provider?.models.find((m) => m.id === draft.model)
   const starred = providers.flatMap((p) =>
@@ -39,7 +39,7 @@ export default function PinnedModelSwitcher({ project }: { project: ProjectDetai
         <span className="min-w-0 flex-1">
           <span className="block truncate font-medium">{model?.display_name ?? draft.model}</span>
           <span className="block truncate text-xs text-muted-foreground">
-            {hybrid ? 'Quy trình tiết kiệm · model theo từng bước' : `${provider?.display_name ?? draft.provider}${size ? ` · ${size}` : ''}`}
+            {hybrid ? `${purpose} · ${draft.generation_size || 'model theo từng bước'}` : `${provider?.display_name ?? draft.provider}${size ? ` · ${size}` : ''}`}
           </span>
         </span>
         <ChevronDownIcon className={`size-4 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden />
