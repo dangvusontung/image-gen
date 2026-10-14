@@ -1,9 +1,4 @@
-"""The nine default lifestyle concepts the concept step renders straight from the prompt.
-
-Five concepts use direct eye contact; four use a subtle off-camera gaze and 5-10 degree head turn.
-All keep the camera in front at eye level.
-A project that has model-proposed concepts uses those instead.
-"""
+"""Default lifestyle scene briefs; projects may use model-proposed concepts instead."""
 
 DEFAULT_CONCEPTS = (
     {
@@ -213,3 +208,97 @@ DEFAULT_CONCEPTS += ({'title': 'At-home manicure',
   'camera': 'overhead camera centered above her face and upper body',
   'framing': 'three-quarter-body',
   'lighting': 'airy diffused daylight with delicate floral shadows'})
+
+DEFAULT_CONCEPTS += (
+    {
+        "title": "Sofa-side manicure",
+        "setting": "a pale rug in front of a cream sofa, a small nail-polish bottle nearby",
+        "activity": "carefully painting her fingernails",
+        "pose": "seated on the rug leaning lightly against the sofa, one leg folded and the other knee raised, hands held naturally in front of her",
+        "outfit": "an opaque two-piece bikini, barefoot",
+        "silhouette": "a two-piece bikini",
+        "expression": "quiet concentration",
+        "gaze": "looking down at her fingernails",
+        "camera": "near-frontal camera at seated eye level",
+        "framing": "full-body seated portrait",
+        "lighting": "soft cool daylight with a gentle film-grain snapshot feel",
+    },
+    {
+        "title": "Bedroom reading break",
+        "setting": "a soft bedroom rug beside a bed with white bedding, an open book and laptop nearby",
+        "activity": "turning a page of an open book",
+        "pose": "reclining comfortably on the rug, supported on one forearm with legs resting to one side, free hand turning the page",
+        "outfit": "an opaque two-piece bikini, barefoot",
+        "silhouette": "a two-piece bikini",
+        "expression": "absorbed and peaceful",
+        "gaze": "down at the open book",
+        "camera": "slightly elevated front diagonal view with the face clearly visible",
+        "framing": "three-quarter-body environmental portrait",
+        "lighting": "warm diffused window light with a softly glowing bedside lamp",
+    },
+    {
+        "title": "Bedside chair pause",
+        "setting": "a simple wooden chair beside an unmade white bed and a bright window",
+        "activity": "brushing a loose strand of hair away from her face",
+        "pose": "seated casually on the chair with one leg folded onto the seat, shoulders relaxed, one hand raised gently to her hair",
+        "outfit": "an opaque two-piece bikini, barefoot",
+        "silhouette": "a two-piece bikini",
+        "expression": "calm and reflective",
+        "gaze": "downward just past her knees",
+        "camera": "near-frontal view slightly above seated eye level",
+        "framing": "three-quarter-body seated portrait",
+        "lighting": "muted natural window light with soft neutral shadows",
+    },
+    {
+        "title": "Pillow embrace",
+        "setting": "a white bed beside sheer curtains and a softly lit bedroom window",
+        "activity": "hugging a large white pillow",
+        "pose": "sitting cross-legged on the bed, pillow resting upright against her torso, one arm loosely around it and the other hand near her chin",
+        "outfit": "an opaque two-piece bikini, barefoot",
+        "silhouette": "a two-piece bikini",
+        "expression": "a soft thoughtful smile",
+        "gaze": "looking toward the camera",
+        "camera": "straight-on frontal view at seated eye level",
+        "framing": "full-body seated portrait",
+        "lighting": "soft airy daylight filtered through sheer curtains",
+    },
+    {
+        "title": "Sofa daydream",
+        "setting": "a pale upholstered sofa with soft blue-gray cushions in a quiet living room",
+        "activity": "resting comfortably on the sofa",
+        "pose": "lying on her stomach with her chin close to folded hands, knees bent and bare feet raised naturally behind her",
+        "outfit": "an opaque two-piece bikini, barefoot",
+        "silhouette": "a two-piece bikini",
+        "expression": "relaxed and gently curious",
+        "gaze": "looking directly toward the camera",
+        "camera": "front view close to cushion height, focus on her face and hands",
+        "framing": "environmental portrait with face in the foreground and bent legs softly out of focus",
+        "lighting": "warm soft daylight with muted vintage colors",
+    },
+    {
+        "title": "Warm vanity glance",
+        "setting": "a bathroom vanity with a stone countertop, basin, mirror and warm wall sconces",
+        "activity": "pausing beside the vanity",
+        "pose": "standing with both hands resting lightly on the countertop, torso angled toward the basin, head turned back toward the camera with face clearly visible",
+        "outfit": "an opaque two-piece bikini, barefoot",
+        "silhouette": "a two-piece bikini",
+        "expression": "a calm subtle smile",
+        "gaze": "toward the camera over her shoulder",
+        "camera": "rear three-quarter view at shoulder height with the face in focus",
+        "framing": "three-quarter-body environmental portrait",
+        "lighting": "warm amber wall lights with soft bathroom shadows",
+    },
+    {
+        "title": "Vanity phone portrait",
+        "setting": "a bedroom dressing table with a mirror, small bottles and warm neutral walls",
+        "activity": "taking a casual phone portrait while adjusting her hair",
+        "pose": "seated comfortably at the dressing table with one knee drawn up, phone held in one hand and the other hand lightly touching her hair",
+        "outfit": "an opaque two-piece bikini, barefoot",
+        "silhouette": "a two-piece bikini",
+        "expression": "relaxed and self-assured",
+        "gaze": "at the phone screen",
+        "camera": "mirror portrait from a slightly angled front view, face visible beside the phone",
+        "framing": "three-quarter-body seated portrait",
+        "lighting": "soft warm indoor light with gentle natural fill",
+    },
+)
