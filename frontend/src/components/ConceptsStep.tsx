@@ -142,6 +142,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       </select></label>
       <Button variant="outline" onClick={() => setCompact(!compact)}>{compact ? 'Xem thẻ chi tiết' : 'Xem bảng ảnh'}</Button>
       <a className="text-sm underline" href={`/api${base}/contact-sheet?run=${run}`}>Tải bảng ảnh</a>
+      <a className="text-sm underline" href={`/api${base}/concepts/download`}>Tải toàn bộ concept (ZIP)</a>
       <span className="text-sm">{cards.filter(c => c?.job.status === 'succeeded').length}/{cards.length} hoàn tất</span>
     </div>}
     {!!runs.length && <div className={`grid gap-4 ${compact ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1'}`}>

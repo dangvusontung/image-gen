@@ -127,3 +127,36 @@ def export_project(project_id: str, db: Session = Depends(get_db)):
 
     return StreamingResponse(chunks(), media_type="application/zip", background=BackgroundTask(archive.close),
                              headers={"Content-Disposition": f'attachment; filename="project-{project_id}.zip"'})
+
+
+@router.get("/api/projects/{project_id}/concepts/download")
+def download_concepts(project_id: str, db: Session = Depends(get_db)):
+    get_project_or_404(db, project_id)
+    concepts = db.query(Concept).filter_by(project_id=project_id).order_by(Concept.run, Concept.slot, Concept.revision).all()
+    archive = tempfile.SpooledTemporaryFile(max_size=8 * 1024 * 1024)
+    count = 0
+    try:
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as zipped:
+            for concept in concepts:
+                if concept.job.status != JobStatus.SUCCEEDED:
+                    continue
+                for index, asset_id in enumerate(concept.job.output_asset_ids, start=1):
+                    asset = db.get(Asset, asset_id)
+                    if asset is None or asset.project_id != project_id:
+                        continue
+                    path = file_for(asset)
+                    zipped.write(path, f"run-{concept.run}/concept-{concept.slot:02d}-v{concept.revision}-{index}{path.suffix}")
+                    count += 1
+        if not count:
+            fail("no_concepts", "Chưa có ảnh concept hoàn tất để tải", 400)
+        archive.seek(0)
+    except BaseException:
+        archive.close()
+        raise
+
+    def chunks():
+        while chunk := archive.read(64 * 1024):
+            yield chunk
+
+    return StreamingResponse(chunks(), media_type="application/zip", background=BackgroundTask(archive.close),
+                             headers={"Content-Disposition": f'attachment; filename="concepts-{project_id}.zip"'})

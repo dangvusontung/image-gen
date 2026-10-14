@@ -357,3 +357,26 @@ def test_optional_glasses_are_added_to_prompt_without_replacing_outfit(client, s
         assert job['status'] == 'succeeded'
         assert ('clear-lens eyeglasses' in job['prompt']) == (slot == 27)
         assert 'bikini' in job['prompt']
+
+
+def test_download_all_concepts_zip_includes_runs_and_revisions(client, studio):
+    base, _, _ = studio
+    assert client.get(f'{base}/concepts/download').status_code == 400
+    for slot in [1, 2]:
+        result = client.post(f'{base}/concepts/generate', json={'slots': [slot], 'confirmed': True}).json()
+        wait_for_job(client, result['job_ids'][0])
+    first = next(c for c in client.get(f'{base}/concepts').json() if c['slot'] == 1)
+    retry = client.post(f"{base}/concepts/{first['id']}/regenerate", json={}).json()
+    wait_for_job(client, retry['job_ids'][0])
+    response = client.get(f'{base}/concepts/download')
+    assert response.status_code == 200
+    assert response.headers['content-type'] == 'application/zip'
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        names = archive.namelist()
+        assert len(names) == 3
+        assert len({n.split('/')[0] for n in names}) == 2
+        assert any('concept-01-v2-' in n for n in names)
+        assert all(archive.read(n) for n in names)
+    other = client.post('/api/projects', json={'name': 'Empty project'}).json()
+    assert client.get(f"/api/projects/{other['id']}/concepts/download").status_code == 400
+    assert client.get('/api/projects/missing/concepts/download').status_code == 404
