@@ -1,3 +1,4 @@
+import { groupConcepts } from '@/lib/conceptGroups'
 import EditConceptPrompt from '@/components/EditConceptPrompt'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import CopyConceptConfiguration from '@/components/CopyConceptConfiguration'
@@ -204,8 +205,21 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         <Button size="sm" variant="outline" onClick={() => { setPicked([]); setConfirmed(false) }} disabled={chosen.length === 0}>Bỏ chọn tất cả</Button>
         <span className="text-sm text-muted-foreground">Đang chọn {chosen.length}/{list.length}</span>
       </div>
-      <ul className="grid gap-3 grid-cols-2 md:grid-cols-3">
-        {list.map(p => <li key={p.id} className={`min-w-0 rounded-xl border p-3 text-sm ${picked !== null && !picked.includes(p.slot) ? 'opacity-60' : ''}`}>
+      {groupConcepts(list).map(group => {
+        const selectedCount = group.items.filter(p => picked === null || picked.includes(p.slot)).length
+        return <section key={group.name} className="space-y-3 rounded-lg border p-3" aria-label={group.name}>
+          <div className="flex flex-wrap items-center gap-3">
+            <h4 className="font-semibold">{group.name}</h4>
+            <span className="text-xs text-muted-foreground">{selectedCount}/{group.items.length} đã chọn</span>
+            <Button size="sm" variant="outline" onClick={() => {
+              const slots = group.items.map(p => p.slot)
+              const current = picked ?? list.map(p => p.slot)
+              setPicked(selectedCount === group.items.length ? current.filter(slot => !slots.includes(slot)) : [...new Set([...current, ...slots])])
+              setConfirmed(false)
+            }}>{selectedCount === group.items.length ? 'Bỏ chọn nhóm' : 'Chọn nhóm'}</Button>
+          </div>
+          <ul className="grid gap-3 grid-cols-2 md:grid-cols-3">
+        {group.items.map(p => <li key={p.id} className={`min-w-0 rounded-xl border p-3 text-sm ${picked !== null && !picked.includes(p.slot) ? 'opacity-60' : ''}`}>
           <label className="flex items-center gap-2 text-xs">
             <input type="checkbox" aria-label={`Chọn concept ${p.slot}`}
               checked={picked === null || picked.includes(p.slot)}
@@ -222,10 +236,9 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
             <span className="block text-xs underline">Xem / sửa chi tiết{edits[p.slot] ? ' · đã sửa' : ''}</span>
           </button>
         </li>)}
-      </ul>
-
-
-
+          </ul>
+        </section>
+      })}
     </details>}
     {list.length > 0 && <div className="space-y-2">
       <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
