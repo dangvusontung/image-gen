@@ -2,12 +2,12 @@ import type { ConceptProposal } from '@/api/client'
 
 const GROUPS = [
   { name: 'Bể bơi', slots: [4, ...Array.from({ length: 12 }, (_, i) => i + 29)] },
-  { name: 'Phòng ngủ & nghỉ ngơi', slots: [2, 5, 11, 15, 16, 18, 19, 20, 24, 25] },
+  { name: 'Phòng ngủ & nghỉ ngơi', slots: [2, 5, 11, 15, 16, 18, 19, 20, 24, 25, 41, 42, 43, 44] },
   { name: 'Phòng khách & sinh hoạt', slots: [1, 9, 10, 17, 21, 28] },
   { name: 'Bếp & bên cửa sổ', slots: [12, 13, 14, 27] },
   { name: 'Ngoài trời & ban công', slots: [3, 6, 8, 26] },
   { name: 'Công việc & bàn trang điểm', slots: [7, 23] },
-  { name: 'Phòng tắm', slots: [22] },
+  { name: 'Phòng tắm', slots: [22, 45, 46, 47, 48] },
 ]
 
 export function groupConcepts(concepts: ConceptProposal[]) {
