@@ -242,3 +242,38 @@ test('copies shared prompts from another project into the current step only', as
   await expect(page.getByLabel('Prompt concept', { exact: true })).toHaveValue(concept)
   expect((await (await request.get(`/api/prompts/master?project_id=${target.id}`)).json()).body).toBe(master)
 })
+
+
+test('step two zoom keeps the entire image reachable at 150 percent', async ({ page, request }) => {
+  const project = await (await request.post('/api/projects', { data: { name: 'Zoom regression' } })).json()
+  const base = `/api/projects/${project.id}`
+  await request.patch(base, { data: { rights_confirmed: true } })
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGM8kWLEwMDAxMDAwMDAAAARKAFipiAqoAAAAABJRU5ErkJggg==', 'base64')
+  await request.post(`${base}/assets`, { multipart: { files: { name: 'face.png', mimeType: 'image/png', buffer: png }, kind: 'reference' } })
+  await request.post(`${base}/master/generate`, { data: { variants: 1 } })
+  await expect.poll(async () => (await (await request.get(`${base}/workflow`)).json()).masters[0]?.job.status).toBe('succeeded')
+  await page.goto(`/#/projects/${project.id}`)
+  await page.getByRole('tab', { name: '2. Nhân vật gốc' }).click()
+  await page.getByRole('button', { name: /^Xem lớn:/ }).first().click()
+  const dialog = page.getByRole('dialog')
+  for (const size of [{ width: 1280, height: 900 }, { width: 390, height: 844 }]) {
+    await page.setViewportSize(size)
+    await dialog.getByRole('button', { name: 'Phóng to', exact: true }).click()
+    await expect(dialog.getByRole('status')).toHaveText('150%')
+    const pane = dialog.getByRole('region', { name: /^Vùng xem ảnh:/ })
+    await expect.poll(() => pane.evaluate(el => el.clientHeight > 0 && el.scrollHeight > el.clientHeight && el.scrollWidth > el.clientWidth)).toBe(true)
+    const geometry = await pane.evaluate(el => {
+      el.scrollTop = el.scrollHeight
+      el.scrollLeft = el.scrollWidth
+      const stage = el.firstElementChild!.getBoundingClientRect()
+      const viewport = el.getBoundingClientRect()
+      return { bottom: stage.bottom <= viewport.bottom + 1, right: stage.right <= viewport.right + 1 }
+    })
+    expect(geometry).toEqual({ bottom: true, right: true })
+    const bounds = await dialog.boundingBox()
+    expect(bounds!.y).toBeGreaterThanOrEqual(0)
+    expect(bounds!.y + bounds!.height).toBeLessThanOrEqual(size.height)
+    await dialog.getByRole('button', { name: 'Vừa khung', exact: true }).click()
+    await expect(dialog.getByRole('status')).toHaveText('100%')
+  }
+})

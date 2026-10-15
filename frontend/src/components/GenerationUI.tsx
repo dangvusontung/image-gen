@@ -78,10 +78,7 @@ export function ImagePreview({ assetId, title = 'Ảnh nhân vật', compareAsse
   }
   const changeZoom = (delta: number) =>
     setZoom((z) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Math.round((z + delta) * 100) / 100)))
-  // At fit the image is bounded by the dialog; zoomed in it grows and the frame scrolls.
-  const zoomStyle = zoom === ZOOM_MIN
-    ? { maxHeight: '75vh', width: '100%' }
-    : { maxHeight: 'none', width: `${zoom * 100}%`, maxWidth: 'none' }
+
 
   return <>
     <button type="button" onClick={() => { setSelectedAssetId(assetId); setZoom(ZOOM_MIN); setOpen(true) }} className="block w-full cursor-zoom-in rounded-lg focus-visible:ring-2" aria-label={`Xem lớn: ${title}`}>
@@ -89,7 +86,7 @@ export function ImagePreview({ assetId, title = 'Ảnh nhân vật', compareAsse
     </button>
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent
-        className="max-h-[95vh] overflow-auto sm:max-w-6xl"
+        className="!flex h-[95dvh] max-h-[95dvh] flex-col overflow-hidden sm:max-w-6xl"
         onKeyDown={(e) => {
           if (canPage && e.key === 'ArrowLeft') step(-1)
           if (canPage && e.key === 'ArrowRight') step(1)
@@ -119,27 +116,32 @@ export function ImagePreview({ assetId, title = 'Ảnh nhân vật', compareAsse
           </Button>
           <span className="text-xs text-muted-foreground">Phím + − để phóng to/thu nhỏ, 0 để vừa khung.</span>
         </div>
-        <div className={`max-h-[75vh] ${zoom > ZOOM_MIN ? 'overflow-auto' : ''} ${compareAssetId ? 'grid gap-4 md:grid-cols-2' : 'flex items-center gap-2'}`}>
-          {compareAssetId && <figure><figcaption>Trước</figcaption><img src={assetUrl(compareAssetId)} alt="Ảnh nguồn trước nâng cấp" style={zoomStyle} className="object-contain" /></figure>}
-          {canPage && (
-            <Button variant="outline" size="icon" aria-label="Ảnh trước" className="sticky left-0 shrink-0 self-center" onClick={() => step(-1)}>
-              <ChevronLeftIcon />
-            </Button>
-          )}
-          <figure className={compareAssetId ? undefined : zoom === ZOOM_MIN ? 'min-w-0 flex-1' : 'shrink-0'}>
-            {compareAssetId && <figcaption>Sau</figcaption>}
-            <img src={assetUrl(canPage ? current.assetId : assetId)} alt={canPage ? current.title : title} style={zoomStyle} className="mx-auto object-contain" />
-          </figure>
-          {canPage && (
-            <Button variant="outline" size="icon" aria-label="Ảnh sau" className="sticky right-0 shrink-0 self-center" onClick={() => step(1)}>
-              <ChevronRightIcon />
-            </Button>
-          )}
+        <div className="flex min-h-0 flex-1 gap-2">
+          {canPage && <Button variant="outline" size="icon" aria-label="Ảnh trước" className="shrink-0 self-center" onClick={() => step(-1)}><ChevronLeftIcon /></Button>}
+          <div className={`min-h-0 min-w-0 flex-1 ${compareAssetId ? 'grid grid-cols-1 grid-rows-2 gap-4 md:grid-cols-2 md:grid-rows-1' : 'flex'}`}>
+            {compareAssetId && <figure className="flex min-h-0 min-w-0 flex-1 flex-col gap-1">
+              <figcaption>Trước</figcaption>
+              <ZoomImage assetId={compareAssetId} title="Ảnh nguồn trước nâng cấp" zoom={zoom} />
+            </figure>}
+            <figure className="flex min-h-0 min-w-0 flex-1 flex-col gap-1">
+              {compareAssetId && <figcaption>Sau</figcaption>}
+              <ZoomImage assetId={canPage ? current.assetId : assetId} title={canPage ? current.title : title} zoom={zoom} />
+            </figure>
+          </div>
+          {canPage && <Button variant="outline" size="icon" aria-label="Ảnh sau" className="shrink-0 self-center" onClick={() => step(1)}><ChevronRightIcon /></Button>}
         </div>
         <DownloadLinks assetId={canPage ? current.assetId : assetId} />
       </DialogContent>
     </Dialog>
   </>
+}
+
+function ZoomImage({ assetId, title, zoom }: { assetId: string; title: string; zoom: number }) {
+  return <div key={`${assetId}/${zoom}`} role="region" aria-label={`Vùng xem ảnh: ${title}`} className="min-h-0 min-w-0 flex-1 overflow-auto rounded bg-muted">
+    <div style={{ width: `${zoom * 100}%`, height: `${zoom * 100}%` }}>
+      <img src={assetUrl(assetId)} alt={title} className="h-full w-full object-contain" />
+    </div>
+  </div>
 }
 
 export function DownloadLinks({ assetId }: { assetId: string }) {
