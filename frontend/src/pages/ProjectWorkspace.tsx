@@ -1,5 +1,5 @@
 import ImageGallery from '@/components/ImageGallery'
-import { generationProject } from '@/lib/generationPolicy'
+import { generationProject, generationPromptName } from '@/lib/generationPolicy'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeftIcon } from 'lucide-react'
 import { request, usePresets, useProject, type GenerationJob } from '@/api/client'
@@ -92,7 +92,7 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
               <Button className="mt-5" disabled={!project.rights_confirmed || !project.assets.length} onClick={() => pickStep('master')}>Tiếp tục → Nhân vật gốc</Button>
             </TabsContent>
             {(['master', 'turnaround'] as const).map(step => <TabsContent key={step} value={step} className="mt-4 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
-              <div className="min-w-0 space-y-5"><PromptEditor projectId={project.id} name={step} />
+              <div className="min-w-0 space-y-5"><PromptEditor projectId={project.id} name={generationPromptName(project, step)} />
               <CharacterStep onSkip={step === 'turnaround' ? () => pickStep('concepts') : undefined} onApproved={() => pickStep(step === 'master' ? 'turnaround' : 'concepts')} key={`${project.preset_id}/${JSON.stringify(project.preset_steps)}/${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, step === 'turnaround' ? 'turnaround' : 'master')} step={step} /></div>
               <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step={step} onBack={() => pickStep(step === 'master' ? 'references' : 'master')} /></aside>
             </TabsContent>)}

@@ -7,11 +7,11 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { formatUsd, groupByGeneration, providerStatus, referenceLimitWarning } from '@/lib/providers'
 
-export default function ProviderPicker({ project }: { project: ProjectDetail }) {
+export default function ProviderPicker({ project, promptName = 'concept' }: { project: ProjectDetail; promptName?: string }) {
   const { data: providers } = useProviders()
   const { data: projects } = useProjects()
   const update = useUpdateProject(project.id)
-  const copyPrompts = useCopyPrompts(project.id)
+  const copyPrompts = useCopyPrompts(project.id, promptName)
   const others = (projects ?? []).filter((p) => p.id !== project.id)
   const { data: presets } = usePresets()
   const preset = presets?.find((p) => p.id === project.preset_id)
@@ -49,9 +49,9 @@ export default function ProviderPicker({ project }: { project: ProjectDetail }) 
       {others.length > 0 && (
         <div className="flex flex-wrap items-center gap-2 text-sm">
           <label>
-            Chép prompt concept từ dự án
+            Chép prompt {promptName} từ dự án
             <select
-              aria-label="Chép prompt concept từ dự án"
+              aria-label={`Chép prompt ${promptName} từ dự án`}
               className="max-w-full rounded border p-2"
               value=""
               disabled={copyPrompts.isPending}

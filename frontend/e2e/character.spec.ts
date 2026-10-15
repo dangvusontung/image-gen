@@ -220,3 +220,25 @@ test('compact concept selection creates an edited concept with its title', async
   expect(concepts[0].brief.outfit).toContain('bikini')
   expect(concepts[0].mood).toBe('Copied title')
 })
+
+
+test('copies shared prompts from another project into the current step only', async ({ page, request }) => {
+  const source = await (await request.post('/api/projects', { data: { name: 'Prompt source' } })).json()
+  const target = await (await request.post('/api/projects', { data: { name: 'Prompt target' } })).json()
+  const master = 'Copied source master instructions.'
+  const conceptDefault = await (await request.get(`/api/prompts/concept?project_id=${source.id}`)).json()
+  const concept = `Copied source concept instructions.\n${conceptDefault.body}`
+  await request.put(`/api/prompts/master?project_id=${source.id}`, { data: { body: master } })
+  await request.put(`/api/prompts/concept?project_id=${source.id}`, { data: { body: concept } })
+  await page.goto(`/#/projects/${target.id}`)
+  await page.getByRole('tab', { name: '2. Nhân vật gốc' }).click()
+  await page.getByLabel('Dự án nguồn cho prompt master', { exact: true }).selectOption(source.id)
+  await page.getByRole('button', { name: 'Chép prompt master', exact: true }).click()
+  await expect(page.getByLabel('Prompt master', { exact: true })).toHaveValue(master)
+  expect((await (await request.get(`/api/prompts/concept?project_id=${target.id}`)).json()).body).toBe(conceptDefault.body)
+  await page.getByRole('tab', { name: '4. Concept' }).click()
+  await page.getByLabel('Dự án nguồn cho prompt concept', { exact: true }).selectOption(source.id)
+  await page.getByRole('button', { name: 'Chép prompt concept', exact: true }).click()
+  await expect(page.getByLabel('Prompt concept', { exact: true })).toHaveValue(concept)
+  expect((await (await request.get(`/api/prompts/master?project_id=${target.id}`)).json()).body).toBe(master)
+})

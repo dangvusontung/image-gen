@@ -211,8 +211,8 @@ export const api = {
     request<Asset[]>(`/projects/${projectId}/assets/order`, json('PUT', { asset_ids: assetIds })),
   setStepLead: (projectId: string, step: WorkflowStep, lead: string | null) =>
     request<ProjectDetail>(`/projects/${projectId}/step-lead`, json('PUT', { step, lead })),
-  copyPrompts: (projectId: string, sourceProjectId: string) =>
-    request<unknown>(`/projects/${projectId}/prompts/copy`, json('POST', { source_project_id: sourceProjectId, prompt_names: ['concept'] })),
+  copyPrompts: (projectId: string, sourceProjectId: string, promptName = 'concept') =>
+    request<{ name: string; body: string }[]>(`/projects/${projectId}/prompts/copy`, json('POST', { source_project_id: sourceProjectId, prompt_names: [promptName] })),
   setStepTemplate: (projectId: string, step: WorkflowStep, assetId: string | null) =>
     request<ProjectDetail>(`/projects/${projectId}/step-template`, json('PUT', { step, asset_id: assetId })),
   updateAsset: (assetId: string, patch: { kind?: AssetKind; selected?: boolean }) =>
@@ -332,10 +332,10 @@ export function useSetStepLead(projectId: string) {
   })
 }
 
-export function useCopyPrompts(projectId: string) {
+export function useCopyPrompts(projectId: string, promptName = 'concept') {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: (sourceProjectId: string) => api.copyPrompts(projectId, sourceProjectId),
+    mutationFn: (sourceProjectId: string) => api.copyPrompts(projectId, sourceProjectId, promptName),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['prompt', projectId] }),
   })
 }

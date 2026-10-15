@@ -1,7 +1,7 @@
 import ProviderPicker from '@/components/ProviderPicker'
 import { useState } from 'react'
 import { ChevronDownIcon, SettingsIcon, StarIcon } from 'lucide-react'
-import { generationProject } from '@/lib/generationPolicy'
+import { generationProject, generationPromptName } from '@/lib/generationPolicy'
 import { useProviders, useUpdateProject, type WorkflowStep, type ProjectDetail } from '@/api/client'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { Button } from '@/components/ui/button'
@@ -46,7 +46,7 @@ export default function PinnedModelSwitcher({ project, purpose = 'master' }: { p
       </button>
 
       {open && <div className="max-h-[70vh] space-y-3 overflow-y-auto border-t p-3">
-        <ProviderPicker project={project} />
+        <ProviderPicker project={project} promptName={generationPromptName(project, purpose)} />
         {hybrid && <p className="text-xs text-muted-foreground">
           Quy trình tiết kiệm tự chọn model cho mỗi bước. Chuyển sang “Thủ công” trong bảng này để đổi tay.
         </p>}

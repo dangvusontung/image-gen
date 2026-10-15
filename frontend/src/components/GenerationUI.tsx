@@ -2,7 +2,7 @@ import CopyPromptButton from '@/components/CopyPromptButton'
 import { useEffect, useState } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon, Clock3Icon, LoaderCircleIcon, MaximizeIcon, ZoomInIcon, ZoomOutIcon } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { assetUrl, downloadUrl, request, useProviders, type GenerationJob } from '@/api/client'
+import { assetUrl, downloadUrl, request, useCopyPrompts, useProjects, useProviders, type GenerationJob } from '@/api/client'
 import { useFavouriteModels } from '@/lib/favourites'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { Button } from '@/components/ui/button'
@@ -196,6 +196,9 @@ export function JobDetails({ job, projectId }: { job: GenerationJob; projectId: 
 export function PromptEditor({ projectId, name }: { projectId: string; name: string }) {
   const qc = useQueryClient()
   const [body, setBody] = useState('')
+  const [sourceProjectId, setSourceProjectId] = useState('')
+  const projects = useProjects()
+  const copy = useCopyPrompts(projectId, name)
   const key = ['prompt', projectId, name]
   const path = `/prompts/${name}?project_id=${projectId}`
   const prompt = useQuery({ queryKey: key, queryFn: () => request<{ body: string }>(path) })
@@ -204,6 +207,21 @@ export function PromptEditor({ projectId, name }: { projectId: string; name: str
     onSuccess: () => qc.invalidateQueries({ queryKey: key }) })
   return <details open className="space-y-3 rounded-lg border bg-background p-4"><summary className="font-semibold">Chỉnh sửa prompt</summary>
     {prompt.error && <ErrorAlert error={prompt.error} title="Không tải được prompt" />}
+    <div className="flex flex-wrap items-end gap-2">
+      <label className="grid gap-1 text-sm">Chép prompt {name} từ dự án
+        <select aria-label={`Dự án nguồn cho prompt ${name}`} className="rounded border bg-background p-2" value={sourceProjectId} disabled={copy.isPending} onChange={e => { setSourceProjectId(e.target.value); copy.reset() }}>
+          <option value="">Chọn dự án…</option>
+          {projects.data?.filter(p => p.id !== projectId).map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+        </select>
+      </label>
+      <Button variant="outline" disabled={!sourceProjectId || copy.isPending || save.isPending} onClick={() => copy.mutate(sourceProjectId, { onSuccess: prompts => {
+        const copied = prompts.find(p => p.name === name)
+        if (copied) { setBody(copied.body); qc.setQueryData(key, copied) }
+      } })}>{copy.isPending ? 'Đang chép…' : `Chép prompt ${name}`}</Button>
+    </div>
+    {copy.error && <ErrorAlert error={copy.error} title="Không chép được prompt" />}
+    {projects.error && <ErrorAlert error={projects.error} title="Không tải được dự án nguồn" />}
+    {copy.isSuccess && <p role="status">Đã chép và lưu prompt {name} từ dự án nguồn.</p>}
     <Textarea aria-label={`Prompt ${name}`} rows={6} value={body} onChange={e => setBody(e.target.value)} />
     <div className="flex flex-wrap gap-2"><CopyPromptButton text={body} /><Button disabled={save.isPending || !body.trim()} onClick={() => save.mutate(body)}>Lưu prompt</Button>
       <Button variant="outline" disabled={save.isPending} onClick={() => save.mutate(null)}>Đặt lại mặc định</Button></div>

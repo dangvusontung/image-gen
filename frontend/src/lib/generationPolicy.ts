@@ -13,3 +13,9 @@ export function defaultGenerationSize(project: ProjectDetail, modelDefault?: str
   return project.workflow_mode && project.workflow_mode !== 'manual'
     ? (project.provider === 'bfl' ? '1MP' : '1K') : modelDefault
 }
+
+
+export function generationPromptName(project: ProjectDetail, purpose: 'master' | 'turnaround' | 'concept' | 'enhance') {
+  const target = generationProject(project, purpose)
+  return target.provider === 'bfl' && (purpose === 'master' || purpose === 'turnaround') ? `${purpose}_flux` : purpose
+}

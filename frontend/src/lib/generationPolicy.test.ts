@@ -19,3 +19,13 @@ describe('per-step generation settings', () => {
     expect(generationProject({ ...project, preset_steps: undefined, workflow_mode: 'manual' }, 'concept').model).toBe('mock-v1')
   })
 })
+
+it('edits and copies the actual BFL template including preset overrides', async () => {
+  const { generationPromptName } = await import('./generationPolicy')
+  const manual = { ...project, preset_steps: undefined, workflow_mode: 'manual', provider: 'bfl' } as ProjectDetail
+  expect(generationPromptName(manual, 'master')).toBe('master_flux')
+  expect(generationPromptName(manual, 'turnaround')).toBe('turnaround_flux')
+  expect(generationPromptName(manual, 'concept')).toBe('concept')
+  expect(generationPromptName(project, 'master')).toBe('master')
+  expect(generationPromptName({ ...project, preset_steps: { master: { provider: 'bfl', model: 'flux-2-pro', size: '1MP' } } }, 'master')).toBe('master_flux')
+})
