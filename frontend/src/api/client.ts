@@ -127,7 +127,7 @@ export class ApiError extends Error {
   }
 }
 
-export async function request<T>(path: string, init?: RequestInit): Promise<T> {
+export async function request<T>(path: string, init?: RequestInit, responseType: 'json' | 'blob' = 'json'): Promise<T> {
   let resp: Response
   try {
     resp = await fetch(`${API_BASE}${path}`, init)
@@ -135,6 +135,7 @@ export async function request<T>(path: string, init?: RequestInit): Promise<T> {
     throw new ApiError(0, 'network_error', 'Không kết nối được tới server. Kiểm tra backend đang chạy.')
   }
   if (resp.status === 204) return undefined as T
+  if (resp.ok && responseType === 'blob') return await resp.blob() as T
   const body = await resp.json().catch(() => null)
   if (!resp.ok) {
     const detail = body?.detail

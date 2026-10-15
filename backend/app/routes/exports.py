@@ -7,6 +7,7 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query
 from fastapi.encoders import jsonable_encoder
 from fastapi.responses import FileResponse, Response, StreamingResponse
+from pydantic import BaseModel, Field
 from PIL import Image, ImageDraw, ImageOps
 from sqlalchemy.orm import Session
 from starlette.background import BackgroundTask
@@ -160,3 +161,37 @@ def download_concepts(project_id: str, db: Session = Depends(get_db)):
 
     return StreamingResponse(chunks(), media_type="application/zip", background=BackgroundTask(archive.close),
                              headers={"Content-Disposition": f'attachment; filename="concepts-{project_id}.zip"'})
+
+
+class GalleryDownloadRequest(BaseModel):
+    asset_ids: list[str] = Field(min_length=1, max_length=500)
+
+
+@router.post("/api/gallery/download")
+def download_gallery(data: GalleryDownloadRequest, db: Session = Depends(get_db)):
+    ids = list(dict.fromkeys(data.asset_ids))
+    assets = (db.query(Asset).join(GenerationJob, Asset.job_id == GenerationJob.id)
+              .filter(Asset.id.in_(ids), Asset.kind == "generated",
+                      GenerationJob.status == JobStatus.SUCCEEDED,
+                      GenerationJob.project_id == Asset.project_id).all())
+    if len(assets) != len(ids):
+        fail("gallery_images_missing", "Một số ảnh đã chọn không còn trong gallery. Vui lòng chọn lại.", 400)
+    by_id = {asset.id: asset for asset in assets}
+    archive = tempfile.SpooledTemporaryFile(max_size=8 * 1024 * 1024)
+    try:
+        with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as zipped:
+            for asset_id in ids:
+                asset = by_id[asset_id]
+                path = file_for(asset)
+                zipped.write(path, f"{asset.project_id}/{asset.id}{path.suffix}")
+        archive.seek(0)
+    except BaseException:
+        archive.close()
+        raise
+
+    def chunks():
+        while chunk := archive.read(64 * 1024):
+            yield chunk
+
+    return StreamingResponse(chunks(), media_type="application/zip", background=BackgroundTask(archive.close),
+                             headers={"Content-Disposition": 'attachment; filename="gallery-selected.zip"'})

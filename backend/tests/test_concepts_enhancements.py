@@ -463,3 +463,24 @@ def test_project_and_global_gallery_filters_and_pagination(client, studio):
     assert client.get('/api/gallery', params={'project_id': 'missing'}).status_code == 404
     assert client.get('/api/gallery', params={'purpose': 'invalid'}).status_code == 422
     assert client.get('/api/gallery', params={'limit': 101}).status_code == 422
+
+
+def test_gallery_bulk_zip_contains_only_selected_generated_images(client, studio):
+    base, _, _ = studio
+    result = client.post(f'{base}/concepts/generate', json={'slots': [1, 2], 'confirmed': True}).json()
+    for job_id in result['job_ids']:
+        wait_for_job(client, job_id)
+    items = client.get('/api/gallery', params={'purpose': 'concept'}).json()['items']
+    chosen = items[1]['id']
+    response = client.post('/api/gallery/download', json={'asset_ids': [chosen, chosen]})
+    assert response.status_code == 200
+    with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
+        assert len(archive.namelist()) == 1
+        assert chosen in archive.namelist()[0]
+        assert archive.read(archive.namelist()[0])
+    assert client.post('/api/gallery/download', json={'asset_ids': []}).status_code == 422
+    assert client.post('/api/gallery/download', json={'asset_ids': ['missing']}).status_code == 400
+    assert client.post('/api/gallery/download', json={'asset_ids': [chosen, 'missing']}).status_code == 400
+    project_id = base.rsplit('/', 1)[1]
+    source_id = client.get(f'/api/projects/{project_id}').json()['assets'][0]['id']
+    assert client.post('/api/gallery/download', json={'asset_ids': [source_id]}).status_code == 400
