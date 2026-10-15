@@ -2,7 +2,7 @@ import { groupConcepts } from '@/lib/conceptGroups'
 import EditConceptPrompt from '@/components/EditConceptPrompt'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import CopyConceptConfiguration from '@/components/CopyConceptConfiguration'
-import { ConceptMenu, useConceptChoices } from '@/components/ConceptMenu'
+import { ConceptMenu, OutfitSwitcher, useConceptChoices } from '@/components/ConceptMenu'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
 import { useImageSize } from '@/lib/imageSize'
 import { useState } from 'react'
@@ -126,7 +126,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       path: `${base}/concepts/generate`,
       data: {
         ...(builtIn ? { slots: chosen.map(p => p.slot) } : { proposal_ids: chosen.map(p => p.id) }),
-        confirmed, size: size || null,
+        confirmed, size: size || null, choices,
         // Only the edited slots travel; everything else keeps its stored wording.
         briefs: Object.fromEntries(chosen.filter(p => edits[p.slot]).map(p => [p.slot, Object.fromEntries(Object.entries(edits[p.slot]).filter(([field]) => field !== 'title'))])),
         titles: Object.fromEntries(chosen.filter(p => edits[p.slot]?.title).map(p => [p.slot, edits[p.slot].title])),
@@ -171,7 +171,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
           <FixAndRetry concept={c} projectId={project.id} size={size} choices={choices} disabled={!ready} />}
         <div className="flex flex-wrap gap-2">
           <EditConceptPrompt key={c.id} concept={c} projectId={project.id} size={size} disabled={pending || active(c.job) || !ready} />
-          <Button size="sm" variant="outline" disabled={pending || active(c.job) || !ready} onClick={() => action.mutate({ path: `${base}/concepts/${c.id}/regenerate`, data: { size: size || null } })}>Tạo lại ô {c.slot}</Button>
+          <Button size="sm" variant="outline" disabled={pending || active(c.job) || !ready} onClick={() => action.mutate({ path: `${base}/concepts/${c.id}/regenerate`, data: { size: size || null, choices } })}>Tạo lại ô {c.slot}</Button>
           <Button size="sm" disabled={c.job.status !== 'succeeded'} onClick={() => onEnhance(c.id)}>Nâng cấp ô {c.slot}</Button>
         </div>
           </div>
@@ -196,6 +196,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       setPicked([])
       setConfirmed(false)
     }} />
+    <OutfitSwitcher choices={choices} onChange={next => { setChoices(next); setConfirmed(false); setCustomConfirmed(false) }} />
     {list.length > 0 && <details className="space-y-4 rounded-xl border p-4">
       <summary className="cursor-pointer font-semibold">{list.length} concept · Mở/đóng danh sách</summary>
       <div className="flex flex-wrap items-center gap-3">

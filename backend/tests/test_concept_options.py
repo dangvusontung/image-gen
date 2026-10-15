@@ -91,3 +91,26 @@ def test_glamour_style_changes_direction_without_changing_identity():
     assert "GLAMOUR" in instruction
     assert "Preserve the actual person's face" in instruction
     assert "If the subject is a minor" in instruction
+
+
+def test_new_outfit_switch_preserves_scene_and_varies_colors():
+    for outfit in ['bikini', 'satin_dress', 'satin_pyjamas', 'shirt_shorts', 'bodysuit_trousers', 'offshoulder_skirt']:
+        first = apply_choices(proposal_brief(), ConceptChoices(outfit=outfit), 1, [])
+        second = apply_choices(proposal_brief(), ConceptChoices(outfit=outfit), 2, [])
+        assert first['outfit'] != second['outfit']
+        assert first['silhouette'] != 'wide cotton trousers'
+        for field in ['setting', 'activity', 'pose', 'gaze', 'camera']:
+            assert first[field] == proposal_brief()[field]
+    original = proposal_brief(outfit='an opaque teal bikini, barefoot')
+    assert apply_choices(original, ConceptChoices(outfit='bikini'), 1, [])['outfit'] == original['outfit']
+
+
+def test_outfit_switch_is_applied_to_generated_concept_prompt(client, studio):
+    base, _, _ = studio
+    for outfit, expected in [('satin_dress', 'satin midi slip dress'), ('bikini', 'bikini')]:
+        result = client.post(f'{base}/concepts/generate', json={'slots': [67], 'choices': {'outfit': outfit}, 'confirmed': True})
+        assert result.status_code == 201, result.text
+        job = wait_for_job(client, result.json()['job_ids'][0])
+        assert job['status'] == 'succeeded'
+        assert expected in job['prompt']
+        assert job['meta']['concept_choices']['outfit'] == outfit

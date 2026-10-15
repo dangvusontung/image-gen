@@ -8,8 +8,8 @@ export interface ConceptChoices {
   style: string; outfit: string; top: string; scene: string; lighting: string
   custom_outfit: string; custom_scene: string; activity: string
 }
-// Everything defaults to "auto": the menu must never silently rewrite a concept's own wording.
-export const CONCEPT_DEFAULTS: ConceptChoices = { glasses: false, style: 'auto', outfit: 'auto', top: 'auto', scene: 'auto', lighting: 'auto', custom_outfit: '', custom_scene: '', activity: '' }
+// Bikini is the default outfit; other styling keeps each concept's own wording.
+export const CONCEPT_DEFAULTS: ConceptChoices = { glasses: false, style: 'auto', outfit: 'bikini', top: 'auto', scene: 'auto', lighting: 'auto', custom_outfit: '', custom_scene: '', activity: '' }
 
 export const overridesConcept = (c: ConceptChoices) =>
   Boolean(c.glasses) || c.style !== 'auto' || c.outfit !== 'auto' || c.top !== 'auto' || c.scene !== 'auto' ||
@@ -18,9 +18,13 @@ export const overridesConcept = (c: ConceptChoices) =>
 export function useConceptChoices(projectId: string) {
   const key = `concept-choices:${projectId}`
   const [choices, setChoices] = useState<ConceptChoices>(() => {
-    try { return { ...CONCEPT_DEFAULTS, ...JSON.parse(localStorage.getItem(key) || '{}') } } catch { return CONCEPT_DEFAULTS }
+    try {
+      const saved = JSON.parse(localStorage.getItem(key) || '{}')
+      if (!localStorage.getItem(`${key}:outfit-switch-v1`) && saved.outfit === 'auto') saved.outfit = 'bikini'
+      return { ...CONCEPT_DEFAULTS, ...saved }
+    } catch { return CONCEPT_DEFAULTS }
   })
-  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(choices)) } catch { /* Browser storage may be unavailable. */ } }, [key, choices])
+  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(choices)); localStorage.setItem(`${key}:outfit-switch-v1`, '1') } catch { /* Browser storage may be unavailable. */ } }, [key, choices])
   return [choices, setChoices] as const
 }
 
@@ -34,7 +38,7 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
       <span role="status" className="text-amber-800">
         Đang ghi đè mô tả của <strong>tất cả</strong> concept bằng lựa chọn bên dưới.
       </span>
-      <button type="button" className="rounded border bg-background px-3 py-1" onClick={() => onChange({ ...CONCEPT_DEFAULTS })}>
+      <button type="button" className="rounded border bg-background px-3 py-1" onClick={() => onChange({ ...CONCEPT_DEFAULTS, outfit: 'auto' })}>
         Dùng mô tả gốc của từng concept
       </button>
     </div>}
@@ -59,4 +63,19 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
     </label>
     <p className="text-xs text-muted-foreground">Lựa chọn được lưu trong trình duyệt này. Trang phục, bối cảnh và prompt thực tế được lưu với từng ảnh trong lịch sử.</p>
   </fieldset>
+}
+
+
+export function OutfitSwitcher({ choices, onChange }: { choices: ConceptChoices; onChange: (next: ConceptChoices) => void }) {
+  const outfits = [['bikini', 'Bikini (mặc định)'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy'], ['auto', 'Trang phục riêng của từng concept']]
+  return <div className="flex flex-wrap items-end gap-4 rounded-xl border p-4">
+    <label className="grid gap-2 text-sm font-medium">Trang phục
+      <select aria-label="Đổi trang phục concept" className="rounded border bg-background p-2" value={choices.outfit} onChange={e => onChange({ ...choices, outfit: e.target.value, top: 'auto' })}>
+        {outfits.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        {!outfits.some(([value]) => value === choices.outfit) && <option value={choices.outfit}>Trang phục tùy chọn từ menu nâng cao</option>}
+      </select>
+    </label>
+    <label className="flex items-center gap-2 py-2 text-sm"><input type="checkbox" checked={Boolean(choices.glasses)} onChange={e => onChange({ ...choices, glasses: e.target.checked })} />+ Kính</label>
+    <p className="text-xs text-muted-foreground">Áp dụng cho concept bạn chọn khi tạo ảnh hoặc tạo lại. Mỗi concept vẫn giữ bối cảnh, tư thế và màu phối riêng.</p>
+  </div>
 }

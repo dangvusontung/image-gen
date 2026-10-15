@@ -217,6 +217,6 @@ test('compact concept selection creates an edited concept with its title', async
   await expect(page.getByRole('img', { name: 'Concept 1 · Copied title', exact: true })).toBeVisible()
   const concepts = await (await request.get(`${base}/concepts`)).json()
   expect(concepts).toHaveLength(1)
-  expect(concepts[0].brief.outfit).toBe('blue shirt')
+  expect(concepts[0].brief.outfit).toContain('bikini')
   expect(concepts[0].mood).toBe('Copied title')
 })

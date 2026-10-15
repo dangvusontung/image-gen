@@ -9,6 +9,7 @@ class ConceptChoices(BaseModel):
     style: Literal["auto", "cute", "glamour"] = "auto"
     outfit: Literal["auto", "denim_mix", "denim_shorts", "denim_skirt", "pleated_skirt", "tennis_skirt",
                     "wide_trousers", "straight_jeans", "cargo_shorts", "sundress", "midi_dress", "knit_dress",
+                    "bikini", "satin_dress", "satin_pyjamas", "shirt_shorts", "bodysuit_trousers", "offshoulder_skirt",
                     "pyjamas", "overalls", "linen_set", "blazer_skirt", "tracksuit", "custom"] = "auto"
     top: Literal["auto", "tee", "knit", "blouse", "cardigan", "fitted_tank", "cropped_tee", "shirt",
                  "hoodie", "turtleneck", "polo", "vest"] = "auto"
@@ -35,7 +36,9 @@ class ConceptChoices(BaseModel):
 
 MENU = {
     "style": [("auto", "Theo từng concept (không ghi đè)"), ("cute", "Dễ thương · nhẹ nhàng, ấm áp"), ("glamour", "Glamour · táo bạo, cuốn hút")],
-    "outfit": [("auto", "Theo từng concept (không ghi đè)"), ("denim_mix", "Phối quần short jeans và chân váy"),
+    "outfit": [("bikini", "Bikini · mặc định"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
+               ("shirt_shorts", "Sơ mi + quần short"), ("bodysuit_trousers", "Bodysuit + quần dài"),
+               ("offshoulder_skirt", "Áo trễ vai + chân váy"), ("auto", "Theo từng concept (không ghi đè)"), ("denim_mix", "Phối quần short jeans và chân váy"),
                ("denim_shorts", "Quần short jeans"), ("cargo_shorts", "Quần short cargo"), ("denim_skirt", "Chân váy jeans"),
                ("pleated_skirt", "Chân váy xếp ly"), ("tennis_skirt", "Chân váy tennis"), ("straight_jeans", "Quần jeans ống đứng"),
                ("wide_trousers", "Quần ống rộng"), ("sundress", "Váy mùa hè"), ("midi_dress", "Váy midi"),
@@ -158,6 +161,15 @@ def apply_choices(brief, choices, slot, prior):
         "blazer_skirt": "a tailored blazer over a plain top with a short skirt and loafers",
         "tracksuit": "a soft cotton tracksuit with clean trainers",
     }
+    color = ("coral pink", "powder blue", "sage green", "burgundy", "lavender", "champagne beige", "deep teal", "terracotta")[(slot - 1) % 8]
+    full_outfits.update({
+        "bikini": (result["outfit"] if "bikini" in result["outfit"].lower() else f"an opaque {color} two-piece bikini, barefoot"),
+        "satin_dress": f"an opaque {color} satin midi slip dress with thin straps and a softly draped neckline, barefoot",
+        "satin_pyjamas": f"an opaque {color} satin camisole and matching fully lined pajama shorts, barefoot",
+        "shirt_shorts": f"an opaque {color} relaxed button-up shirt over a white camisole and cream tailored shorts, barefoot",
+        "bodysuit_trousers": f"an opaque {color} square-neck bodysuit tucked into cream high-waisted wide-leg trousers, barefoot",
+        "offshoulder_skirt": f"an opaque {color} off-shoulder knitted top with a cream fitted midi skirt, barefoot",
+    })
     # A user-selected garment replaces the planner's silhouette too, so the prompt
     # never asks for a chosen skirt and a planned pair of shorts at once.
     if outfit in bottoms:
