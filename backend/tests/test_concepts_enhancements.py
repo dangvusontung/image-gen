@@ -230,7 +230,7 @@ def test_exports_validation_and_project_isolation(client, studio):
     assert client.get(f"{base}/contact-sheet").status_code == 400
     # With no proposed round, the step offers the built-in nine straight from the prompt.
     built_in = client.get(f"{base}/concept-proposals").json()
-    assert len(built_in) == 66 and all(p["run"] == 0 for p in built_in)
+    assert len(built_in) == 72 and all(p["run"] == 0 for p in built_in)
     propose(client, base)
     unknown = client.post(f"{base}/concepts/generate", json={"proposal_ids": ["nope"], "confirmed": True})
     assert unknown.status_code == 404 and unknown.json()["detail"]["code"] == "proposal_not_found"
@@ -264,7 +264,7 @@ def test_concepts_can_exclude_an_approved_turnaround(client, studio):
 def test_default_concepts_mix_direct_and_slightly_off_camera_gaze():
     from app.concept_defaults import DEFAULT_CONCEPTS
     from app.routes.concepts import preferred_angle
-    assert len(DEFAULT_CONCEPTS) == 66
+    assert len(DEFAULT_CONCEPTS) == 72
     direct = [c for c in DEFAULT_CONCEPTS[:9] if c["gaze"] == "looking directly into the camera lens, eyes open"]
     assert len(direct) == 5
     off_camera = [c for c in DEFAULT_CONCEPTS[:9] if c not in direct]
@@ -298,7 +298,7 @@ def test_regenerate_uses_exact_edited_prompt_and_keeps_it_for_next_revision(clie
 def test_seven_added_concepts_are_selectable_and_renderable(client, studio):
     base, _, _ = studio
     defaults = client.get(f'{base}/concept-proposals').json()
-    assert len(defaults) == 66
+    assert len(defaults) == 72
     added = defaults[9:16]
     assert [p['slot'] for p in added] == list(range(10, 17))
     assert [p['title'] for p in added] == ['At-home manicure', 'Soft morning knit', 'Kitchen daydream',
@@ -335,7 +335,7 @@ def test_reference_concepts_use_bikini_outfits(client, studio):
     defaults = client.get(f'{base}/concept-proposals').json()
     added = defaults[23:26]
     assert [p['slot'] for p in added] == [24, 25, 26]
-    for concept in defaults:
+    for concept in defaults[:66]:
         assert 'bikini' in concept['brief']['outfit']
         assert 'bikini' in concept['brief']['silhouette']
     assert len({c['brief']['outfit'] for c in defaults}) == len(defaults)
@@ -431,7 +431,7 @@ def test_beach_home_portrait_concepts_generate_selected_scenes(client, studio):
 def test_glamour_additions_are_selectable_and_keep_scene_outfits(client, studio):
     base, _, _ = studio
     defaults = client.get(f'{base}/concept-proposals').json()
-    assert [p['slot'] for p in defaults[60:]] == list(range(61, 67))
+    assert [p['slot'] for p in defaults[60:66]] == list(range(61, 67))
     assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 66}).status_code == 200
     result = client.post(f'{base}/concepts/generate', json={'slots': [61, 66], 'confirmed': True})
     assert result.status_code == 201, result.text
@@ -484,3 +484,21 @@ def test_gallery_bulk_zip_contains_only_selected_generated_images(client, studio
     project_id = base.rsplit('/', 1)[1]
     source_id = client.get(f'/api/projects/{project_id}').json()['assets'][0]['id']
     assert client.post('/api/gallery/download', json={'asset_ids': [source_id]}).status_code == 400
+
+
+def test_fashion_glamour_keeps_varied_outfits_in_generated_prompts(client, studio):
+    base, _, _ = studio
+    defaults = client.get(f'{base}/concept-proposals').json()
+    added = defaults[66:]
+    assert [p['slot'] for p in added] == list(range(67, 73))
+    assert len({p['brief']['outfit'] for p in added}) == 6
+    assert all('bikini' not in p['brief']['outfit'] for p in added)
+    assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 72}).status_code == 200
+    result = client.post(f'{base}/concepts/generate', json={'slots': [67, 70, 72], 'confirmed': True})
+    assert result.status_code == 201, result.text
+    for slot, job_id in zip([67, 70, 72], result.json()['job_ids'], strict=True):
+        job = wait_for_job(client, job_id)
+        assert job['status'] == 'succeeded'
+        assert defaults[slot - 1]['brief']['outfit'] in job['prompt']
+        assert 'bikini' not in job['prompt']
+    assert {c['slot'] for c in client.get(f'{base}/concepts').json()} == {67, 70, 72}

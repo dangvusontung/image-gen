@@ -797,3 +797,80 @@ DEFAULT_CONCEPTS = tuple(
     {**concept, "outfit": f"an opaque {color} two-piece bikini, barefoot"}
     for concept, color in zip(DEFAULT_CONCEPTS, _BIKINI_PALETTE, strict=True)
 )
+
+# Fashion glamour concepts keep their individual clothing instead of the bikini palette.
+DEFAULT_CONCEPTS += ({'title': 'Burgundy satin evening',
+  'setting': 'a softly lit hotel suite with floor-length curtains and a warm reading lamp',
+  'activity': 'pausing beside the curtains',
+  'pose': 'standing with a relaxed weight shift, one hand lightly holding the curtain edge and the other '
+          'resting naturally at her side',
+  'outfit': 'an opaque burgundy satin midi slip dress with thin straps and a softly draped neckline',
+  'silhouette': 'a fluid fitted-waist satin midi dress',
+  'expression': 'a poised confident half-smile',
+  'gaze': 'direct eye contact with the camera',
+  'camera': 'front three-quarter view at eye level',
+  'framing': 'full-body fashion portrait',
+  'lighting': 'warm lamplight with soft window fill'},
+ {'title': 'Emerald open-back terrace',
+  'setting': 'a private rooftop terrace above blurred city lights',
+  'activity': 'turning gently toward the camera',
+  'pose': 'standing at the terrace rail, one hand resting on it, torso angled away and head turned back '
+          'naturally with face clearly visible',
+  'outfit': 'an opaque emerald-green open-back evening dress with a long skirt and simple gold earrings',
+  'silhouette': 'a long softly fitted open-back dress',
+  'expression': 'calm and self-assured',
+  'gaze': 'toward the lens over her shoulder',
+  'camera': 'rear three-quarter view at shoulder height',
+  'framing': 'three-quarter-body editorial portrait',
+  'lighting': 'cool blue-hour ambient light with warm reflected fill'},
+ {'title': 'Ivory shirt and charcoal shorts',
+  'setting': 'a bright bedroom with white linen bedding and a wooden chair',
+  'activity': 'adjusting the rolled cuff of a shirt',
+  'pose': 'seated comfortably on the chair, shoulders relaxed, legs angled to one side and hands lightly '
+          'touching one cuff',
+  'outfit': 'an opaque ivory button-up shirt with the top two buttons casually undone, a fully lined ivory '
+            'camisole underneath, and tailored charcoal high-waisted shorts',
+  'silhouette': 'a relaxed layered shirt and fitted tailored shorts',
+  'expression': 'a subtle playful smile',
+  'gaze': 'slightly past the camera',
+  'camera': 'near-frontal view at seated eye level',
+  'framing': 'three-quarter-body portrait',
+  'lighting': 'soft morning window light'},
+ {'title': 'Midnight bodysuit editorial',
+  'setting': 'a modern suite with a velvet chair and dark neutral walls',
+  'activity': 'posing beside the chair',
+  'pose': 'standing upright with one hand on the chair back, the other at her waist, shoulders relaxed and '
+          'chin level',
+  'outfit': 'an opaque midnight-blue square-neck sleeveless bodysuit tucked into cream high-waisted wide-leg '
+            'trousers',
+  'silhouette': 'a fitted bodysuit balanced with flowing tailored trousers',
+  'expression': 'a composed confident gaze',
+  'gaze': 'directly toward the camera',
+  'camera': 'front diagonal view at eye level',
+  'framing': 'full-body fashion portrait',
+  'lighting': 'soft directional studio-style light with gentle rim highlights'},
+ {'title': 'Mauve off-shoulder lounge',
+  'setting': 'a quiet living room with a pale sofa and textured cushions',
+  'activity': 'relaxing at the corner of the sofa',
+  'pose': 'sitting sideways on the sofa with legs together and knees softly bent, one hand resting on the '
+          'cushion and the other lightly touching her hair',
+  'outfit': 'an opaque dusty-mauve off-shoulder knitted top with a fitted cream midi skirt',
+  'silhouette': 'a soft off-shoulder knit and a fitted midi skirt',
+  'expression': 'a warm relaxed smile',
+  'gaze': 'toward the camera with a small natural head turn',
+  'camera': 'slightly elevated front three-quarter view',
+  'framing': 'three-quarter-body seated portrait',
+  'lighting': 'warm late-afternoon daylight with soft shadows'},
+ {'title': 'Champagne satin night-in',
+  'setting': 'a cozy bedroom with cream pillows, a bedside lamp and a closed book',
+  'activity': 'putting a book aside before resting',
+  'pose': 'sitting upright against pillows with knees comfortably bent to one side, one hand on the book and '
+          'the other resting naturally on the bedding',
+  'outfit': 'an opaque champagne satin camisole with delicate lace trim and matching fully lined pajama '
+            'shorts',
+  'silhouette': 'a coordinated satin camisole and lounge shorts set',
+  'expression': 'a soft self-assured smile',
+  'gaze': 'toward the camera',
+  'camera': 'near-frontal view at seated eye level',
+  'framing': 'three-quarter-body bedroom editorial',
+  'lighting': 'warm bedside lamplight with gentle ambient fill'})
