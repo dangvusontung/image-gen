@@ -1,3 +1,4 @@
+import Gallery from '@/pages/Gallery'
 import Dashboard from '@/pages/Dashboard'
 import ProjectWorkspace from '@/pages/ProjectWorkspace'
 import ProviderSettings from '@/pages/ProviderSettings'
@@ -11,6 +12,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-muted/40">
       {route.page === 'project' && <ProjectWorkspace key={route.projectId} projectId={route.projectId} onBack={home} />}
+      {route.page === 'gallery' && <Gallery onBack={home} />}
       {route.page === 'settings' && <ProviderSettings onBack={home} />}
       <GlobalHistory onOpenProject={(id) => navigate(`/projects/${id}`)} />
       {route.page === 'dashboard' && (

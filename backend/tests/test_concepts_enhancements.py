@@ -440,3 +440,26 @@ def test_glamour_additions_are_selectable_and_keep_scene_outfits(client, studio)
         assert job['status'] == 'succeeded'
         assert 'bikini' in job['prompt']
     assert {c['slot'] for c in client.get(f'{base}/concepts').json()} == {61, 66}
+
+
+def test_project_and_global_gallery_filters_and_pagination(client, studio):
+    base, _, _ = studio
+    project_id = base.rsplit('/', 1)[1]
+    result = client.post(f'{base}/concepts/generate', json={'slots': [1, 2], 'confirmed': True}).json()
+    for job_id in result['job_ids']:
+        wait_for_job(client, job_id)
+    own = client.get('/api/gallery', params={'project_id': project_id, 'purpose': 'concept'}).json()
+    assert own['total'] == 2
+    assert all(item['project_id'] == project_id and item['purpose'] == 'concept' for item in own['items'])
+    assert all(item['model'] == 'mock-v1' and item['prompt'] for item in own['items'])
+    first = client.get('/api/gallery', params={'purpose': 'concept', 'limit': 1}).json()
+    second = client.get('/api/gallery', params={'purpose': 'concept', 'limit': 1, 'offset': 1}).json()
+    assert first['total'] == second['total'] == 2
+    assert first['items'][0]['id'] != second['items'][0]['id']
+    other = client.post('/api/projects', json={'name': 'Other gallery'}).json()['id']
+    assert client.get('/api/gallery', params={'project_id': other}).json() == {'total': 0, 'items': []}
+    assert client.get('/api/gallery').json()['total'] > 2  # Includes the approved master.
+    assert client.get('/api/gallery', params={'purpose': 'enhance'}).json()['total'] == 0
+    assert client.get('/api/gallery', params={'project_id': 'missing'}).status_code == 404
+    assert client.get('/api/gallery', params={'purpose': 'invalid'}).status_code == 422
+    assert client.get('/api/gallery', params={'limit': 101}).status_code == 422

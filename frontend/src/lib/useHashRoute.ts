@@ -1,6 +1,6 @@
 import { useCallback, useSyncExternalStore } from 'react'
 
-export type Route = { page: 'dashboard' } | { page: 'settings' } | { page: 'project'; projectId: string }
+export type Route = { page: 'dashboard' } | { page: 'settings' } | { page: 'gallery' } | { page: 'project'; projectId: string }
 
 const subscribe = (cb: () => void) => {
   window.addEventListener('hashchange', cb)
@@ -10,6 +10,7 @@ const subscribe = (cb: () => void) => {
 export function parseRoute(hash: string): Route {
   const project = hash.match(/^#\/projects\/([\w-]+)/)
   if (project) return { page: 'project', projectId: project[1] }
+  if (hash === '#/gallery') return { page: 'gallery' }
   if (hash.startsWith('#/settings')) return { page: 'settings' }
   return { page: 'dashboard' }
 }

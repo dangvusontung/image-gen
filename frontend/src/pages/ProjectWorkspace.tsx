@@ -1,3 +1,4 @@
+import ImageGallery from '@/components/ImageGallery'
 import { generationProject } from '@/lib/generationPolicy'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeftIcon } from 'lucide-react'
@@ -29,6 +30,7 @@ const STEPS = [
   { value: 'turnaround', label: '3. Turnaround (tùy chọn)' },
   { value: 'concepts', label: '4. Concept' },
   { value: 'enhance', label: '5. Nâng cấp' },
+  { value: 'gallery', label: 'Gallery' },
   { value: 'history', label: 'Lịch sử' },
 ]
 
@@ -103,6 +105,7 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
               <PromptEditor projectId={project.id} name="enhance" />
               <EnhanceStep onBack={() => pickStep('concepts')} key={`${project.preset_id}/${JSON.stringify(project.preset_steps)}/${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'enhance')} selectedConceptId={selectedConceptId} onSelect={setSelectedConceptId} />
             </TabsContent>
+            <TabsContent value="gallery" className="mt-4"><ImageGallery projectId={project.id} /></TabsContent>
             <TabsContent value="history" className="mt-4"><HistoryStep projectId={projectId} /></TabsContent>
           </Tabs>
           <GenerationMonitor projectId={projectId} projectName={project.name} />

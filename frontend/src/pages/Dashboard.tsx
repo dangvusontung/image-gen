@@ -31,7 +31,8 @@ export default function Dashboard({
           <h1 className="text-3xl font-semibold tracking-tight">Character Studio</h1>
           <p className="mt-1 text-muted-foreground">Biến ảnh của một người thành nhân vật 3D phong cách hoá, nhất quán.</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="lg" onClick={() => { window.location.hash = '/gallery' }}><ImageIcon /> Gallery tổng</Button>
           <Button variant="outline" size="lg" onClick={onOpenSettings}>
             <SettingsIcon /> Nhà cung cấp & model
           </Button>
