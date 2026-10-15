@@ -24,7 +24,7 @@ it.each(['master', 'concept', 'enhance', 'master_flux', 'turnaround_flux'])('cop
   await user.clear(screen.getByLabelText(`Prompt ${name}`))
   await user.type(screen.getByLabelText(`Prompt ${name}`), 'Unsaved draft')
   await user.selectOptions(screen.getByLabelText(`Dự án nguồn cho prompt ${name}`), 'source')
-  await user.click(screen.getByRole('button', { name: `Chép prompt ${name}`, exact: true }))
+  await user.click(screen.getByRole('button', { name: `Chép prompt ${name}` }))
   await waitFor(() => expect(screen.getByLabelText(`Prompt ${name}`)).toHaveValue('Copied source prompt'))
   expect(payload).toEqual({ source_project_id: 'source', prompt_names: [name] })
   expect(screen.getByRole('status')).toHaveTextContent(`Đã chép và lưu prompt ${name}`)
