@@ -230,7 +230,7 @@ def new_concept(db, registry, project, run, slot, mood, camera, revision, size, 
 
 
 #: Custom images are numbered from here, clear of the nine concept slots.
-CUSTOM_SLOT_BASE = 101
+CUSTOM_SLOT_BASE = max(101, len(DEFAULT_CONCEPTS) + 1)
 #: A deliberately plain starting point: the styling menu supplies everything that matters.
 NEUTRAL_BRIEF = {
     "setting": "a simple setting suited to the outfit",
@@ -346,7 +346,7 @@ def generate_concepts(project_id: str, data: GenerateRequest, request: Request, 
         if data.choices is None or not data.choices.overrides_concept():
             fail("choices_required", "Chọn ít nhất một mục trong menu trang phục/bối cảnh", 400)
         run = (db.query(func.max(Concept.run)).filter_by(project_id=project_id).scalar() or 0) + 1
-        # Custom images sit above the nine so they never collide with a concept slot.
+        # Custom images start after the built-in slots.
         base_slot = CUSTOM_SLOT_BASE
         jobs, concepts = [], []
         for index in range(data.count):

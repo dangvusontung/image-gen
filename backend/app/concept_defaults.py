@@ -1197,3 +1197,117 @@ DEFAULT_CONCEPTS += ({'title': 'Private hotel morning',
   'camera': 'front three-quarter view at eye level',
   'framing': 'three-quarter-body environmental portrait',
   'lighting': 'cool city-night ambient light with warm light from the open suite'})
+
+DEFAULT_CONCEPTS += ({'title': 'Vintage cafe window turn',
+  'setting': 'a cozy vintage cafe dining nook with cream walls, dark wood wainscoting and a narrow counter, '
+             'a wall shelf of decorative books and ceramic plates, hanging wine glasses, large monstera '
+             'plants, a tall metal-grille window with tied-back white sheer curtains, leafy trees outside, '
+             'and a white-linen dining table with pizza, pasta, salad and a pink fruit drink',
+  'activity': 'turning gently toward the window during a candid cafe moment',
+  'pose': 'standing beside the dark wooden counter with arms relaxed, torso turning toward the window and '
+          'hair moving naturally with the turn, face visible in a soft three-quarter angle',
+  'outfit': 'an opaque ivory mini sundress with a delicate small floral print, thin straps, a softly '
+            'gathered bodice and a ruffled hem, white thigh-high stockings with small pale-pink ribbon bows '
+            'and black Mary Jane platform shoes',
+  'silhouette': 'a softly flared floral mini dress with a ruffled hem, ribbon stockings and Mary Jane shoes',
+  'expression': 'a relaxed candid expression',
+  'gaze': 'toward the sunlit window',
+  'camera': 'front diagonal view from beside the dining table',
+  'framing': 'full-body environmental portrait including stockings, shoes, plants and the tall window',
+  'lighting': 'soft natural daylight through the sheer curtains, muted warm wood tones and gentle indoor '
+              'shadows'},
+ {'title': 'Vintage cafe lunch pause',
+  'setting': 'a cozy vintage cafe dining nook with cream walls, dark wood wainscoting and a narrow counter, '
+             'a wall shelf of decorative books and ceramic plates, hanging wine glasses, large monstera '
+             'plants, a tall metal-grille window with tied-back white sheer curtains, leafy trees outside, '
+             'and a white-linen dining table with pizza, pasta, salad and a pink fruit drink',
+  'activity': 'pausing beside the lunch table while holding a fork',
+  'pose': 'standing upright against the counter, one hand resting lightly on its edge and the other holding '
+          'a small fork near shoulder height, head turned gently toward the window',
+  'outfit': 'an opaque ivory mini sundress with a delicate small floral print, thin straps, a softly '
+            'gathered bodice and a ruffled hem, white thigh-high stockings with small pale-pink ribbon bows '
+            'and black Mary Jane platform shoes',
+  'silhouette': 'a softly flared floral mini dress with a ruffled hem, ribbon stockings and Mary Jane shoes',
+  'expression': 'a small thoughtful smile',
+  'gaze': 'toward the window just past the camera',
+  'camera': 'near-frontal view across the dining table with a clear glass globe pendant lamp high in the '
+            'foreground, face unobstructed',
+  'framing': 'three-quarter-body environmental portrait with pizza, pasta and salad visible in the '
+             'foreground',
+  'lighting': 'soft natural daylight through the sheer curtains, muted warm wood tones and gentle indoor '
+              'shadows'},
+ {'title': 'Vintage cafe counter lean',
+  'setting': 'a cozy vintage cafe dining nook with cream walls, dark wood wainscoting and a narrow counter, '
+             'a wall shelf of decorative books and ceramic plates, hanging wine glasses, large monstera '
+             'plants, a tall metal-grille window with tied-back white sheer curtains, leafy trees outside, '
+             'and a white-linen dining table with pizza, pasta, salad and a pink fruit drink',
+  'activity': 'enjoying a quiet moment beside the cafe window',
+  'pose': 'standing with one hand resting behind her on the wooden counter, one knee softly bent, the other '
+          'hand lightly beside her chin, shoulders relaxed and balanced posture',
+  'outfit': 'an opaque ivory mini sundress with a delicate small floral print, thin straps, a softly '
+            'gathered bodice and a ruffled hem, white thigh-high stockings with small pale-pink ribbon bows '
+            'and black Mary Jane platform shoes',
+  'silhouette': 'a softly flared floral mini dress with a ruffled hem, ribbon stockings and Mary Jane shoes',
+  'expression': 'a gentle reflective expression',
+  'gaze': 'out through the window with face clearly visible',
+  'camera': 'front three-quarter view at eye level',
+  'framing': 'full-body environmental portrait including the floral dress, stockings, shoes and dining-table '
+             'edge',
+  'lighting': 'soft natural daylight through the sheer curtains, muted warm wood tones and gentle indoor '
+              'shadows'})
+
+DEFAULT_CONCEPTS += ({'title': 'Garden window sun pause',
+  'setting': 'a sunlit cottage cafe window-seat nook with pale yellow timber walls and ceiling beams, '
+             'wide-open green-painted casement windows, pink floral curtains, a cushioned wooden bench with '
+             'rose-patterned cushions and a small plush white bear, a round white-linen table with a '
+             'croissant breakfast plate, and a lush garden of trees, purple flowers and a pale picket fence '
+             'outside',
+  'activity': 'enjoying a quiet moment in the warm garden sunlight',
+  'pose': 'seated sideways on the cushioned window bench with one knee softly raised, both hands resting on '
+          'the cushion beside her for support, shoulders relaxed and chin gently tilted toward the light',
+  'outfit': 'an opaque ivory lightly striped camisole with delicate lace trim and matching fully lined '
+            'lounge shorts, white thigh-high stockings',
+  'silhouette': 'a lace-trim camisole and matching lounge shorts with white stockings',
+  'expression': 'peaceful with a soft relaxed smile',
+  'gaze': 'up toward the sunlit garden',
+  'camera': 'front three-quarter view at seated eye level',
+  'framing': 'three-quarter-body environmental portrait including green window frames and floral cushions',
+  'lighting': 'bright natural garden sunlight with dappled leaf shadows, warm timber highlights and soft '
+              'reflected fill from the curtains'},
+ {'title': 'Garden window shoulder glance',
+  'setting': 'a sunlit cottage cafe window-seat nook with pale yellow timber walls and ceiling beams, '
+             'wide-open green-painted casement windows, pink floral curtains, a cushioned wooden bench with '
+             'rose-patterned cushions and a small plush white bear, a round white-linen table with a '
+             'croissant breakfast plate, and a lush garden of trees, purple flowers and a pale picket fence '
+             'outside',
+  'activity': 'turning back toward the camera from the window seat',
+  'pose': 'seated sideways on the bench with legs comfortably folded, hands resting naturally on the '
+          'cushion, torso angled toward the garden and head turning over her shoulder toward the camera',
+  'outfit': 'an opaque ivory lightly striped camisole with delicate lace trim and matching fully lined '
+            'lounge shorts, white thigh-high stockings',
+  'silhouette': 'a lace-trim camisole and matching lounge shorts with white stockings',
+  'expression': 'a gentle thoughtful expression',
+  'gaze': 'toward the camera over her shoulder with face clearly visible',
+  'camera': 'rear three-quarter view at seated eye level',
+  'framing': 'three-quarter-body portrait framed by both open green windows',
+  'lighting': 'bright natural garden sunlight with dappled leaf shadows, warm timber highlights and soft '
+              'reflected fill from the curtains'},
+ {'title': 'Garden breakfast window seat',
+  'setting': 'a sunlit cottage cafe window-seat nook with pale yellow timber walls and ceiling beams, '
+             'wide-open green-painted casement windows, pink floral curtains, a cushioned wooden bench with '
+             'rose-patterned cushions and a small plush white bear, a round white-linen table with a '
+             'croissant breakfast plate, and a lush garden of trees, purple flowers and a pale picket fence '
+             'outside',
+  'activity': 'watching the garden before breakfast',
+  'pose': 'seated diagonally on the cushioned bench with knees folded naturally to one side, hands on the '
+          'seat beside her, back upright and face turned toward the open window',
+  'outfit': 'an opaque ivory lightly striped camisole with delicate lace trim and matching fully lined '
+            'lounge shorts, white thigh-high stockings',
+  'silhouette': 'a lace-trim camisole and matching lounge shorts with white stockings',
+  'expression': 'quiet and reflective',
+  'gaze': 'out toward the trees and flowers',
+  'camera': 'rear diagonal environmental view, face turned away naturally',
+  'framing': 'wide seated portrait with the green window, floral pillows, plush bear and croissant plate on '
+             'the round table',
+  'lighting': 'bright natural garden sunlight with dappled leaf shadows, warm timber highlights and soft '
+              'reflected fill from the curtains'})

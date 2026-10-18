@@ -230,7 +230,7 @@ def test_exports_validation_and_project_isolation(client, studio):
     assert client.get(f"{base}/contact-sheet").status_code == 400
     # With no proposed round, the step offers the built-in nine straight from the prompt.
     built_in = client.get(f"{base}/concept-proposals").json()
-    assert len(built_in) == 98 and all(p["run"] == 0 for p in built_in)
+    assert len(built_in) == 104 and all(p["run"] == 0 for p in built_in)
     propose(client, base)
     unknown = client.post(f"{base}/concepts/generate", json={"proposal_ids": ["nope"], "confirmed": True})
     assert unknown.status_code == 404 and unknown.json()["detail"]["code"] == "proposal_not_found"
@@ -264,7 +264,7 @@ def test_concepts_can_exclude_an_approved_turnaround(client, studio):
 def test_default_concepts_mix_direct_and_slightly_off_camera_gaze():
     from app.concept_defaults import DEFAULT_CONCEPTS
     from app.routes.concepts import preferred_angle
-    assert len(DEFAULT_CONCEPTS) == 98
+    assert len(DEFAULT_CONCEPTS) == 104
     direct = [c for c in DEFAULT_CONCEPTS[:9] if c["gaze"] == "looking directly into the camera lens, eyes open"]
     assert len(direct) == 5
     off_camera = [c for c in DEFAULT_CONCEPTS[:9] if c not in direct]
@@ -298,7 +298,7 @@ def test_regenerate_uses_exact_edited_prompt_and_keeps_it_for_next_revision(clie
 def test_seven_added_concepts_are_selectable_and_renderable(client, studio):
     base, _, _ = studio
     defaults = client.get(f'{base}/concept-proposals').json()
-    assert len(defaults) == 98
+    assert len(defaults) == 104
     added = defaults[9:16]
     assert [p['slot'] for p in added] == list(range(10, 17))
     assert [p['title'] for p in added] == ['At-home manicure', 'Soft morning knit', 'Kitchen daydream',
@@ -338,7 +338,7 @@ def test_reference_concepts_use_bikini_outfits(client, studio):
     for concept in defaults[:66]:
         assert 'bikini' in concept['brief']['outfit']
         assert 'bikini' in concept['brief']['silhouette']
-    assert len({c['brief']['outfit'] for c in defaults}) == len(defaults)
+    assert len({c['brief']['outfit'] for c in defaults[:98]}) == 98
     result = client.post(f'{base}/concepts/generate', json={'slots': [24, 25, 26], 'confirmed': True})
     assert result.status_code == 201, result.text
     for job_id in result.json()['job_ids']:
@@ -540,7 +540,7 @@ def test_vietnam_scenes_are_selectable_and_support_outfit_switch(client, studio)
 def test_private_moments_preserve_original_clothing_or_use_outfit_switch(client, studio):
     base, _, _ = studio
     defaults = client.get(f'{base}/concept-proposals').json()
-    assert [p['slot'] for p in defaults[92:]] == list(range(93, 99))
+    assert [p['slot'] for p in defaults[92:98]] == list(range(93, 99))
     assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 98}).status_code == 200
     for slot, outfit in [(93, 'auto'), (96, 'bikini'), (98, 'satin_pyjamas')]:
         response = client.post(f'{base}/concepts/generate', json={'slots': [slot], 'choices': {'outfit': outfit}, 'confirmed': True})
@@ -551,3 +551,49 @@ def test_private_moments_preserve_original_clothing_or_use_outfit_switch(client,
             assert defaults[slot - 1]['brief']['outfit'] in job['prompt']
         else:
             assert ('bikini' if outfit == 'bikini' else 'pajama shorts') in job['prompt']
+
+
+def test_vintage_cafe_reference_concepts_and_scene_switch(client, studio):
+    base, _, _ = studio
+    defaults = client.get(f'{base}/concept-proposals').json()
+    added = defaults[98:101]
+    assert [p['slot'] for p in added] == [99, 100, 101]
+    assert len({p['brief']['pose'] for p in added}) == 3
+    assert all('Mary Jane' in p['brief']['outfit'] and 'sheer curtains' in p['brief']['setting'] for p in added)
+    assert ['vintage_cafe', 'Café vintage · cửa sổ & bàn ăn'] in client.get(f'{base}/concept-options').json()['scene']
+    assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 101}).status_code == 200
+    result = client.post(f'{base}/concepts/generate', json={'slots': [99, 100, 101], 'confirmed': True})
+    assert result.status_code == 201, result.text
+    for job_id in result.json()['job_ids']:
+        job = wait_for_job(client, job_id)
+        assert job['status'] == 'succeeded'
+        assert 'floral print' in job['prompt']
+    result = client.post(f'{base}/concepts/generate', json={'custom': True, 'count': 1, 'choices': {'scene': 'vintage_cafe', 'outfit': 'bikini'}, 'confirmed': True})
+    assert result.status_code == 201, result.text
+    job = wait_for_job(client, result.json()['job_ids'][0])
+    assert 'bikini' in job['prompt'] and 'monstera' in job['prompt']
+    custom = next(c for c in client.get(f'{base}/concepts').json() if c['id'] == result.json()['concept_ids'][0])
+    assert custom['slot'] > len(defaults)
+
+
+def test_garden_cafe_reference_concepts_and_scene_switch(client, studio):
+    base, _, _ = studio
+    defaults = client.get(f'{base}/concept-proposals').json()
+    added = defaults[101:]
+    assert [p['slot'] for p in added] == [102, 103, 104]
+    assert len({p['brief']['pose'] for p in added}) == 3
+    assert all('casement windows' in p['brief']['setting'] and 'lace trim' in p['brief']['outfit'] for p in added)
+    assert ['garden_cafe', 'Café sân vườn · cửa sổ xanh'] in client.get(f'{base}/concept-options').json()['scene']
+    assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 104}).status_code == 200
+    result = client.post(f'{base}/concepts/generate', json={'slots': [102, 103, 104], 'confirmed': True})
+    assert result.status_code == 201, result.text
+    for job_id in result.json()['job_ids']:
+        job = wait_for_job(client, job_id)
+        assert job['status'] == 'succeeded'
+        assert 'camisole' in job['prompt'] and 'green-painted' in job['prompt']
+    result = client.post(f'{base}/concepts/generate', json={'custom': True, 'count': 1, 'choices': {'scene': 'garden_cafe', 'outfit': 'bikini'}, 'confirmed': True})
+    assert result.status_code == 201, result.text
+    job = wait_for_job(client, result.json()['job_ids'][0])
+    assert 'bikini' in job['prompt'] and 'casement windows' in job['prompt']
+    custom = next(c for c in client.get(f'{base}/concepts').json() if c['id'] == result.json()['concept_ids'][0])
+    assert custom['slot'] > len(defaults)

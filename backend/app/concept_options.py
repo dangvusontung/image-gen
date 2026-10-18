@@ -14,7 +14,7 @@ class ConceptChoices(BaseModel):
     top: Literal["auto", "tee", "knit", "blouse", "cardigan", "fitted_tank", "cropped_tee", "shirt",
                  "hoodie", "turtleneck", "polo", "vest"] = "auto"
     scene: Literal["auto", "poolside", "beach", "cafe", "garden", "city", "bedroom", "kitchen", "library",
-                   "studio", "rooftop", "park", "market", "office", "custom"] = "auto"
+                   "studio", "rooftop", "park", "market", "office", "vintage_cafe", "garden_cafe", "custom"] = "auto"
     lighting: Literal["auto", "daylight", "golden", "blue_hour"] = "auto"
     custom_outfit: str = Field(default="", max_length=600)
     custom_scene: str = Field(default="", max_length=600)
@@ -49,13 +49,55 @@ MENU = {
             ("turtleneck", "Áo cổ lọ"), ("polo", "Áo polo"), ("hoodie", "Áo hoodie"), ("vest", "Áo gi-lê"),
             ("cardigan", "Áo cardigan và áo thun")],
     "scene": [("auto", "Theo từng concept (không ghi đè)"), ("bedroom", "Phòng ngủ"), ("kitchen", "Bếp"),
-              ("library", "Thư viện"), ("studio", "Xưởng sáng tác"), ("cafe", "Quán cà phê"), ("garden", "Vườn hoa"),
+              ("library", "Thư viện"), ("studio", "Xưởng sáng tác"), ("cafe", "Quán cà phê"), ("vintage_cafe", "Café vintage · cửa sổ & bàn ăn"), ("garden_cafe", "Café sân vườn · cửa sổ xanh"), ("garden", "Vườn hoa"),
               ("park", "Công viên"), ("rooftop", "Sân thượng"), ("market", "Chợ/phiên chợ"), ("office", "Văn phòng"),
               ("city", "Dạo phố"), ("poolside", "Bên hồ bơi"), ("beach", "Bãi biển"), ("custom", "Tùy chỉnh")],
     "lighting": [("auto", "Theo từng concept (không ghi đè)"), ("daylight", "Ban ngày dịu sáng"), ("golden", "Nắng chiều vàng"), ("blue_hour", "Chạng vạng")],
 }
 
 SCENE_CHOICES = {
+    "garden_cafe": [('a sunlit cottage cafe window-seat nook with pale yellow timber walls and ceiling beams, wide-open '
+  'green-painted casement windows, pink floral curtains, a cushioned wooden bench with rose-patterned '
+  'cushions and a small plush white bear, a round white-linen table with a croissant breakfast plate, and a '
+  'lush garden of trees, purple flowers and a pale picket fence outside',
+  'enjoying a quiet moment in the warm garden sunlight',
+  'seated sideways on the cushioned window bench with one knee softly raised, both hands resting on the '
+  'cushion beside her for support, shoulders relaxed and chin gently tilted toward the light'),
+ ('a sunlit cottage cafe window-seat nook with pale yellow timber walls and ceiling beams, wide-open '
+  'green-painted casement windows, pink floral curtains, a cushioned wooden bench with rose-patterned '
+  'cushions and a small plush white bear, a round white-linen table with a croissant breakfast plate, and a '
+  'lush garden of trees, purple flowers and a pale picket fence outside',
+  'turning back toward the camera from the window seat',
+  'seated sideways on the bench with legs comfortably folded, hands resting naturally on the cushion, torso '
+  'angled toward the garden and head turning over her shoulder toward the camera'),
+ ('a sunlit cottage cafe window-seat nook with pale yellow timber walls and ceiling beams, wide-open '
+  'green-painted casement windows, pink floral curtains, a cushioned wooden bench with rose-patterned '
+  'cushions and a small plush white bear, a round white-linen table with a croissant breakfast plate, and a '
+  'lush garden of trees, purple flowers and a pale picket fence outside',
+  'watching the garden before breakfast',
+  'seated diagonally on the cushioned bench with knees folded naturally to one side, hands on the seat '
+  'beside her, back upright and face turned toward the open window')],
+    "vintage_cafe": [('a cozy vintage cafe dining nook with cream walls, dark wood wainscoting and a narrow counter, a wall '
+  'shelf of decorative books and ceramic plates, hanging wine glasses, large monstera plants, a tall '
+  'metal-grille window with tied-back white sheer curtains, leafy trees outside, and a white-linen dining '
+  'table with pizza, pasta, salad and a pink fruit drink',
+  'turning gently toward the window during a candid cafe moment',
+  'standing beside the dark wooden counter with arms relaxed, torso turning toward the window and hair '
+  'moving naturally with the turn, face visible in a soft three-quarter angle'),
+ ('a cozy vintage cafe dining nook with cream walls, dark wood wainscoting and a narrow counter, a wall '
+  'shelf of decorative books and ceramic plates, hanging wine glasses, large monstera plants, a tall '
+  'metal-grille window with tied-back white sheer curtains, leafy trees outside, and a white-linen dining '
+  'table with pizza, pasta, salad and a pink fruit drink',
+  'pausing beside the lunch table while holding a fork',
+  'standing upright against the counter, one hand resting lightly on its edge and the other holding a small '
+  'fork near shoulder height, head turned gently toward the window'),
+ ('a cozy vintage cafe dining nook with cream walls, dark wood wainscoting and a narrow counter, a wall '
+  'shelf of decorative books and ceramic plates, hanging wine glasses, large monstera plants, a tall '
+  'metal-grille window with tied-back white sheer curtains, leafy trees outside, and a white-linen dining '
+  'table with pizza, pasta, salad and a pink fruit drink',
+  'enjoying a quiet moment beside the cafe window',
+  'standing with one hand resting behind her on the wooden counter, one knee softly bent, the other hand '
+  'lightly beside her chin, shoulders relaxed and balanced posture')],
     "poolside": [
         ("a pastel-tiled swimming pool terrace with a striped parasol", "sipping a fruit drink beside the pool", "seated naturally on a dry poolside chair"),
         ("a boutique hotel pool with turquoise water and potted palms", "holding a folded pool towel while smiling", "standing on the dry pool deck"),
