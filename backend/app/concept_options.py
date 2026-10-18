@@ -14,7 +14,7 @@ class ConceptChoices(BaseModel):
     top: Literal["auto", "tee", "knit", "blouse", "cardigan", "fitted_tank", "cropped_tee", "shirt",
                  "hoodie", "turtleneck", "polo", "vest"] = "auto"
     scene: Literal["auto", "poolside", "beach", "cafe", "garden", "city", "bedroom", "kitchen", "library",
-                   "studio", "rooftop", "park", "market", "office", "vintage_cafe", "garden_cafe", "custom"] = "auto"
+                   "studio", "rooftop", "park", "market", "office", "vintage_cafe", "garden_cafe", "retro_bath", "custom"] = "auto"
     lighting: Literal["auto", "daylight", "golden", "blue_hour"] = "auto"
     custom_outfit: str = Field(default="", max_length=600)
     custom_scene: str = Field(default="", max_length=600)
@@ -49,13 +49,25 @@ MENU = {
             ("turtleneck", "Áo cổ lọ"), ("polo", "Áo polo"), ("hoodie", "Áo hoodie"), ("vest", "Áo gi-lê"),
             ("cardigan", "Áo cardigan và áo thun")],
     "scene": [("auto", "Theo từng concept (không ghi đè)"), ("bedroom", "Phòng ngủ"), ("kitchen", "Bếp"),
-              ("library", "Thư viện"), ("studio", "Xưởng sáng tác"), ("cafe", "Quán cà phê"), ("vintage_cafe", "Café vintage · cửa sổ & bàn ăn"), ("garden_cafe", "Café sân vườn · cửa sổ xanh"), ("garden", "Vườn hoa"),
+              ("library", "Thư viện"), ("studio", "Xưởng sáng tác"), ("cafe", "Quán cà phê"), ("vintage_cafe", "Café vintage · cửa sổ & bàn ăn"), ("garden_cafe", "Café sân vườn · cửa sổ xanh"), ("retro_bath", "Phòng tắm retro · xanh olive"), ("garden", "Vườn hoa"),
               ("park", "Công viên"), ("rooftop", "Sân thượng"), ("market", "Chợ/phiên chợ"), ("office", "Văn phòng"),
               ("city", "Dạo phố"), ("poolside", "Bên hồ bơi"), ("beach", "Bãi biển"), ("custom", "Tùy chỉnh")],
     "lighting": [("auto", "Theo từng concept (không ghi đè)"), ("daylight", "Ban ngày dịu sáng"), ("golden", "Nắng chiều vàng"), ("blue_hour", "Chạng vạng")],
 }
 
 SCENE_CHOICES = {
+    "retro_bath": [('a retro hotel bathroom and doorway with olive-green walls, deep burgundy wooden door trim and mirror '
+  'frame, dark red ceramic tiles visible through the doorway, a pale terrazzo vanity with an inset round '
+  'basin, simple drinking glasses, a bathtub and warm globe lighting',
+  'pausing naturally in the open bathroom doorway',
+  'standing upright within the burgundy doorframe, one hand lightly holding the door edge and the other '
+  'relaxed at her side, legs naturally close with one foot slightly ahead'),
+ ('a retro hotel bathroom and doorway with olive-green walls, deep burgundy wooden door trim and mirror '
+  'frame, dark red ceramic tiles visible through the doorway, a pale terrazzo vanity with an inset round '
+  'basin, simple drinking glasses, a bathtub and warm globe lighting',
+  'resting beside the bathroom vanity',
+  'standing beside the terrazzo counter with a relaxed weight shift, hands resting lightly at her sides, '
+  'shoulders relaxed and chin level')],
     "garden_cafe": [('a sunlit cottage cafe window-seat nook with pale yellow timber walls and ceiling beams, wide-open '
   'green-painted casement windows, pink floral curtains, a cushioned wooden bench with rose-patterned '
   'cushions and a small plush white bear, a round white-linen table with a croissant breakfast plate, and a '

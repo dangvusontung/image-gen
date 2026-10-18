@@ -1311,3 +1311,63 @@ DEFAULT_CONCEPTS += ({'title': 'Garden window sun pause',
              'the round table',
   'lighting': 'bright natural garden sunlight with dappled leaf shadows, warm timber highlights and soft '
               'reflected fill from the curtains'})
+
+DEFAULT_CONCEPTS += ({'title': 'Olive bathroom doorway',
+  'setting': 'a retro hotel bathroom and doorway with olive-green walls, deep burgundy wooden door trim and '
+             'mirror frame, dark red ceramic tiles visible through the doorway, a pale terrazzo vanity with '
+             'an inset round basin, simple drinking glasses, a bathtub and warm globe lighting',
+  'activity': 'pausing naturally in the open bathroom doorway',
+  'pose': 'standing upright within the burgundy doorframe, one hand lightly holding the door edge and the '
+          'other relaxed at her side, legs naturally close with one foot slightly ahead',
+  'outfit': 'an opaque ivory fitted camisole-style lounge bodysuit with thin straps, a small bow at the '
+            'neckline, fully lined matching brief coverage and a short soft ruffled overskirt, barefoot',
+  'silhouette': 'a fitted ivory lounge bodysuit with a small neckline bow and a softly ruffled overskirt',
+  'expression': 'a calm composed expression',
+  'gaze': 'directly toward the camera',
+  'camera': 'straight-on frontal view at eye level',
+  'framing': 'full-body environmental portrait framed by the doorway, with the olive wall and a rectangular '
+             'mirror visible beside her',
+  'lighting': 'warm soft globe and bathroom light with muted olive-green and burgundy tones, gentle shadows '
+              'and even fill on the face'},
+ {'title': 'Retro terrazzo vanity portrait',
+  'setting': 'a retro hotel bathroom and doorway with olive-green walls, deep burgundy wooden door trim and '
+             'mirror frame, dark red ceramic tiles visible through the doorway, a pale terrazzo vanity with '
+             'an inset round basin, simple drinking glasses, a bathtub and warm globe lighting',
+  'activity': 'resting beside the bathroom vanity',
+  'pose': 'standing beside the terrazzo counter with a relaxed weight shift, hands resting lightly at her '
+          'sides, shoulders relaxed and chin level',
+  'outfit': 'an opaque ivory fitted camisole-style lounge bodysuit with thin straps, a small bow at the '
+            'neckline, fully lined matching brief coverage and a short soft ruffled overskirt, barefoot',
+  'silhouette': 'a fitted ivory lounge bodysuit with a small neckline bow and a softly ruffled overskirt',
+  'expression': 'a subtle self-assured smile',
+  'gaze': 'toward the camera',
+  'camera': 'near-frontal view at eye level',
+  'framing': 'three-quarter-body portrait including the round basin, burgundy mirror edge, olive walls and '
+             'bathtub behind her',
+  'lighting': 'warm soft globe and bathroom light with muted olive-green and burgundy tones, gentle shadows '
+              'and even fill on the face'})
+
+DEFAULT_CONCEPTS += ({'title': 'Soft bedroom chin-rest',
+  'setting': 'a quiet bedroom with muted gray-green bedding, a pale wall and a simple dark headboard',
+  'activity': 'resting comfortably on the bed',
+  'pose': 'lying on her stomach supported on her forearms, one hand resting lightly beside her chin, knees '
+          'bent naturally with feet loosely crossed behind her, shoulders relaxed',
+  'outfit': 'an opaque pale-pink lace-trim bralette with matching fully lined briefs',
+  'silhouette': 'a coordinated opaque lace-trim lounge bralette and briefs',
+  'expression': 'a calm relaxed expression',
+  'gaze': 'directly toward the camera',
+  'camera': 'near-frontal view close to mattress height, focus on her face and eyes',
+  'framing': 'upper-body portrait with the surrounding bedding and softly out-of-focus bent legs visible',
+  'lighting': 'soft warm bedside light with gentle frontal fill'},
+ {'title': 'Overhead pillow portrait',
+  'setting': 'a bright bedroom with white pillows and cream bedding patterned with tiny dark ribbon motifs',
+  'activity': 'taking a relaxed overhead portrait while resting',
+  'pose': 'lying on her back against the pillows, one forearm resting loosely above her forehead without '
+          'hiding either eye, the other arm relaxed beside her, shoulders and body resting naturally',
+  'outfit': 'an opaque fitted white ribbed tank top with black fully lined briefs',
+  'silhouette': 'a fitted ribbed tank top and opaque briefs',
+  'expression': 'a soft attentive expression',
+  'gaze': 'up toward the camera',
+  'camera': 'overhead front-facing view centered above her face and shoulders, natural portrait perspective',
+  'framing': 'upper-body portrait including the pillow and a little surrounding bedding',
+  'lighting': 'soft diffused daylight with bright neutral bedding reflections'})
