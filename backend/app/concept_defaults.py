@@ -1371,3 +1371,83 @@ DEFAULT_CONCEPTS += ({'title': 'Soft bedroom chin-rest',
   'camera': 'overhead front-facing view centered above her face and shoulders, natural portrait perspective',
   'framing': 'upper-body portrait including the pillow and a little surrounding bedding',
   'lighting': 'soft diffused daylight with bright neutral bedding reflections'})
+
+DEFAULT_CONCEPTS += ({'title': 'Ivory lace window portrait',
+  'setting': 'a bright room with sheer curtains, a pale armchair and a small vase of flowers',
+  'activity': 'pausing beside the window',
+  'pose': 'standing upright beside the curtain, one hand lightly holding its edge and the other relaxed at '
+          'her side, shoulders soft and chin level',
+  'outfit': 'an ivory floral-lace midi dress over a fully opaque matching slip lining, with delicate straps '
+            'and a softly scalloped hem',
+  'silhouette': 'a flowing lined lace midi dress',
+  'expression': 'a gentle serene smile',
+  'gaze': 'toward the camera',
+  'camera': 'front three-quarter view at eye level',
+  'framing': 'full-body fashion portrait',
+  'lighting': 'soft diffused morning window light emphasizing the lace texture without harsh shadows'},
+ {'title': 'Black lace studio tailoring',
+  'setting': 'a minimal photography studio with a warm gray backdrop and a wooden stool',
+  'activity': 'resting one hand on the stool between portrait poses',
+  'pose': 'standing with a relaxed weight shift, one hand resting lightly on the stool and the other near '
+          'her waist, torso angled slightly toward the lens',
+  'outfit': 'a black floral-lace bodysuit with a fully opaque lining, paired with cream high-waisted '
+            'wide-leg trousers',
+  'silhouette': 'a fitted lined lace bodysuit and flowing tailored trousers',
+  'expression': 'a composed confident half-smile',
+  'gaze': 'directly into the camera lens',
+  'camera': 'near-frontal view at eye level',
+  'framing': 'full-body editorial portrait',
+  'lighting': 'a broad soft studio key with a subtle rim light showing the lace details'},
+ {'title': 'Rose lace vanity moment',
+  'setting': 'a quiet dressing room with an illuminated mirror, small jewelry tray and pale upholstered '
+             'chair',
+  'activity': 'choosing earrings at the vanity',
+  'pose': 'seated upright with knees angled to one side, one hand holding an earring beside her ear and the '
+          'other resting on the dressing table',
+  'outfit': 'a dusty-rose lace-trim camisole with a fully opaque lining and matching lined lace lounge '
+            'shorts',
+  'silhouette': 'a coordinated lace-trim camisole and lounge shorts set',
+  'expression': 'a soft thoughtful smile',
+  'gaze': 'toward her reflection',
+  'camera': 'slightly angled frontal view with one coherent mirror reflection',
+  'framing': 'three-quarter-body seated portrait',
+  'lighting': 'warm even vanity light with gentle room fill'},
+ {'title': 'Emerald lace balcony dusk',
+  'setting': 'a secluded balcony with a dark railing and softly blurred city lights',
+  'activity': 'enjoying the evening air',
+  'pose': 'standing naturally with one forearm resting lightly on the railing, free hand brushing hair '
+          'behind one ear, face turned gently toward the lens',
+  'outfit': 'an emerald-green floral-lace sleeveless top over an opaque matching camisole, with a flowing '
+            'black satin midi skirt',
+  'silhouette': 'a lined lace top and fluid satin midi skirt',
+  'expression': 'calm and self-assured',
+  'gaze': 'toward the camera with a small natural head turn',
+  'camera': 'front three-quarter view at eye level',
+  'framing': 'three-quarter-body fashion portrait',
+  'lighting': 'cool blue-hour ambient light balanced with warm light from the open room'},
+ {'title': 'Lavender lace sofa pause',
+  'setting': 'a cozy living room with a cream sofa, textured cushions and a warm reading lamp',
+  'activity': 'setting a closed book beside her on the sofa',
+  'pose': 'seated comfortably with legs folded loosely to one side, one hand resting on the closed book and '
+          'the other on a cushion',
+  'outfit': 'a lavender satin camisole with floral-lace trim and matching fully lined lace-trim shorts, with '
+            'a lightweight opaque robe loosely resting around her shoulders',
+  'silhouette': 'a satin lounge set with delicate lace trim and a light robe',
+  'expression': 'a relaxed contented smile',
+  'gaze': 'slightly past the camera',
+  'camera': 'near-frontal view at seated eye level',
+  'framing': 'three-quarter-body seated portrait',
+  'lighting': 'soft late-afternoon window light with a warm reading-lamp accent'},
+ {'title': 'Champagne lace dressing-room portrait',
+  'setting': 'a softly lit hotel dressing room with full-length curtains and a tall mirror',
+  'activity': 'pausing before the mirror after getting ready',
+  'pose': 'standing upright with shoulders relaxed, one hand resting gently at her waist and the other '
+          'hanging naturally, head tilted only a few degrees',
+  'outfit': 'a champagne-colored lace-trim satin slip dress with a fully opaque lining, fine shoulder straps '
+            'and a softly draped neckline',
+  'silhouette': 'a softly fitted satin midi slip dress with scalloped lace trim',
+  'expression': 'a quiet confident smile',
+  'gaze': 'directly toward the camera',
+  'camera': 'front diagonal view at eye level, mirror kept unobtrusive in the background',
+  'framing': 'full-body fashion portrait',
+  'lighting': 'warm soft practical lighting with gentle fill and subtle highlights across the lace'})
