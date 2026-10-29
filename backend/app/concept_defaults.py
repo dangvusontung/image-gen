@@ -1451,3 +1451,48 @@ DEFAULT_CONCEPTS += ({'title': 'Ivory lace window portrait',
   'camera': 'front diagonal view at eye level, mirror kept unobtrusive in the background',
   'framing': 'full-body fashion portrait',
   'lighting': 'warm soft practical lighting with gentle fill and subtle highlights across the lace'})
+
+DEFAULT_CONCEPTS += ({'title': 'White sofa yarn afternoon',
+  'setting': 'a bright cottage living room with a white slipcovered sofa, cream cushions, a mint-green '
+             'knitted throw draped over the back, a yellow ball of yarn on the seat, a pale side cabinet and '
+             'floral curtains beside a large window',
+  'activity': 'relaxing on the sofa while gently twirling a loose strand of hair',
+  'pose': 'reclining comfortably along the sofa with her head supported by a cushion, one knee loosely bent '
+          'across the other leg, hands holding a strand of hair above her shoulder, body resting naturally',
+  'outfit': 'an opaque ivory fluffy long-sleeve hooded lounge top with white ruffled cotton shorts and white '
+            'ankle socks',
+  'silhouette': 'a soft fluffy lounge top, ruffled shorts and ankle socks',
+  'expression': 'a calm softly curious expression',
+  'gaze': 'toward the camera with a small natural head turn',
+  'camera': 'slightly elevated front diagonal view',
+  'framing': 'full-body environmental portrait including the sofa, yarn and mint knitted throw',
+  'lighting': 'bright diffused window daylight with airy white tones and gentle warm highlights'},
+ {'title': 'Powder-blue armchair lounge',
+  'setting': 'a cozy reading corner with a rounded pale upholstered armchair, a warm wooden slatted cabinet '
+             'behind it and a muted rose cushion',
+  'activity': 'settling into the armchair for a quiet afternoon',
+  'pose': 'seated comfortably in the armchair, one knee raised naturally and the other leg loosely folded on '
+          'the seat, one hand resting lightly in her hair and the other near her cheek, shoulders relaxed',
+  'outfit': 'an opaque powder-blue ribbed camisole with white lace trim and small front buttons, matching '
+            'fully lined blue lounge shorts with ruffled hems and a small white waist bow, barefoot',
+  'silhouette': 'a coordinated ribbed camisole and lounge shorts set with delicate lace trim',
+  'expression': 'a relaxed attentive expression',
+  'gaze': 'directly toward the camera',
+  'camera': 'near-frontal view at seated eye level',
+  'framing': 'full-body seated portrait framed by the rounded armchair',
+  'lighting': 'soft warm afternoon daylight with natural skin tones and gentle room shadows'},
+ {'title': 'Warm timber camper pause',
+  'setting': 'a sunlit vintage camper interior with honey-colored wooden cabinetry, bamboo blinds, cream '
+             'curtains, a striped upholstered bench seat and a narrow windowsill with a small red cup',
+  'activity': 'enjoying a quiet pause beside the camper window',
+  'pose': 'seated sideways on the bench with knees resting naturally on the cushion, one forearm draped '
+          'across the rounded bench back, the other hand lightly supporting her cheek, torso comfortably '
+          'angled toward the window',
+  'outfit': 'an opaque rust-brown two-piece bikini with pale mint-green contrast bands and cream strap '
+            'details',
+  'silhouette': 'a coordinated contrast-trim two-piece bikini',
+  'expression': 'a small relaxed smile',
+  'gaze': 'out toward the nearby window',
+  'camera': 'front three-quarter view from the aisle with face clearly visible',
+  'framing': 'three-quarter-body environmental portrait including the bench, cup and timber window frame',
+  'lighting': 'warm golden window light with muted film-like colors and soft cabin shadows'})

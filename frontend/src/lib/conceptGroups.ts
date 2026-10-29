@@ -1,6 +1,7 @@
 import type { ConceptProposal } from '@/api/client'
 
 const GROUPS = [
+  { name: 'Camper & du lịch vintage', slots: [117] },
   { name: 'Ren & thời trang', slots: [109, 110, 111, 112, 113, 114] },
   { name: 'Phòng tắm retro · xanh olive', slots: [105, 106] },
   { name: 'Café sân vườn & cửa sổ xanh', slots: [102, 103, 104] },
@@ -17,7 +18,7 @@ const GROUPS = [
   { name: 'Chân dung cận', slots: [57, 58, 59, 60] },
   { name: 'Bể bơi', slots: [4, ...Array.from({ length: 12 }, (_, i) => i + 29)] },
   { name: 'Phòng ngủ & nghỉ ngơi', slots: [2, 5, 11, 15, 16, 18, 19, 20, 24, 25, 41, 42, 43, 44] },
-  { name: 'Phòng khách & sinh hoạt', slots: [1, 9, 10, 17, 21, 28] },
+  { name: 'Phòng khách & sinh hoạt', slots: [1, 9, 10, 17, 21, 28, 115, 116] },
   { name: 'Bếp & bên cửa sổ', slots: [12, 13, 14, 27] },
   { name: 'Ngoài trời & ban công', slots: [3, 6, 8, 26] },
   { name: 'Công việc & bàn trang điểm', slots: [7, 23] },
