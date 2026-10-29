@@ -9,10 +9,10 @@ function Harness() {
 }
 afterEach(() => localStorage.clear())
 
-it('defaults to bikini and remembers a selected outfit and glasses', async () => {
+it('defaults to per-concept clothing and remembers a selected outfit and glasses', async () => {
   const user = userEvent.setup()
   const view = render(<Harness />)
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('bikini')
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
   await user.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'satin_dress')
   await user.click(screen.getByRole('checkbox', { name: '+ Kính' }))
   view.unmount()
@@ -21,12 +21,20 @@ it('defaults to bikini and remembers a selected outfit and glasses', async () =>
   expect(screen.getByRole('checkbox', { name: '+ Kính' })).toBeChecked()
 })
 
-it('migrates an old auto default once while preserving a deliberate per-concept choice', async () => {
-  localStorage.setItem('concept-choices:outfit-test', JSON.stringify({ outfit: 'auto' }))
+it('migrates the old bikini default once and still allows an explicit bikini selection', async () => {
+  localStorage.setItem('concept-choices:outfit-test', JSON.stringify({ outfit: 'bikini' }))
   const view = render(<Harness />)
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('bikini')
-  await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'auto')
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
+  await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'bikini')
   view.unmount()
   render(<Harness />)
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('bikini')
+})
+
+
+it('preserves an existing fashion outfit instead of resetting it during migration', () => {
+  localStorage.setItem('concept-choices:outfit-test', JSON.stringify({ outfit: 'satin_pyjamas', glasses: true }))
+  render(<Harness />)
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('satin_pyjamas')
+  expect(screen.getByRole('checkbox', { name: '+ Kính' })).toBeChecked()
 })

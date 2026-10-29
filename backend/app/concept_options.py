@@ -36,9 +36,9 @@ class ConceptChoices(BaseModel):
 
 MENU = {
     "style": [("auto", "Theo từng concept (không ghi đè)"), ("cute", "Dễ thương · nhẹ nhàng, ấm áp"), ("glamour", "Glamour · táo bạo, cuốn hút")],
-    "outfit": [("bikini", "Bikini · mặc định"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
+    "outfit": [("auto", "Trang phục riêng của từng concept · mặc định"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
                ("shirt_shorts", "Sơ mi + quần short"), ("bodysuit_trousers", "Bodysuit + quần dài"),
-               ("offshoulder_skirt", "Áo trễ vai + chân váy"), ("auto", "Theo từng concept (không ghi đè)"), ("denim_mix", "Phối quần short jeans và chân váy"),
+               ("offshoulder_skirt", "Áo trễ vai + chân váy"), ("denim_mix", "Phối quần short jeans và chân váy"),
                ("denim_shorts", "Quần short jeans"), ("cargo_shorts", "Quần short cargo"), ("denim_skirt", "Chân váy jeans"),
                ("pleated_skirt", "Chân váy xếp ly"), ("tennis_skirt", "Chân váy tennis"), ("straight_jeans", "Quần jeans ống đứng"),
                ("wide_trousers", "Quần ống rộng"), ("sundress", "Váy mùa hè"), ("midi_dress", "Váy midi"),

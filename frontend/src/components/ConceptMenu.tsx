@@ -8,8 +8,8 @@ export interface ConceptChoices {
   style: string; outfit: string; top: string; scene: string; lighting: string
   custom_outfit: string; custom_scene: string; activity: string
 }
-// Bikini is the default outfit; other styling keeps each concept's own wording.
-export const CONCEPT_DEFAULTS: ConceptChoices = { glasses: false, style: 'auto', outfit: 'bikini', top: 'auto', scene: 'auto', lighting: 'auto', custom_outfit: '', custom_scene: '', activity: '' }
+// Keep each concept's own clothing unless the user explicitly selects an override.
+export const CONCEPT_DEFAULTS: ConceptChoices = { glasses: false, style: 'auto', outfit: 'auto', top: 'auto', scene: 'auto', lighting: 'auto', custom_outfit: '', custom_scene: '', activity: '' }
 
 export const overridesConcept = (c: ConceptChoices) =>
   Boolean(c.glasses) || c.style !== 'auto' || c.outfit !== 'auto' || c.top !== 'auto' || c.scene !== 'auto' ||
@@ -20,11 +20,11 @@ export function useConceptChoices(projectId: string) {
   const [choices, setChoices] = useState<ConceptChoices>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(key) || '{}')
-      if (!localStorage.getItem(`${key}:outfit-switch-v1`) && saved.outfit === 'auto') saved.outfit = 'bikini'
+      if (!localStorage.getItem(`${key}:outfit-default-v2`) && saved.outfit === 'bikini') saved.outfit = 'auto'
       return { ...CONCEPT_DEFAULTS, ...saved }
     } catch { return CONCEPT_DEFAULTS }
   })
-  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(choices)); localStorage.setItem(`${key}:outfit-switch-v1`, '1') } catch { /* Browser storage may be unavailable. */ } }, [key, choices])
+  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(choices)); localStorage.setItem(`${key}:outfit-default-v2`, '1') } catch { /* Browser storage may be unavailable. */ } }, [key, choices])
   return [choices, setChoices] as const
 }
 
@@ -67,7 +67,7 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
 
 
 export function OutfitSwitcher({ choices, onChange }: { choices: ConceptChoices; onChange: (next: ConceptChoices) => void }) {
-  const outfits = [['bikini', 'Bikini (mặc định)'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy'], ['auto', 'Trang phục riêng của từng concept']]
+  const outfits = [['auto', 'Trang phục riêng của từng concept (mặc định)'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
   return <div className="flex flex-wrap items-end gap-4 rounded-xl border p-4">
     <label className="grid gap-2 text-sm font-medium">Trang phục
       <select aria-label="Đổi trang phục concept" className="rounded border bg-background p-2" value={choices.outfit} onChange={e => onChange({ ...choices, outfit: e.target.value, top: 'auto' })}>
