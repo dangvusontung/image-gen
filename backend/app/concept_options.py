@@ -9,7 +9,7 @@ class ConceptChoices(BaseModel):
     style: Literal["auto", "cute", "glamour"] = "auto"
     outfit: Literal["auto", "denim_mix", "denim_shorts", "denim_skirt", "pleated_skirt", "tennis_skirt",
                     "wide_trousers", "straight_jeans", "cargo_shorts", "sundress", "midi_dress", "knit_dress",
-                    "bikini", "satin_dress", "satin_pyjamas", "shirt_shorts", "bodysuit_trousers", "offshoulder_skirt",
+                    "black_white_lounge", "bikini", "satin_dress", "satin_pyjamas", "shirt_shorts", "bodysuit_trousers", "offshoulder_skirt",
                     "pyjamas", "overalls", "linen_set", "blazer_skirt", "tracksuit", "custom"] = "auto"
     top: Literal["auto", "tee", "knit", "blouse", "cardigan", "fitted_tank", "cropped_tee", "shirt",
                  "hoodie", "turtleneck", "polo", "vest"] = "auto"
@@ -36,7 +36,7 @@ class ConceptChoices(BaseModel):
 
 MENU = {
     "style": [("auto", "Theo từng concept (không ghi đè)"), ("cute", "Dễ thương · nhẹ nhàng, ấm áp"), ("glamour", "Glamour · táo bạo, cuốn hút")],
-    "outfit": [("auto", "Trang phục riêng của từng concept · mặc định"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
+    "outfit": [("auto", "Trang phục riêng của từng concept · mặc định"), ("black_white_lounge", "Crop tank + short đen viền trắng"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
                ("shirt_shorts", "Sơ mi + quần short"), ("bodysuit_trousers", "Bodysuit + quần dài"),
                ("offshoulder_skirt", "Áo trễ vai + chân váy"), ("denim_mix", "Phối quần short jeans và chân váy"),
                ("denim_shorts", "Quần short jeans"), ("cargo_shorts", "Quần short cargo"), ("denim_skirt", "Chân váy jeans"),
@@ -206,6 +206,7 @@ def apply_choices(brief, choices, slot, prior):
                "wide_trousers": "wide-leg cotton trousers"}
     # Complete looks that replace the top as well.
     full_outfits = {
+        "black_white_lounge": "an opaque black fitted cropped tank top with thin shoulder straps and white neckline piping and matching black lounge shorts with a white elastic waistband, white side and hem piping and a white drawstring tied in a small bow at the front, barefoot",
         "sundress": "a soft pastel summer dress with delicate embroidery and simple sandals",
         "midi_dress": "a flowing midi dress with a neat waist and simple shoes",
         "knit_dress": "a fine-knit dress with soft drape and ankle boots",

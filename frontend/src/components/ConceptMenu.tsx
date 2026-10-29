@@ -67,7 +67,7 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
 
 
 export function OutfitSwitcher({ choices, onChange }: { choices: ConceptChoices; onChange: (next: ConceptChoices) => void }) {
-  const outfits = [['auto', 'Trang phục riêng của từng concept (mặc định)'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
+  const outfits = [['auto', 'Trang phục riêng của từng concept (mặc định)'], ['black_white_lounge', 'Crop tank + short đen viền trắng'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
   return <div className="flex flex-wrap items-end gap-4 rounded-xl border p-4">
     <label className="grid gap-2 text-sm font-medium">Trang phục
       <select aria-label="Đổi trang phục concept" className="rounded border bg-background p-2" value={choices.outfit} onChange={e => onChange({ ...choices, outfit: e.target.value, top: 'auto' })}>

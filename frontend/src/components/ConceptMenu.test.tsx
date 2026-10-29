@@ -38,3 +38,14 @@ it('preserves an existing fashion outfit instead of resetting it during migratio
   expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('satin_pyjamas')
   expect(screen.getByRole('checkbox', { name: '+ Kính' })).toBeChecked()
 })
+
+
+it('selects and remembers the black lounge set without changing the default', async () => {
+  const view = render(<Harness />)
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
+  await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'black_white_lounge')
+  view.unmount()
+  render(<Harness />)
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('black_white_lounge')
+  expect(screen.getByRole('option', { name: 'Crop tank + short đen viền trắng' })).toBeInTheDocument()
+})

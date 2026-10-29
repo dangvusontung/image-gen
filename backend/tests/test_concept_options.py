@@ -114,3 +114,20 @@ def test_outfit_switch_is_applied_to_generated_concept_prompt(client, studio):
         assert job['status'] == 'succeeded'
         assert expected in job['prompt']
         assert job['meta']['concept_choices']['outfit'] == outfit
+
+
+def test_black_white_lounge_reference_outfit_is_fixed_and_keeps_scene(client, studio):
+    base, _, _ = studio
+    options = client.get(f'{base}/concept-options').json()['outfit']
+    assert ['black_white_lounge', 'Crop tank + short đen viền trắng'] in options
+    result = client.post(f'{base}/concepts/generate', json={'slots': [1, 2], 'choices': {'outfit': 'black_white_lounge'}, 'confirmed': True})
+    assert result.status_code == 201, result.text
+    for job_id in result.json()['job_ids']:
+        job = wait_for_job(client, job_id)
+        assert job['status'] == 'succeeded'
+        assert 'black fitted cropped tank top' in job['prompt']
+        assert 'white drawstring' in job['prompt']
+        assert job['meta']['concept_choices']['outfit'] == 'black_white_lounge'
+    concepts = client.get(f'{base}/concepts').json()
+    assert len({c['brief']['outfit'] for c in concepts}) == 1
+    assert all('shorts' in c['brief']['silhouette'] for c in concepts)
