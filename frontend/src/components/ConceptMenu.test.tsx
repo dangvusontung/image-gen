@@ -49,3 +49,14 @@ it('selects and remembers the black lounge set without changing the default', as
   expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('black_white_lounge')
   expect(screen.getByRole('option', { name: 'Crop tank + short đen viền trắng' })).toBeInTheDocument()
 })
+
+
+it('remembers the white strapless dress without changing scene, lighting or glasses', async () => {
+  localStorage.setItem('concept-choices:outfit-test', JSON.stringify({ outfit: 'auto', scene: 'garden_cafe', lighting: 'golden', glasses: true }))
+  const view = render(<Harness />)
+  await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'white_strapless_mini')
+  view.unmount()
+  render(<Harness />)
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('white_strapless_mini')
+  expect(JSON.parse(localStorage.getItem('concept-choices:outfit-test') || '{}')).toMatchObject({ scene: 'garden_cafe', lighting: 'golden', glasses: true })
+})

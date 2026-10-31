@@ -131,3 +131,30 @@ def test_black_white_lounge_reference_outfit_is_fixed_and_keeps_scene(client, st
     concepts = client.get(f'{base}/concepts').json()
     assert len({c['brief']['outfit'] for c in concepts}) == 1
     assert all('shorts' in c['brief']['silhouette'] for c in concepts)
+
+
+def test_white_strapless_dress_changes_only_clothing():
+    original = proposal_brief()
+    for slot in [1, 117]:
+        changed = apply_choices(original, ConceptChoices(outfit='white_strapless_mini'), slot, [])
+        assert 'pearl-white satin strapless mini dress' in changed['outfit']
+        assert 'white pointed-toe high-heeled pumps' in changed['outfit']
+        assert 'strapless mini dress' in changed['silhouette']
+        for field in original.keys() - {'outfit', 'silhouette'}:
+            assert changed[field] == original[field]
+
+
+def test_white_strapless_dress_generates_in_original_concept_background(client, studio):
+    base, _, _ = studio
+    assert ['white_strapless_mini', 'Váy mini satin trắng cúp ngực'] in client.get(f'{base}/concept-options').json()['outfit']
+    original = client.get(f'{base}/concept-proposals').json()[0]
+    result = client.post(f'{base}/concepts/generate', json={'slots': [1], 'choices': {'outfit': 'white_strapless_mini'}, 'confirmed': True})
+    assert result.status_code == 201, result.text
+    job = wait_for_job(client, result.json()['job_ids'][0])
+    assert job['status'] == 'succeeded'
+    assert 'pearl-white satin strapless mini dress' in job['prompt']
+    assert original['brief']['setting'] in job['prompt']
+    rendered = client.get(f'{base}/concepts').json()[0]['brief']
+    assert rendered['setting'] == original['brief']['setting']
+    assert rendered['pose'] == original['brief']['pose']
+    assert rendered['lighting'] == original['brief']['lighting']
