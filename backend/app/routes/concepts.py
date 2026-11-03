@@ -205,6 +205,8 @@ def new_concept(db, registry, project, run, slot, mood, camera, revision, size, 
         if styling:
             prompt += "\n" + styling
         meta["concept_choices"] = choices.model_dump()
+    if brief and brief.get("footwear"):
+        prompt += "\nFOOTWEAR: " + brief["footwear"] + ". This separate footwear selection overrides footwear, socks or barefoot wording elsewhere in the brief. Preserve the selected clothing, pose and scene; do not replace them to match the shoes."
     refs = [(master_asset, "MASTER identity authority")] + concept_turn_ref(turn, camera, (project.step_leads or {}).get("concept"))
     template = step_template(db, project, "concept")
     if template:
@@ -245,7 +247,7 @@ NEUTRAL_BRIEF = {
     "lighting": "soft natural light",
 }
 
-PROPOSAL_FIELDS = ("setting", "activity", "pose", "outfit", "silhouette", "expression", "gaze", "camera", "framing", "lighting")
+PROPOSAL_FIELDS = ("setting", "activity", "pose", "outfit", "silhouette", "expression", "gaze", "camera", "framing", "lighting", "footwear")
 
 
 def parse_proposals(text: str) -> list[dict]:

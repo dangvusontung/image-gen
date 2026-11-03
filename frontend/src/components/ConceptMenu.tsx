@@ -4,15 +4,16 @@ import { request } from '@/api/client'
 import { ErrorAlert } from '@/components/ErrorAlert'
 
 export interface ConceptChoices {
+  footwear?: string; custom_footwear?: string
   glasses?: boolean
   style: string; outfit: string; top: string; scene: string; lighting: string
   custom_outfit: string; custom_scene: string; activity: string
 }
 // Keep each concept's own clothing unless the user explicitly selects an override.
-export const CONCEPT_DEFAULTS: ConceptChoices = { glasses: false, style: 'auto', outfit: 'auto', top: 'auto', scene: 'auto', lighting: 'auto', custom_outfit: '', custom_scene: '', activity: '' }
+export const CONCEPT_DEFAULTS: ConceptChoices = { footwear: 'auto', custom_footwear: '', glasses: false, style: 'auto', outfit: 'auto', top: 'auto', scene: 'auto', lighting: 'auto', custom_outfit: '', custom_scene: '', activity: '' }
 
 export const overridesConcept = (c: ConceptChoices) =>
-  Boolean(c.glasses) || c.style !== 'auto' || c.outfit !== 'auto' || c.top !== 'auto' || c.scene !== 'auto' ||
+  (c.footwear !== undefined && c.footwear !== 'auto') || Boolean(c.glasses) || c.style !== 'auto' || c.outfit !== 'auto' || c.top !== 'auto' || c.scene !== 'auto' ||
   c.lighting !== 'auto' || Boolean(c.activity.trim())
 
 export function useConceptChoices(projectId: string) {
@@ -45,13 +46,14 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
     <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={Boolean(choices.glasses)} onChange={e => onChange({ ...choices, glasses: e.target.checked })} />+ Kính (tùy chọn)</label>
     {menu.error && <ErrorAlert error={menu.error} title="Không tải được menu concept" />}
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {(['style', 'outfit', 'top', 'scene', 'lighting'] as const).map(key => <label key={key} className="grid gap-2 text-sm">
-        {{ style: 'Phong cách', outfit: 'Trang phục', top: 'Áo phối cùng', scene: 'Bối cảnh', lighting: 'Ánh sáng' }[key]}
-        <select aria-label={{ style: 'Phong cách concept', outfit: 'Trang phục concept', top: 'Áo concept', scene: 'Bối cảnh concept', lighting: 'Ánh sáng concept' }[key]} className="w-full rounded border p-2" value={choices[key]} disabled={!menu.data} onChange={e => change(key, e.target.value)}>
+      {(['style', 'outfit', 'footwear', 'top', 'scene', 'lighting'] as const).map(key => <label key={key} className="grid gap-2 text-sm">
+        {{ style: 'Phong cách', outfit: 'Quần áo', footwear: 'Giày', top: 'Áo phối cùng', scene: 'Bối cảnh', lighting: 'Ánh sáng' }[key]}
+        <select aria-label={{ style: 'Phong cách concept', outfit: 'Trang phục concept', footwear: 'Giày concept', top: 'Áo concept', scene: 'Bối cảnh concept', lighting: 'Ánh sáng concept' }[key]} className="w-full rounded border p-2" value={choices[key]} disabled={!menu.data} onChange={e => change(key, e.target.value)}>
           {menu.data?.[key].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
       </label>)}
     </div>
+    {choices.footwear === 'custom' && <label className="grid gap-2 text-sm">Giày tùy chỉnh<input className="rounded border p-2" maxLength={400} value={choices.custom_footwear ?? ''} onChange={e => change('custom_footwear', e.target.value)} placeholder="Ví dụ: slingback đỏ mũi nhọn, gót nhọn thấp…" /></label>}
     {choices.outfit === 'custom' && <label className="grid gap-2 text-sm">Trang phục tùy chỉnh
       <input className="rounded border p-2" maxLength={600} value={choices.custom_outfit} onChange={e => change('custom_outfit', e.target.value)} placeholder="Ví dụ: quần short jeans xanh, áo thun hồng và giày trắng" />
     </label>}
@@ -67,12 +69,22 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
 
 
 export function OutfitSwitcher({ choices, onChange }: { choices: ConceptChoices; onChange: (next: ConceptChoices) => void }) {
-  const outfits = [['auto', 'Trang phục riêng của từng concept (mặc định)'], ['tank_pleated_classic', 'Tank trắng + mini xếp ly xám'], ['tank_pleated_minimal', 'Tank đen + mini xếp ly kem'], ['tank_pleated_sport', 'Tank xanh pastel + mini xếp ly trắng'], ['tank_pleated_vintage', 'Tank đỏ rượu + mini xếp ly taupe'], ['white_strapless_mini', 'Váy mini satin trắng cúp ngực'], ['black_white_lounge', 'Crop tank + short đen viền trắng'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
+  const outfits = [['black_strapless_mini', 'Váy mini đen cúp ngực'], ['auto', 'Trang phục riêng của từng concept (mặc định)'], ['tank_pleated_classic', 'Tank trắng + mini xếp ly xám'], ['tank_pleated_minimal', 'Tank đen + mini xếp ly kem'], ['tank_pleated_sport', 'Tank xanh pastel + mini xếp ly trắng'], ['tank_pleated_vintage', 'Tank đỏ rượu + mini xếp ly taupe'], ['white_strapless_mini', 'Váy mini satin trắng cúp ngực'], ['black_white_lounge', 'Crop tank + short đen viền trắng'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
   return <div className="flex flex-wrap items-end gap-4 rounded-xl border p-4">
     <label className="grid gap-2 text-sm font-medium">Trang phục
       <select aria-label="Đổi trang phục concept" className="rounded border bg-background p-2" value={choices.outfit} onChange={e => onChange({ ...choices, outfit: e.target.value, top: 'auto' })}>
         {outfits.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         {!outfits.some(([value]) => value === choices.outfit) && <option value={choices.outfit}>Trang phục tùy chọn từ menu nâng cao</option>}
+      </select>
+    </label>
+    <label className="grid gap-2 text-sm font-medium">Giày
+      <select aria-label="Đổi giày concept" className="rounded border bg-background p-2" value={choices.footwear ?? 'auto'} onChange={e => onChange({ ...choices, footwear: e.target.value })}>
+        <option value="auto">Giày riêng của từng concept</option>
+        <option value="white_slingback">Slingback trắng · mũi nhọn, quai đôi, gót đen</option>
+        <option value="black_pumps">Pumps đen gót nhọn</option>
+        <option value="sneakers">Sneakers trắng</option>
+        <option value="barefoot">Chân trần · không tất</option>
+        {choices.footwear === 'custom' && <option value="custom">Giày tùy chỉnh từ menu nâng cao</option>}
       </select>
     </label>
     <label className="flex items-center gap-2 py-2 text-sm"><input type="checkbox" checked={Boolean(choices.glasses)} onChange={e => onChange({ ...choices, glasses: e.target.checked })} />+ Kính</label>

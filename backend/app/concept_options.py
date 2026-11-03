@@ -1,4 +1,5 @@
 """User-controlled concept styling, stored in each job's immutable metadata."""
+from app.footwear import BLACK_MINI, FOOTWEAR
 from app.outfit_presets import TANK_PLEATED_OUTFITS
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -7,11 +8,13 @@ from pydantic import BaseModel, ConfigDict, Field, model_validator
 class ConceptChoices(BaseModel):
     model_config = ConfigDict(extra="forbid")
     glasses: bool = False
+    footwear: Literal["auto", "white_slingback", "black_pumps", "sneakers", "barefoot", "custom"] = "auto"
+    custom_footwear: str = Field(default="", max_length=400)
     style: Literal["auto", "cute", "glamour"] = "auto"
     outfit: Literal["auto", "denim_mix", "denim_shorts", "denim_skirt", "pleated_skirt", "tennis_skirt",
                     "wide_trousers", "straight_jeans", "cargo_shorts", "sundress", "midi_dress", "knit_dress",
                     "tank_pleated_classic", "tank_pleated_minimal", "tank_pleated_sport", "tank_pleated_vintage",
-                    "white_strapless_mini", "black_white_lounge", "bikini", "satin_dress", "satin_pyjamas", "shirt_shorts", "bodysuit_trousers", "offshoulder_skirt",
+                    "black_strapless_mini", "white_strapless_mini", "black_white_lounge", "bikini", "satin_dress", "satin_pyjamas", "shirt_shorts", "bodysuit_trousers", "offshoulder_skirt",
                     "pyjamas", "overalls", "linen_set", "blazer_skirt", "tracksuit", "custom"] = "auto"
     top: Literal["auto", "tee", "knit", "blouse", "cardigan", "fitted_tank", "cropped_tee", "shirt",
                  "hoodie", "turtleneck", "polo", "vest"] = "auto"
@@ -24,21 +27,24 @@ class ConceptChoices(BaseModel):
 
     def overrides_concept(self) -> bool:
         """True when the user picked something that should replace the concept's own wording."""
-        return any((self.glasses, self.outfit != "auto", self.top != "auto", self.scene != "auto",
+        return any((self.footwear != "auto", self.glasses, self.outfit != "auto", self.top != "auto", self.scene != "auto",
                     self.lighting != "auto", self.style != "auto", self.activity.strip()))
 
     @model_validator(mode="after")
     def validate_custom(self):
         if self.outfit == "custom" and not self.custom_outfit.strip():
             raise ValueError("Nhập trang phục tùy chỉnh")
+        if self.footwear == "custom" and not self.custom_footwear.strip():
+            raise ValueError("Nhập giày tùy chỉnh")
         if self.scene == "custom" and not self.custom_scene.strip():
             raise ValueError("Nhập bối cảnh tùy chỉnh")
         return self
 
 
 MENU = {
+    "footwear": [("auto", "Giày riêng của từng concept"), *[(key, label) for key, (label, _) in FOOTWEAR.items()], ("custom", "Giày tùy chỉnh")],
     "style": [("auto", "Theo từng concept (không ghi đè)"), ("cute", "Dễ thương · nhẹ nhàng, ấm áp"), ("glamour", "Glamour · táo bạo, cuốn hút")],
-    "outfit": [("auto", "Trang phục riêng của từng concept · mặc định"),
+    "outfit": [("auto", "Trang phục riêng của từng concept · mặc định"), ("black_strapless_mini", "Váy mini đen cúp ngực"),
                *[(key, label) for key, (label, _) in TANK_PLEATED_OUTFITS.items()], ("white_strapless_mini", "Váy mini satin trắng cúp ngực"), ("black_white_lounge", "Crop tank + short đen viền trắng"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
                ("shirt_shorts", "Sơ mi + quần short"), ("bodysuit_trousers", "Bodysuit + quần dài"),
                ("offshoulder_skirt", "Áo trễ vai + chân váy"), ("denim_mix", "Phối quần short jeans và chân váy"),
@@ -220,6 +226,7 @@ def apply_choices(brief, choices, slot, prior):
         "blazer_skirt": "a tailored blazer over a plain top with a short skirt and loafers",
         "tracksuit": "a soft cotton tracksuit with clean trainers",
     }
+    full_outfits["black_strapless_mini"] = BLACK_MINI
     full_outfits.update({key: body for key, (_, body) in TANK_PLEATED_OUTFITS.items()})
     color = ("coral pink", "powder blue", "sage green", "burgundy", "lavender", "champagne beige", "deep teal", "terracotta")[(slot - 1) % 8]
     full_outfits.update({
@@ -261,6 +268,8 @@ def apply_choices(brief, choices, slot, prior):
             result["silhouette"] = bottoms[outfit]
     if choices.glasses:
         result["outfit"] += "; wearing clear-lens eyeglasses with a simple thin frame, eyes clearly visible"
+    if choices.footwear != "auto":
+        result["footwear"] = choices.custom_footwear.strip() if choices.footwear == "custom" else FOOTWEAR[choices.footwear][1]
     return result
 
 

@@ -64,7 +64,7 @@ def test_nine_standalone_concepts_enhance_export_and_restart(client, studio):
     assert len({c["job"]["output_asset_ids"][0] for c in concepts}) == 9
     for c in concepts:
         assert c["job"]["status"] == "succeeded"
-        assert set(c["brief"]) == {"setting", "activity", "outfit", "silhouette", "framing", "pose", "expression", "gaze", "camera", "lighting"}
+        assert set(c["brief"]) == {"setting", "activity", "outfit", "footwear", "silhouette", "framing", "pose", "expression", "gaze", "camera", "lighting"}
         assert c["mood"] == next(p["title"] for p in proposals if p["slot"] == c["slot"])
         assert c["master_version_id"] == master["id"]
         assert c["turnaround_version_id"] == turn["id"]
@@ -230,7 +230,7 @@ def test_exports_validation_and_project_isolation(client, studio):
     assert client.get(f"{base}/contact-sheet").status_code == 400
     # With no proposed round, the step offers the built-in nine straight from the prompt.
     built_in = client.get(f"{base}/concept-proposals").json()
-    assert len(built_in) == 119 and all(p["run"] == 0 for p in built_in)
+    assert len(built_in) == 121 and all(p["run"] == 0 for p in built_in)
     propose(client, base)
     unknown = client.post(f"{base}/concepts/generate", json={"proposal_ids": ["nope"], "confirmed": True})
     assert unknown.status_code == 404 and unknown.json()["detail"]["code"] == "proposal_not_found"
@@ -264,7 +264,7 @@ def test_concepts_can_exclude_an_approved_turnaround(client, studio):
 def test_default_concepts_mix_direct_and_slightly_off_camera_gaze():
     from app.concept_defaults import DEFAULT_CONCEPTS
     from app.routes.concepts import preferred_angle
-    assert len(DEFAULT_CONCEPTS) == 135
+    assert len(DEFAULT_CONCEPTS) == 137
     direct = [c for c in DEFAULT_CONCEPTS[:9] if c["gaze"] == "looking directly into the camera lens, eyes open"]
     assert len(direct) == 5
     off_camera = [c for c in DEFAULT_CONCEPTS[:9] if c not in direct]
@@ -299,7 +299,7 @@ def test_seven_added_concepts_are_selectable_and_renderable(client, studio):
     base, _, _ = studio
     # Include historical slots when checking the original reference batches.
     defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
-    assert len(defaults) == 135
+    assert len(defaults) == 137
     added = defaults[9:16]
     assert [p['slot'] for p in added] == list(range(10, 17))
     assert [p['title'] for p in added] == ['At-home manicure', 'Soft morning knit', 'Kitchen daydream',
@@ -724,7 +724,7 @@ def test_bedroom_beach_reference_concepts_keep_outfit_and_scene(client, studio):
     # Include historical slots when checking the original reference batches.
     defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[126:130]
-    assert len(defaults) == 135
+    assert len(defaults) == 137
     assert [p['slot'] for p in added] == [127, 128, 129, 130]
     assert len({p['brief']['outfit'] for p in added}) == 4
     assert 'headland' in added[2]['brief']['setting']

@@ -14,10 +14,10 @@ import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { active, costLabel, DownloadLinks, ImagePreview, JobDetails, JobPlaceholder, PromptEditor, useGenerationAction } from '@/components/GenerationUI'
 
-const BRIEF_FIELDS = ['setting', 'activity', 'pose', 'outfit', 'silhouette', 'expression', 'gaze', 'camera', 'framing', 'lighting']
+const BRIEF_FIELDS = ['setting', 'activity', 'pose', 'outfit', 'footwear', 'silhouette', 'expression', 'gaze', 'camera', 'framing', 'lighting']
 
 const BRIEF_LABEL: Record<string, string> = {
-  setting: 'Bối cảnh', activity: 'Hoạt động', outfit: 'Trang phục', silhouette: 'Dáng trang phục',
+  footwear: 'Giày', setting: 'Bối cảnh', activity: 'Hoạt động', outfit: 'Trang phục', silhouette: 'Dáng trang phục',
   framing: 'Khung hình', pose: 'Tư thế', expression: 'Biểu cảm', gaze: 'Hướng nhìn',
   camera: 'Máy ảnh', lighting: 'Ánh sáng',
 }
@@ -76,6 +76,15 @@ function FixAndRetry({ concept, projectId, size, choices, disabled }: {
 }
 
 export default function ConceptsStep({ project, onEnhance }: { project: ProjectDetail; onEnhance: (id: string) => void }) {
+  const [bookmarks, setBookmarks] = useState<Record<string, boolean>>(() => {
+    try { return JSON.parse(localStorage.getItem('concept-bookmarks:v1') || '{}') || {} } catch { return {} }
+  })
+  const bookmarked = (p: ConceptProposal) => bookmarks[conceptMarkKey(project.id, p)] === true
+  const toggleBookmark = (p: ConceptProposal) => {
+    const next = { ...bookmarks, [conceptMarkKey(project.id, p)]: !bookmarked(p) }
+    setBookmarks(next)
+    try { localStorage.setItem('concept-bookmarks:v1', JSON.stringify(next)) } catch { /* Storage may be unavailable. */ }
+  }
   const [emojiMarks, setEmojiMarks] = useState(readEmojiMarks)
   const [emojiFilter, setEmojiFilter] = useState('all')
   const emojiOf = (proposal: ConceptProposal) => emojiMarks[conceptMarkKey(project.id, proposal)] ?? ''
@@ -128,7 +137,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const pending = action.isPending
   const ready = project.rights_confirmed && Boolean(workflow.data?.approved_master_id)
   const list = proposals.data ?? []
-  const visibleList = list.filter(p => emojiFilter === 'all' || (emojiFilter === 'unmarked' ? !emojiOf(p) : emojiOf(p) === emojiFilter))
+  const visibleList = list.filter(p => emojiFilter === 'all' || (emojiFilter === 'bookmarked' ? bookmarked(p) : emojiFilter === 'unmarked' ? !emojiOf(p) : emojiOf(p) === emojiFilter))
   const chosen = picked === null ? list : list.filter(p => picked.includes(p.slot))
   const estimate = useQuery({ queryKey: ['estimate', project.id, project.provider, project.model, size, chosen.length], enabled: ready && chosen.length > 0,
     queryFn: () => request<{ total_usd: number | null; note: string }>(`${base}/generation-estimate?purpose=concept&count=${chosen.length}${size ? `&size=${encodeURIComponent(size)}` : ''}`), refetchInterval: 3000 })
@@ -220,8 +229,9 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         <span className="text-sm text-muted-foreground">Đang chọn {chosen.length}/{list.length}</span>
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm">Lọc emoji <select aria-label="Lọc concept theo emoji" className="ml-2 rounded border p-2" value={emojiFilter} onChange={e => setEmojiFilter(e.target.value)}>
+        <label className="text-sm">Lọc concept <select aria-label="Lọc concept theo emoji" className="ml-2 rounded border p-2" value={emojiFilter} onChange={e => setEmojiFilter(e.target.value)}>
           <option value="all">Tất cả ({list.length})</option>
+          <option value="bookmarked">🔖 Bookmark ({list.filter(bookmarked).length})</option>
           <option value="unmarked">Chưa đánh dấu ({list.filter(p => !emojiOf(p)).length})</option>
           {CONCEPT_EMOJIS.map(emoji => <option key={emoji} value={emoji}>{emoji} ({list.filter(p => emojiOf(p) === emoji).length})</option>)}
         </select></label>
@@ -254,6 +264,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
                 setConfirmed(false)
               }} />Chọn
           </label>
+          <button type="button" className="mt-2 rounded border px-2 py-1 text-xs" aria-label={`Bookmark concept ${p.slot}`} aria-pressed={bookmarked(p)} onClick={() => toggleBookmark(p)}>{bookmarked(p) ? '🔖 Đã lưu' : '🔖 Bookmark'}</button>
           <label className="mt-2 flex items-center gap-2 text-xs">Đánh dấu
             <select aria-label={`Emoji concept ${p.slot}`} className="rounded border p-1 text-base" value={emojiOf(p)} onChange={e => markEmoji(p, e.target.value)}>
               <option value="">—</option>

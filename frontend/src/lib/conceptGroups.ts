@@ -6,7 +6,7 @@ const GROUPS = [
   { name: 'Ren & thời trang', slots: [109, 110, 111, 112, 113, 114] },
   { name: 'Phòng tắm retro · xanh olive', slots: [105, 106] },
   { name: 'Café sân vườn & cửa sổ xanh', slots: [102, 103, 104] },
-  { name: 'Café vintage & bên cửa sổ', slots: [99, 100, 101] },
+  { name: 'Café vintage & bên cửa sổ', slots: [99, 100, 101, 136, 137] },
   { name: 'Private moments', slots: [93, 94, 95, 96, 97, 98, 107, 108] },
   { name: 'Việt Nam', slots: [85, 86, 87, 88, 89, 90, 91, 92] },
   { name: 'Phòng thay đồ & làm đẹp', slots: [73, 74, 75, 76] },

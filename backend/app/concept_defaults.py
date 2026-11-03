@@ -1775,6 +1775,46 @@ DEFAULT_CONCEPTS += ({'title': 'Cream sofa phone break',
   'lighting': 'soft low-contrast natural side light, warm gray and beige tones, subtle grain and quiet '
               'shadows rather than glossy studio lighting'})
 
+DEFAULT_CONCEPTS += ({'title': 'Garden cafe table-side hair sweep',
+  'activity': 'pausing beside the cafe table while brushing her hair back',
+  'pose': 'perching lightly against the edge of a sturdy low white table with both feet on the lawn, legs '
+          'naturally close, one palm supporting her at her side, the other hand behind her head sweeping her '
+          'hair back; torso relaxed and head tipped gently toward the side',
+  'expression': 'a relaxed absorbed expression',
+  'gaze': 'off-camera toward the shaded cafe terrace',
+  'camera': 'front three-quarter view at natural standing eye level',
+  'framing': 'full-body environmental portrait with both pointed slingback shoes and black heels fully '
+             'visible, cream chairs and parasols behind',
+  'setting': 'an outdoor garden cafe on a dry grass lawn with cream upholstered chairs in black metal frames '
+             'topped with chrome finials, square white tables, broad ivory parasols and dark timber shutters',
+  'outfit': 'an opaque fitted black strapless mini dress with a softly curved neckline, gently gathered '
+            'fabric at the waist, a small front hem slit and fully lined coverage',
+  'footwear': 'white pointed-toe leather slingback pumps with two slim buckled straps across the vamp, an '
+              'open heel with a slim back strap, black insoles and slender black stiletto heels',
+  'silhouette': 'a fitted black strapless mini dress',
+  'lighting': 'natural afternoon sunlight softened by the parasols, gentle dappled shadows and realistic '
+              'fabric texture'},
+ {'title': 'Garden cafe cream-chair recline',
+  'activity': 'lounging in a wide cream cafe chair during a quiet afternoon',
+  'pose': 'reclining diagonally into the chair back, one arm draped loosely over the side and the other bent '
+          'with the hand resting on top of her head; one knee remains bent on the seat while the other leg '
+          'extends casually beyond the opposite armrest, ankles relaxed, dress hem resting naturally with '
+          'full coverage',
+  'expression': 'a restful calm expression',
+  'gaze': 'off-camera toward the parasols',
+  'camera': 'wide side three-quarter view at seated eye level with face visible in profile',
+  'framing': 'one full-body seated portrait including the entire chair and both white pointed slingbacks '
+             'with black stiletto heels; one image, no collage',
+  'setting': 'an outdoor garden cafe on a dry grass lawn with cream upholstered chairs in black metal frames '
+             'topped with chrome finials, square white tables, broad ivory parasols and dark timber shutters',
+  'outfit': 'an opaque fitted black strapless mini dress with a softly curved neckline, gently gathered '
+            'fabric at the waist, a small front hem slit and fully lined coverage',
+  'footwear': 'white pointed-toe leather slingback pumps with two slim buckled straps across the vamp, an '
+              'open heel with a slim back strap, black insoles and slender black stiletto heels',
+  'silhouette': 'a fitted black strapless mini dress',
+  'lighting': 'natural afternoon sunlight softened by the parasols, gentle dappled shadows and realistic '
+              'fabric texture'})
+
 # Retain historical slots for saved images and explicit reruns. Only the strongest
 # composition from each reviewed near-duplicate cluster remains in the picker.
 RETIRED_CONCEPT_SLOTS = {
