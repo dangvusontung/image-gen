@@ -1496,3 +1496,63 @@ DEFAULT_CONCEPTS += ({'title': 'White sofa yarn afternoon',
   'camera': 'front three-quarter view from the aisle with face clearly visible',
   'framing': 'three-quarter-body environmental portrait including the bench, cup and timber window frame',
   'lighting': 'warm golden window light with muted film-like colors and soft cabin shadows'})
+
+DEFAULT_CONCEPTS += ({'title': 'Ribbed tank bookshop cafe',
+  'setting': 'a bright independent bookshop cafe with pale wood shelves, a small coffee table and tall '
+             'windows',
+  'activity': 'browsing an open book beside the coffee table',
+  'pose': 'standing naturally beside the table, one hand holding an open book at waist level and the other '
+          'lightly touching its page, weight resting on one leg',
+  'outfit': 'an opaque fitted white ribbed scoop-neck tank top tucked into a charcoal-gray high-waisted '
+            'pleated mini skirt with an opaque lining and built-in shorts, a slim black leather belt, white '
+            'ankle socks, polished black loafers and small silver hoop earrings',
+  'silhouette': 'a fitted ribbed tank and a high-waisted charcoal pleated mini skirt',
+  'expression': 'a gentle thoughtful smile',
+  'gaze': 'down toward the open book',
+  'camera': 'front three-quarter view at eye level',
+  'framing': 'full-body fashion portrait including loafers and the cafe shelves',
+  'lighting': 'soft morning window light with warm wood reflections'},
+ {'title': 'Minimal tank gallery stroll',
+  'setting': 'a contemporary art gallery with cream walls, a large abstract painting and a polished stone '
+             'floor',
+  'activity': 'pausing to look at a painting',
+  'pose': 'standing upright with shoulders relaxed, arms resting naturally at her sides, head turned '
+          'slightly toward the artwork while both eyes remain visible',
+  'outfit': 'an opaque fitted black square-neck tank top tucked into an ivory high-waisted pleated mini '
+            'skirt with an opaque lining and built-in shorts, cream low-profile sneakers and a fine gold '
+            'necklace',
+  'silhouette': 'a fitted square-neck tank and an ivory pleated mini skirt',
+  'expression': 'calm and attentive',
+  'gaze': 'toward the artwork just beside the camera',
+  'camera': 'near-frontal view at eye level',
+  'framing': 'full-body environmental portrait including the skirt pleats and cream sneakers',
+  'lighting': 'broad diffused skylight with soft neutral shadows'},
+ {'title': 'Pastel tank court break',
+  'setting': 'a quiet outdoor tennis court with a green fence, a courtside bench and leafy trees beyond',
+  'activity': 'taking a short break beside the bench after a casual practice',
+  'pose': 'standing upright beside the bench, one hand loosely holding a tennis racket by her side and the '
+          'other resting on the bench back, shoulders relaxed',
+  'outfit': 'an opaque powder-blue sleeveless ribbed athletic tank top and a white high-waisted pleated '
+            'tennis skort with built-in opaque shorts, white crew socks, clean white court sneakers and a '
+            'slim silver bracelet',
+  'silhouette': 'a ribbed athletic tank and a white pleated tennis skort',
+  'expression': 'a bright relaxed smile',
+  'gaze': 'toward the camera',
+  'camera': 'front three-quarter view at eye level',
+  'framing': 'full-body sports-fashion portrait with racket and court shoes visible',
+  'lighting': 'soft late-afternoon sunlight with gentle reflected fill'},
+ {'title': 'Burgundy tank record-shop pause',
+  'setting': 'a cozy vintage record shop with warm wooden racks, vinyl sleeves and a softly lit display '
+             'window',
+  'activity': 'looking over a record sleeve',
+  'pose': 'standing beside a wooden record rack, holding a sleeve comfortably in both hands at waist level, '
+          'torso slightly angled toward the window',
+  'outfit': 'an opaque burgundy fine-ribbed tank top tucked into a warm taupe high-waisted pleated mini '
+            'skirt with an opaque lining and built-in shorts, a narrow brown belt, dark-brown leather '
+            'loafers and small gold stud earrings',
+  'silhouette': 'a fine-ribbed tank and a taupe high-waisted pleated mini skirt',
+  'expression': 'a small pleased smile',
+  'gaze': 'slightly past the camera toward the window',
+  'camera': 'front diagonal view at eye level',
+  'framing': 'full-body environmental portrait including loafers and the warm record-shop interior',
+  'lighting': 'warm window light with soft amber practical lighting'})

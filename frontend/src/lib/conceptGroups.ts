@@ -1,6 +1,7 @@
 import type { ConceptProposal } from '@/api/client'
 
 const GROUPS = [
+  { name: 'Tank top & mini xếp ly', slots: [118, 119, 120, 121] },
   { name: 'Camper & du lịch vintage', slots: [117] },
   { name: 'Ren & thời trang', slots: [109, 110, 111, 112, 113, 114] },
   { name: 'Phòng tắm retro · xanh olive', slots: [105, 106] },

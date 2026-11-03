@@ -1,4 +1,5 @@
 """User-controlled concept styling, stored in each job's immutable metadata."""
+from app.outfit_presets import TANK_PLEATED_OUTFITS
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -9,6 +10,7 @@ class ConceptChoices(BaseModel):
     style: Literal["auto", "cute", "glamour"] = "auto"
     outfit: Literal["auto", "denim_mix", "denim_shorts", "denim_skirt", "pleated_skirt", "tennis_skirt",
                     "wide_trousers", "straight_jeans", "cargo_shorts", "sundress", "midi_dress", "knit_dress",
+                    "tank_pleated_classic", "tank_pleated_minimal", "tank_pleated_sport", "tank_pleated_vintage",
                     "white_strapless_mini", "black_white_lounge", "bikini", "satin_dress", "satin_pyjamas", "shirt_shorts", "bodysuit_trousers", "offshoulder_skirt",
                     "pyjamas", "overalls", "linen_set", "blazer_skirt", "tracksuit", "custom"] = "auto"
     top: Literal["auto", "tee", "knit", "blouse", "cardigan", "fitted_tank", "cropped_tee", "shirt",
@@ -36,7 +38,8 @@ class ConceptChoices(BaseModel):
 
 MENU = {
     "style": [("auto", "Theo từng concept (không ghi đè)"), ("cute", "Dễ thương · nhẹ nhàng, ấm áp"), ("glamour", "Glamour · táo bạo, cuốn hút")],
-    "outfit": [("auto", "Trang phục riêng của từng concept · mặc định"), ("white_strapless_mini", "Váy mini satin trắng cúp ngực"), ("black_white_lounge", "Crop tank + short đen viền trắng"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
+    "outfit": [("auto", "Trang phục riêng của từng concept · mặc định"),
+               *[(key, label) for key, (label, _) in TANK_PLEATED_OUTFITS.items()], ("white_strapless_mini", "Váy mini satin trắng cúp ngực"), ("black_white_lounge", "Crop tank + short đen viền trắng"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
                ("shirt_shorts", "Sơ mi + quần short"), ("bodysuit_trousers", "Bodysuit + quần dài"),
                ("offshoulder_skirt", "Áo trễ vai + chân váy"), ("denim_mix", "Phối quần short jeans và chân váy"),
                ("denim_shorts", "Quần short jeans"), ("cargo_shorts", "Quần short cargo"), ("denim_skirt", "Chân váy jeans"),
@@ -217,6 +220,7 @@ def apply_choices(brief, choices, slot, prior):
         "blazer_skirt": "a tailored blazer over a plain top with a short skirt and loafers",
         "tracksuit": "a soft cotton tracksuit with clean trainers",
     }
+    full_outfits.update({key: body for key, (_, body) in TANK_PLEATED_OUTFITS.items()})
     color = ("coral pink", "powder blue", "sage green", "burgundy", "lavender", "champagne beige", "deep teal", "terracotta")[(slot - 1) % 8]
     full_outfits.update({
         "bikini": (result["outfit"] if "bikini" in result["outfit"].lower() else f"an opaque {color} two-piece bikini, barefoot"),

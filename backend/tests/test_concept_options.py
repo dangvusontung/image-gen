@@ -158,3 +158,32 @@ def test_white_strapless_dress_generates_in_original_concept_background(client, 
     assert rendered['setting'] == original['brief']['setting']
     assert rendered['pose'] == original['brief']['pose']
     assert rendered['lighting'] == original['brief']['lighting']
+
+
+def test_tank_pleated_outfits_keep_background_and_pose():
+    from app.outfit_presets import TANK_PLEATED_OUTFITS
+    original = proposal_brief()
+    for outfit in TANK_PLEATED_OUTFITS:
+        result = apply_choices(original, ConceptChoices(outfit=outfit), 1, [])
+        assert 'tank top' in result['outfit']
+        assert 'pleated' in result['outfit']
+        for field in original.keys() - {'outfit', 'silhouette'}:
+            assert result[field] == original[field]
+
+
+def test_tank_pleated_concepts_and_outfit_override_generate(client, studio):
+    from app.outfit_presets import TANK_PLEATED_OUTFITS
+    base, _, _ = studio
+    defaults = client.get(f'{base}/concept-proposals').json()
+    assert [p['slot'] for p in defaults[117:]] == [118, 119, 120, 121]
+    assert [p['brief']['outfit'] for p in defaults[117:]] == [v[1] for v in TANK_PLEATED_OUTFITS.values()]
+    menu = dict(client.get(f'{base}/concept-options').json()['outfit'])
+    assert all(key in menu for key in TANK_PLEATED_OUTFITS)
+    for slot, outfit in [(118, 'auto'), (121, 'auto'), (1, 'tank_pleated_sport')]:
+        response = client.post(f'{base}/concepts/generate', json={'slots': [slot], 'choices': {'outfit': outfit}, 'confirmed': True})
+        assert response.status_code == 201, response.text
+        job = wait_for_job(client, response.json()['job_ids'][0])
+        assert job['status'] == 'succeeded'
+        expected = defaults[slot - 1]['brief']['outfit'] if outfit == 'auto' else TANK_PLEATED_OUTFITS[outfit][1]
+        assert expected in job['prompt']
+        assert defaults[slot - 1]['brief']['setting'] in job['prompt']

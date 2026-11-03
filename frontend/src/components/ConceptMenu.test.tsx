@@ -60,3 +60,16 @@ it('remembers the white strapless dress without changing scene, lighting or glas
   expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('white_strapless_mini')
   expect(JSON.parse(localStorage.getItem('concept-choices:outfit-test') || '{}')).toMatchObject({ scene: 'garden_cafe', lighting: 'golden', glasses: true })
 })
+
+
+it('offers all four tank and pleated-mini looks and remembers the chosen style', async () => {
+  const view = render(<Harness />)
+  for (const label of ['Tank trắng + mini xếp ly xám', 'Tank đen + mini xếp ly kem', 'Tank xanh pastel + mini xếp ly trắng', 'Tank đỏ rượu + mini xếp ly taupe']) {
+    expect(screen.getByRole('option', { name: label })).toBeInTheDocument()
+  }
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
+  await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'tank_pleated_classic')
+  view.unmount()
+  render(<Harness />)
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('tank_pleated_classic')
+})
