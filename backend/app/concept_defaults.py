@@ -1556,3 +1556,77 @@ DEFAULT_CONCEPTS += ({'title': 'Ribbed tank bookshop cafe',
   'camera': 'front diagonal view at eye level',
   'framing': 'full-body environmental portrait including loafers and the warm record-shop interior',
   'lighting': 'warm window light with soft amber practical lighting'})
+
+
+DEFAULT_CONCEPTS += ({'title': 'Tropical pool quiet hair adjustment',
+  'setting': 'a tropical dark-stone infinity pool with teal water, dense palms and broad-leaf plants, a '
+             'thatched-roof pavilion and forested mountains beyond',
+  'activity': 'pausing beside the pool among tropical leaves',
+  'pose': 'standing on the stone coping with ankles loosely crossed, head gently lowered, both hands lightly '
+          'arranging her hair near her shoulders',
+  'outfit': 'an opaque burgundy two-piece bikini with a softly ruched structured top, thin shoulder straps '
+            'and matching lined bottoms, barefoot',
+  'silhouette': 'a coordinated burgundy two-piece swimsuit',
+  'expression': 'a quiet relaxed expression',
+  'gaze': 'down toward her hands',
+  'camera': 'front three-quarter view at a natural eye-level angle with face visible',
+  'framing': 'full-body environmental portrait with feet, stone coping and palms visible',
+  'lighting': 'soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain'},
+ {'title': 'Tropical pool breeze pose',
+  'setting': 'a tropical dark-stone infinity pool with teal water, dense palms and broad-leaf plants, a '
+             'thatched-roof pavilion and forested mountains beyond',
+  'activity': 'enjoying the breeze beside the infinity pool',
+  'pose': 'standing with weight on one leg, one hand lightly brushing hair away from her forehead and the '
+          'other resting naturally at her hip',
+  'outfit': 'an opaque burgundy two-piece bikini with a softly ruched structured top, thin shoulder straps '
+            'and matching lined bottoms, barefoot',
+  'silhouette': 'a coordinated burgundy two-piece swimsuit',
+  'expression': 'calm and relaxed',
+  'gaze': 'off-camera across the pool',
+  'camera': 'front three-quarter view at a natural eye-level angle with face visible',
+  'framing': 'full-body environmental portrait including the pool edge and mountain backdrop',
+  'lighting': 'soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain'},
+ {'title': 'Wooden pool steps gentle descent',
+  'setting': 'a tropical dark-stone infinity pool with teal water, dense palms and broad-leaf plants, a '
+             'thatched-roof pavilion and forested mountains beyond',
+  'activity': 'taking a careful step into the pool',
+  'pose': 'standing on a submerged stone entry step between two weathered wooden handrails, holding one rail '
+          'with each hand, looking down as one knee bends for the next step',
+  'outfit': 'an opaque burgundy two-piece bikini with a softly ruched structured top, thin shoulder straps '
+            'and matching lined bottoms, barefoot',
+  'silhouette': 'a coordinated burgundy two-piece swimsuit',
+  'expression': 'a soft attentive expression',
+  'gaze': 'down toward the entry steps',
+  'camera': 'front three-quarter view at a natural eye-level angle with face visible',
+  'framing': 'three-quarter-body environmental portrait including both wooden handrails and the waterline',
+  'lighting': 'soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain'},
+ {'title': 'Tropical pool seated water pause',
+  'setting': 'a tropical dark-stone infinity pool with teal water, dense palms and broad-leaf plants, a '
+             'thatched-roof pavilion and forested mountains beyond',
+  'activity': 'resting on the pool edge with her lower legs in the water',
+  'pose': 'sitting sideways on the dark-stone coping, one palm supporting her behind, the other hand lifted '
+          'loosely near her face, knees bent naturally with calves in the pool',
+  'outfit': 'an opaque burgundy two-piece bikini with a softly ruched structured top, thin shoulder straps '
+            'and matching lined bottoms, barefoot',
+  'silhouette': 'a coordinated burgundy two-piece swimsuit',
+  'expression': 'a peaceful thoughtful expression',
+  'gaze': 'toward her lifted hand',
+  'camera': 'front three-quarter view at a natural eye-level angle with face visible',
+  'framing': 'seated three-quarter-body portrait including the supporting hand, coping and rippling water',
+  'lighting': 'soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain'},
+ {'title': 'Wooden pool rail relaxed portrait',
+  'setting': 'a tropical dark-stone infinity pool with teal water, dense palms and broad-leaf plants, a '
+             'thatched-roof pavilion and forested mountains beyond',
+  'activity': 'pausing on the pool-entry steps',
+  'pose': 'standing on a submerged step, one forearm resting comfortably along a wooden handrail and the '
+          'other hand lightly touching her hair, one knee softly bent while her torso turns toward the '
+          'camera',
+  'outfit': 'an opaque burgundy two-piece bikini with a softly ruched structured top, thin shoulder straps '
+            'and matching lined bottoms, barefoot',
+  'silhouette': 'a coordinated burgundy two-piece swimsuit',
+  'expression': 'a gentle confident expression',
+  'gaze': 'toward the camera',
+  'camera': 'front three-quarter view at a natural eye-level angle with face visible',
+  'framing': 'three-quarter-body portrait framed by weathered wooden handrails, teal water and tropical '
+             'greenery',
+  'lighting': 'soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain'})
