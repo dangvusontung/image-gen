@@ -1630,3 +1630,59 @@ DEFAULT_CONCEPTS += ({'title': 'Tropical pool quiet hair adjustment',
   'framing': 'three-quarter-body portrait framed by weathered wooden handrails, teal water and tropical '
              'greenery',
   'lighting': 'soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain'})
+
+
+DEFAULT_CONCEPTS += ({'title': 'Bright bedroom chin-rest lounge',
+  'setting': 'a bright minimalist bedroom with rumpled white bedding, a broad window with a cream roller '
+             'blind, a glass-block wall and simple wooden lounge chairs',
+  'activity': 'relaxing on the bed in daylight',
+  'pose': 'lying on her stomach across the bed, elbows resting on the duvet, one palm gently supporting her '
+          'cheek, knees bent with feet raised loosely behind',
+  'outfit': 'an opaque ivory camisole lounge set with matching relaxed shorts',
+  'silhouette': 'a soft camisole and relaxed lounge shorts',
+  'expression': 'a calm relaxed expression',
+  'gaze': 'toward the camera',
+  'camera': 'a natural mattress-height front diagonal view with face clearly visible',
+  'framing': 'wide three-quarter-body portrait including the raised feet, white duvet and bright room',
+  'lighting': 'soft airy window daylight with creamy whites and gentle shadows'},
+ {'title': 'White tee denim pillow lounge',
+  'setting': 'a cozy bedroom with white striped pillows, a pale sage wall and a small warm bedside lamp',
+  'activity': 'taking a quiet break against the pillows',
+  'pose': 'reclining against stacked pillows with legs bent comfortably on the bed, one hand resting near '
+          'the waistband and the other relaxed beside her',
+  'outfit': 'an opaque fitted white cropped crew-neck T-shirt, relaxed light-wash jeans worn slightly open '
+            'at the waist over a pale-pink opaque underwear waistband, and plain white ankle socks',
+  'silhouette': 'a cropped tee with relaxed denim and ankle socks',
+  'expression': 'a relaxed thoughtful expression',
+  'gaze': 'toward the camera',
+  'camera': 'slightly elevated front diagonal view with natural perspective',
+  'framing': 'three-quarter-body casual fashion portrait including the pillows and bent legs',
+  'lighting': 'warm bedside lamplight mixed with soft ambient light'},
+ {'title': 'Rocky cove picnic reading pause',
+  'setting': 'a quiet sandy cove with a rocky tree-lined headland, small blue-green waves and a '
+             'blue-and-white checked picnic blanket; an open book, compact camera, headphones, sunscreen and '
+             'a small bouquet rest nearby',
+  'activity': 'pausing while reading a book on a beach picnic blanket',
+  'pose': 'lying on her stomach on the blanket, one elbow supporting her cheek, the other forearm resting '
+          'beside the open book, knees bent with feet loosely raised behind',
+  'outfit': 'an opaque ivory two-piece bikini with fine tie details, barefoot',
+  'silhouette': 'a coordinated ivory two-piece swimsuit',
+  'expression': 'a quiet daydreaming expression',
+  'gaze': 'off-camera toward the shoreline',
+  'camera': 'low front three-quarter view with face clearly visible',
+  'framing': 'wide environmental portrait showing the blanket, books, picnic objects, shoreline and headland',
+  'lighting': 'warm late-afternoon coastal sunlight with soft film-like color and gentle shadows'},
+ {'title': 'Golden window white-shirt morning',
+  'setting': 'a peaceful bedroom with a tall white-framed window, sheer ivory curtains, a rumpled bed with a '
+             'textured beige throw and a small potted plant on the sill',
+  'activity': 'enjoying a quiet moment beside the sunlit window',
+  'pose': 'standing naturally beside the curtains with arms relaxed, head gently tilted toward the light and '
+          'eyes softly closed',
+  'outfit': 'an opaque oversized white cotton button-down shirt worn to mid-thigh over matching white lounge '
+            'shorts, barefoot',
+  'silhouette': 'a loose long white shirt and discreet matching lounge shorts',
+  'expression': 'a peaceful restful expression',
+  'gaze': 'eyes softly closed toward the window light',
+  'camera': 'eye-level front three-quarter view',
+  'framing': 'full-body environmental portrait including bare feet, sheer curtains and the bed corner',
+  'lighting': 'golden morning backlight through sheer curtains, soft rim light and warm hazy shadows'})
