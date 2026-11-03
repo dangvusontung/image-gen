@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.builtin import DEFAULT_REFERENCE_ID, builtin_reference, is_builtin
 from app.database import get_db
+from app.hairstyles import HairStyle, hairstyle_direction
 from app.generation_policy import generation_target
 from app.jobs.service import JobRequestError, check_spend, enqueue_job
 from app.models import SOURCE_KINDS, ApprovalEvent, Asset, JobStatus, MasterVersion, TurnaroundVersion, TurnaroundView
@@ -31,6 +32,8 @@ def fail(code, message, status=409):
 class Generate(BaseModel):
     variants: int = Field(default=1, ge=1, le=4)
     confirmed: bool = False
+    hairstyle: HairStyle = "reference"
+    custom_hairstyle: str = Field(default="", max_length=500)
     #: Turnaround only: which angles to render. None means all six.
     angles: list[str] | None = Field(default=None, min_length=1, max_length=6)
 
@@ -191,6 +194,8 @@ def get_workflow(project_id: str, db: Session = Depends(get_db)):
 @router.post("/api/projects/{project_id}/master/generate", response_model=GenerationResult, status_code=201)
 def generate_master(project_id: str, data: Generate, request: Request, db: Session = Depends(get_db), registry=Depends(get_registry)):
     project = get_project_or_404(db, project_id)
+    if data.hairstyle == "custom" and not data.custom_hairstyle.strip():
+        fail("hairstyle_required", "Describe the custom hairstyle", 422)
     refs = db.query(Asset).filter(Asset.project_id == project_id, Asset.kind.in_(["reference", "side_profile"]),
                                   Asset.selected.is_(True)).order_by(Asset.position).all()
     refs = lead_first(refs, (project.step_leads or {}).get("master"))
@@ -200,6 +205,8 @@ def generate_master(project_id: str, data: Generate, request: Request, db: Sessi
              "Chọn ít nhất một ảnh tham chiếu ở bước 1" if has_any else "Tải ít nhất một ảnh tham chiếu", 400)
     provider_name, _model_id, _default_size = generation_target(project, "master")
     prompt, meta = snapshot(db, project_id, provider_template("master", provider_name))
+    prompt += hairstyle_direction(data.hairstyle, data.custom_hairstyle)
+    meta["hairstyle"] = {"style": data.hairstyle, "custom": data.custom_hairstyle.strip() if data.hairstyle == "custom" else ""}
     template = step_template(db, project, "master")
     labels = ["Ảnh tham chiếu" for _ in refs]
     if template:

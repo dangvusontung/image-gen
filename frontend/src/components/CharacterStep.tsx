@@ -17,6 +17,7 @@ interface Workflow {
   masters: Master[]; turnarounds: Turnaround[]
   approvals: { target_type: string; target_id: string; created_at: string }[]
 }
+const HAIRSTYLES = [['reference', 'Giữ tóc ảnh tham chiếu'], ['straight', 'Tóc dài thẳng'], ['waves', 'Tóc xoăn sóng'], ['bob', 'Tóc bob'], ['pixie', 'Tóc pixie'], ['ponytail', 'Đuôi ngựa cao'], ['bun', 'Búi thấp'], ['braids', 'Tóc tết'], ['custom', 'Tùy chỉnh…']]
 const ANGLE_KEYS = ['front', 'left45', 'left90', 'right45', 'right90', 'back']
 
 const labels: Record<string, string> = {
@@ -24,6 +25,16 @@ const labels: Record<string, string> = {
   right45: 'Phải 45°', right90: 'Nghiêng phải 90°', back: 'Sau lưng 180°',
   queued: 'Đang chờ', submitting: 'Đang gửi', polling: 'Đang tạo', running: 'Đang tạo',
   succeeded: 'Hoàn tất', failed: 'Lỗi', cancelled: 'Đã huỷ',
+}
+
+function savedHair(projectId: string): { hairstyle: string; custom_hairstyle: string } {
+  try {
+    const saved = JSON.parse(localStorage.getItem(`character-hair:${projectId}`) || 'null')
+    if (saved && HAIRSTYLES.some(([key]) => key === saved.hairstyle) && typeof saved.custom_hairstyle === 'string') {
+      return { hairstyle: saved.hairstyle, custom_hairstyle: saved.custom_hairstyle.slice(0, 500) }
+    }
+  } catch { /* Browser storage may be unavailable. */ }
+  return { hairstyle: 'reference', custom_hairstyle: '' }
 }
 
 function ImageJob({ job, projectId, gallery }: { job: Job; projectId: string; gallery?: GalleryImage[] }) {
@@ -43,6 +54,14 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
   const model = providers.data?.find(p => p.name === project.provider)?.models.find(m => m.id === project.model)
   const defaultSize = defaultGenerationSize(project, model?.default_size)
   const unitPrice = (defaultSize ? model?.price_table?.[defaultSize] : undefined) ?? model?.price_per_image_usd
+  const [hairChoices, setHairChoices] = useState<Record<string, { hairstyle: string; custom_hairstyle: string }>>({})
+  const hair = hairChoices[project.id] ?? savedHair(project.id)
+  const changeHair = (value: Partial<typeof hair>) => {
+    const next = { ...hair, ...value }
+    setHairChoices(previous => ({ ...previous, [project.id]: next }))
+    try { localStorage.setItem(`character-hair:${project.id}`, JSON.stringify(next)) } catch { /* Browser storage may be unavailable. */ }
+    setConfirmed(false)
+  }
   const [variants, setVariants] = useState(1)
   const [angles, setAngles] = useState<string[]>(ANGLE_KEYS)
   const [confirmed, setConfirmed] = useState(false)
@@ -87,6 +106,16 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
       </div>}
       {!ready && <p>{!project.rights_confirmed ? 'Xác nhận quyền sử dụng ảnh ở bước 1.' : step === 'master' ? (project.assets.length ? 'Chọn ít nhất một ảnh ở bước 1.' : 'Tải ảnh tham chiếu ở bước 1.') : 'Tạo và duyệt nhân vật gốc ở bước 2.'}</p>}
       {paid && <p className="text-sm">{model?.display_name}{defaultSize ? ` · ${defaultSize}` : ''} · {step === 'master' ? `${selectedAssets.length} ảnh tham chiếu đã chọn sẽ được gửi` : 'Ảnh tham chiếu sẽ được gửi'} tới nhà cung cấp đã chọn.</p>}
+      {step === 'master' && <fieldset className="space-y-3 rounded-xl border p-4">
+        <legend className="px-1 font-medium">Kiểu tóc nhân vật</legend>
+        <label className="block">Kiểu tóc <select aria-label="Kiểu tóc" className="ml-2 rounded border p-2" value={hair.hairstyle} disabled={pending} onChange={e => changeHair({ hairstyle: e.target.value })}>
+          {HAIRSTYLES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select></label>
+        {hair.hairstyle === 'custom' && <label className="block">Mô tả kiểu tóc
+          <textarea aria-label="Mô tả kiểu tóc" className="mt-1 block w-full rounded border p-2" maxLength={500} rows={3} value={hair.custom_hairstyle} disabled={pending} placeholder="Ví dụ: tóc ngang vai xoăn nhẹ, mái thưa, màu nâu hạt dẻ…" onChange={e => changeHair({ custom_hairstyle: e.target.value })} />
+        </label>}
+        <p className="text-sm text-muted-foreground">Áp dụng khi tạo nhân vật gốc mới. Turnaround và concept sẽ giữ kiểu tóc của nhân vật đã duyệt. Giữ màu tóc gốc trừ khi mô tả màu mới.</p>
+      </fieldset>}
       <div className="flex flex-wrap items-center gap-4">
         {step === 'master' && <label>Số biến thể <select aria-label="Số biến thể" className="rounded border p-2" value={variants} onChange={e => { setVariants(Number(e.target.value)); setConfirmed(false) }}>
           {[1, 2, 3, 4].map(n => <option key={n}>{n}</option>)}
@@ -104,8 +133,8 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
         </fieldset>}
         <p className="text-sm">{(estimate.data ? estimate.data.total_usd : unitPrice != null ? unitPrice * count : null) != null ? `Ước tính: $${(estimate.data?.total_usd ?? (unitPrice ?? 0) * count).toFixed(3)} / ${count} ảnh` : 'Chi phí ước tính chưa có'}</p>
         {needConfirmation && <label className="text-sm"><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} /> Tôi xác nhận tạo {count} ảnh và chi phí nhà cung cấp</label>}
-        <Button disabled={pending || !ready || !count || (needConfirmation && !confirmed)}
-          onClick={() => run(`${base}/${step}/generate`, step === 'master' ? { variants, confirmed } : { confirmed, angles })}>
+        <Button disabled={pending || !ready || !count || (step === 'master' && hair.hairstyle === 'custom' && !hair.custom_hairstyle.trim()) || (needConfirmation && !confirmed)}
+          onClick={() => run(`${base}/${step}/generate`, step === 'master' ? { variants, confirmed, ...hair } : { confirmed, angles })}>
           Tạo {step === 'master' ? 'nhân vật gốc' : `${angles.length} góc`}
         </Button>
       </div>
@@ -123,7 +152,7 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
           {group.map(m => <article key={m.id} className="space-y-3 rounded-xl border p-4">
             <h4>Biến thể {m.variant}</h4><ImageJob job={m.job} projectId={project.id} gallery={masterGallery} />
             <Button disabled={pending || m.job.status !== 'succeeded' || data?.approved_master_id === m.id} onClick={() => run(`${base}/master/${m.id}/approve`, undefined, undefined, onApproved)}>{data?.approved_master_id === m.id ? 'Đã duyệt' : 'Duyệt nhân vật này'}</Button>
-            {['failed', 'cancelled'].includes(m.job.status) && <Button variant="outline" disabled={pending} onClick={() => run(`${base}/master/generate`, { variants: 1 })}>Tạo lại từ ảnh tham chiếu</Button>}
+            {['failed', 'cancelled'].includes(m.job.status) && <Button variant="outline" disabled={pending} onClick={() => run(`${base}/master/generate`, { variants: 1, ...hair })}>Tạo lại từ ảnh tham chiếu</Button>}
           </article>)}
         </div>
       </section>)}
