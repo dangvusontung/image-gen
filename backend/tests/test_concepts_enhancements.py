@@ -725,8 +725,13 @@ def test_neutral_living_room_references_preserve_outfits_and_composition(client,
     assert [p['slot'] for p in added] == [131, 132, 133, 134, 135]
     assert len({p['brief']['pose'] for p in added}) == 5
     assert added[2]['brief']['outfit'] == added[3]['brief']['outfit']
+    assert all('barefoot' in p['brief']['outfit'] for p in added)
+    assert all('socked' not in str(p['brief']) for p in added)
+    assert 'slouched' in added[0]['brief']['pose']
+    assert 'hides most of her face' in added[1]['brief']['pose']
+    assert 'chin resting directly on her forearms' in added[3]['brief']['pose']
     assert 'phone' in added[0]['brief']['activity']
-    assert 'wall space' in added[1]['brief']['framing']
+    assert 'plain wall' in added[1]['brief']['framing']
     assert 'photography book' in added[4]['brief']['activity']
     response = client.post(f'{base}/concepts/generate', json={'slots': [131, 132, 133, 134, 135], 'choices': {'outfit': 'auto'}, 'confirmed': True})
     assert response.status_code == 201, response.text

@@ -1691,71 +1691,86 @@ DEFAULT_CONCEPTS += ({'title': 'Bright bedroom chin-rest lounge',
 DEFAULT_CONCEPTS += ({'title': 'Cream sofa phone break',
   'setting': 'a comfortable cream sofa in a warm beige living room with copper pendant lights and a small '
              'painting in the background',
-  'activity': 'checking a message on her phone',
-  'pose': 'sitting cross-legged on the sofa, back supported by cushions, holding a phone naturally in both '
-          'hands near chest level',
-  'outfit': 'an opaque white crew-neck T-shirt tucked loosely into cream ribbed drawstring lounge trousers '
-            'with plain white ankle socks',
+  'activity': 'idly scrolling her phone while sinking into the sofa during an unhurried afternoon',
+  'pose': 'sitting deep in the sofa with her pelvis settled into the seat and back slouched into the '
+          'cushions, knees loosely opened and legs folded casually across the seat rather than a neat '
+          'symmetrical cross-legged pose; her right elbow rests on the sofa back, the right hand loosely '
+          'touches the top of a phone supported by her left hand at mid-torso height; shoulders dropped, '
+          'head tipped down toward the screen',
+  'outfit': 'a soft opaque white crew-neck T-shirt worn loosely at the waist, cream wide-leg ribbed '
+            'drawstring lounge trousers, barefoot with no socks or shoes',
   'silhouette': 'a relaxed tee and ribbed lounge trousers',
-  'expression': 'a calm attentive expression',
+  'expression': 'an unposed absorbed expression with relaxed lips and brow',
   'gaze': 'down toward the phone',
-  'camera': 'eye-level front diagonal view',
-  'framing': 'full-body seated environmental portrait including crossed legs and sofa cushions',
+  'camera': 'casual front diagonal view from slightly below seated eye level, natural perspective',
+  'framing': 'loose seated portrait showing the spread of the trouser legs across the cream cushions, '
+             'relaxed hands and bare feet; lived-in asymmetry rather than a formal fashion pose',
   'lighting': 'soft natural window light with warm neutral tones'},
  {'title': 'Taupe sofa quiet book hour',
   'setting': 'a wide low taupe modular sofa against a plain warm-gray wall, with a pale woven rug and '
              'generous empty wall space above',
-  'activity': 'reading a paperback in a quiet living room',
-  'pose': 'sitting loosely on the sofa with one leg folded onto the cushion and the other foot resting near '
-          'the rug, holding an open book at chest height just below her face',
+  'activity': 'getting lost in a paperback while lounging alone on a large sofa',
+  'pose': 'sinking low into the middle sofa cushion with her back slouched against the backrest, left leg '
+          'folded sideways on the seat and right leg hanging loosely over the front edge, bare foot near the '
+          'rug; both hands hold an open paperback upright directly in front of her face with elbows bent and '
+          'shoulders dropped; the book intentionally hides most of her face as in a candid reading snapshot',
   'outfit': 'an opaque ivory long-sleeved fine-knit sweater and matching loose knit trousers, barefoot',
   'silhouette': 'a coordinated ivory knit lounge set',
-  'expression': 'a peaceful absorbed expression',
-  'gaze': 'down at the open book',
-  'camera': 'straight-on eye-level view from across the room',
-  'framing': 'wide full-body environmental portrait with generous wall space, the entire sofa and the rug '
-             'visible',
+  'expression': 'quietly absorbed in reading, facial expression mostly obscured by the book',
+  'gaze': 'at the pages behind the open book',
+  'camera': 'straight-on wide view from across the room; the book intentionally obscures the face, '
+            'prioritizing the reading composition',
+  'framing': 'distant full-sofa composition with the small seated figure centered low in frame, a large '
+             'expanse of plain wall above and pale rug below, bare feet visible',
   'lighting': 'soft diffused daylight with gentle muted shadows'},
  {'title': 'Ivory knit sofa stretch',
   'setting': 'a beige linen sofa with rounded arms and soft cushions against a plain warm neutral wall',
-  'activity': 'resting along the sofa in the afternoon',
-  'pose': 'lying comfortably on her stomach along the cushions, upper body supported by the rounded armrest, '
-          'one arm draped loosely over it, one knee bent with a socked foot raised while the other leg rests '
-          'along the seat, head turned gently toward the camera',
-  'outfit': 'an opaque oversized ivory textured knit sweater, fitted white lounge shorts and plain white '
-            'crew socks',
-  'silhouette': 'a loose knit sweater with white lounge shorts and crew socks',
-  'expression': 'a relaxed quiet expression',
-  'gaze': 'toward the camera',
-  'camera': 'side view at sofa height with face visible in three-quarter profile',
-  'framing': 'wide full-body environmental portrait showing the length of the sofa and both socked feet',
+  'activity': 'lazily resting across the sofa with no deliberate posing',
+  'pose': 'lying belly-down along the sofa with chest and shoulders resting heavily over the rounded left '
+          'armrest, both forearms draped forward over the arm with limp wrists and loose fingers; hips and '
+          'thighs rest flat on the seat, one leg extends along the cushions and the other knee bends so a '
+          'bare foot floats casually upward; her head turns back toward the camera without lifting her torso',
+  'outfit': 'a soft opaque oversized ivory chunky-knit sweater with loose sleeves and fitted white cotton '
+            'lounge shorts, barefoot with no socks or shoes',
+  'silhouette': 'a slouchy ivory knit sweater and simple white lounge shorts',
+  'expression': 'a sleepy neutral expression with relaxed eyelids and lips',
+  'gaze': 'a quiet sideways glance toward the camera over the armrest',
+  'camera': 'wide side-on view at sofa-seat height, showing the natural length of the sofa',
+  'framing': 'horizontal-feeling full-sofa environmental portrait with the figure stretched along the '
+             'cushions, both bare feet included, large quiet wall space above',
   'lighting': 'soft side-window daylight with subdued beige and ivory tones'},
  {'title': 'Ivory knit cushion nest',
   'setting': 'a soft beige linen sofa with large loose back cushions in a minimalist neutral living room',
-  'activity': 'settling into the corner of the sofa',
-  'pose': 'sitting sideways with both legs folded comfortably on the cushion, leaning her forearms on a '
-          'large upright cushion and resting her chin lightly above them, shoulders relaxed toward the '
-          'camera',
-  'outfit': 'an opaque oversized ivory textured knit sweater, fitted white lounge shorts and plain white '
-            'crew socks',
-  'silhouette': 'a loose knit sweater with white lounge shorts and crew socks',
-  'expression': 'a gentle thoughtful expression',
-  'gaze': 'toward the camera',
-  'camera': 'natural front three-quarter view at seated eye level',
-  'framing': 'three-quarter-body seated portrait including folded knees, socks and the supporting cushion',
+  'activity': 'curling up against a sofa cushion for a quiet rest',
+  'pose': 'sitting sideways on both folded legs with bare feet tucked loosely behind her on the seat, hips '
+          'settled heavily into the cushion; torso leans forward into a large upright pillow, forearms '
+          'folded across its top with one relaxed hand draped over the opposite sleeve, chin resting '
+          'directly on her forearms; shoulders rounded softly and head low rather than sitting upright',
+  'outfit': 'a soft opaque oversized ivory chunky-knit sweater with loose sleeves and fitted white cotton '
+            'lounge shorts, barefoot with no socks or shoes',
+  'silhouette': 'a slouchy ivory knit sweater and simple white lounge shorts',
+  'expression': 'a soft tired expression with an unfocused relaxed gaze, no posed smile',
+  'gaze': 'gently toward the camera while her chin stays on her forearms',
+  'camera': 'close front diagonal view at cushion height, natural perspective',
+  'framing': 'intimate three-quarter seated portrait with folded legs, tucked bare feet, oversized sweater '
+             'folds and the upright cushion filling the frame',
   'lighting': 'soft overcast window light with gentle fabric texture and natural shadows'},
  {'title': 'Minimal floor photo-book morning',
   'setting': 'a minimalist room with a warm gray plaster wall and pale textured carpet, an open photography '
              'book, a dark ceramic coffee cup and folded sunglasses on the floor',
-  'activity': 'turning a page of a large photography book beside a cup of coffee',
-  'pose': 'sitting naturally on the carpet with one leg loosely folded and the other knee raised, one hand '
-          'turning a book page and the other resting beside the open book',
+  'activity': 'slowly browsing a photography book on the floor beside a cup of coffee',
+  'pose': 'sitting low on the carpet with one leg loosely folded in front and the other knee raised off to '
+          'the side, bare foot resting naturally on the carpet; torso curves slightly forward over the open '
+          'book, shoulders dropped, one hand lightly catches the upper corner of a page while the other '
+          'rests near the opposite page; head bowed toward the book in an unposed moment',
   'outfit': 'an opaque black scoop-neck sleeveless fitted lounge bodysuit with full lining and subtle gold '
             'jewelry, barefoot',
   'silhouette': 'a simple black sleeveless lounge bodysuit',
-  'expression': 'a calm contemplative expression',
+  'expression': 'a neutral absorbed expression with relaxed lips and lowered eyelids',
   'gaze': 'down at the photography book',
-  'camera': 'slightly elevated front diagonal view with natural perspective',
-  'framing': 'full-body seated environmental portrait including the book, coffee cup, sunglasses and bare '
-             'feet',
-  'lighting': 'soft directional morning light with warm muted editorial colors'})
+  'camera': 'slightly elevated wide front diagonal view, natural candid perspective',
+  'framing': 'full seated figure low in frame with generous quiet plaster wall above, open photography book '
+             'large in the foreground, coffee cup and folded sunglasses to one side and both bare feet '
+             'visible',
+  'lighting': 'soft low-contrast natural side light, warm gray and beige tones, subtle grain and quiet '
+              'shadows rather than glossy studio lighting'})
