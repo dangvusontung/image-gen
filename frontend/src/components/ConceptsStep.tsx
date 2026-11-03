@@ -1,3 +1,4 @@
+import { CONCEPT_EMOJIS, CONCEPT_EMOJI_STORAGE, conceptMarkKey, readEmojiMarks } from '@/lib/conceptEmoji'
 import { groupConcepts } from '@/lib/conceptGroups'
 import EditConceptPrompt from '@/components/EditConceptPrompt'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
@@ -75,6 +76,17 @@ function FixAndRetry({ concept, projectId, size, choices, disabled }: {
 }
 
 export default function ConceptsStep({ project, onEnhance }: { project: ProjectDetail; onEnhance: (id: string) => void }) {
+  const [emojiMarks, setEmojiMarks] = useState(readEmojiMarks)
+  const [emojiFilter, setEmojiFilter] = useState('all')
+  const emojiOf = (proposal: ConceptProposal) => emojiMarks[conceptMarkKey(project.id, proposal)] ?? ''
+  const markEmoji = (proposal: ConceptProposal, emoji: string) => {
+    const next = { ...readEmojiMarks(), ...emojiMarks }
+    const key = conceptMarkKey(project.id, proposal)
+    if (emoji) next[key] = emoji
+    else delete next[key]
+    setEmojiMarks(next)
+    try { localStorage.setItem(CONCEPT_EMOJI_STORAGE, JSON.stringify(next)) } catch { /* Browser storage may be unavailable. */ }
+  }
   const [selectedRun, setSelectedRun] = useState<number | null>(null)
   const [compact, setCompact] = useState(true)
   const [detailSlot, setDetailSlot] = useState<number | null>(null)
@@ -116,6 +128,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const pending = action.isPending
   const ready = project.rights_confirmed && Boolean(workflow.data?.approved_master_id)
   const list = proposals.data ?? []
+  const visibleList = list.filter(p => emojiFilter === 'all' || (emojiFilter === 'unmarked' ? !emojiOf(p) : emojiOf(p) === emojiFilter))
   const chosen = picked === null ? list : list.filter(p => picked.includes(p.slot))
   const estimate = useQuery({ queryKey: ['estimate', project.id, project.provider, project.model, size, chosen.length], enabled: ready && chosen.length > 0,
     queryFn: () => request<{ total_usd: number | null; note: string }>(`${base}/generation-estimate?purpose=concept&count=${chosen.length}${size ? `&size=${encodeURIComponent(size)}` : ''}`), refetchInterval: 3000 })
@@ -206,7 +219,17 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         <Button size="sm" variant="outline" onClick={() => { setPicked([]); setConfirmed(false) }} disabled={chosen.length === 0}>Bỏ chọn tất cả</Button>
         <span className="text-sm text-muted-foreground">Đang chọn {chosen.length}/{list.length}</span>
       </div>
-      {groupConcepts(list).map(group => {
+      <div className="flex flex-wrap items-center gap-3">
+        <label className="text-sm">Lọc emoji <select aria-label="Lọc concept theo emoji" className="ml-2 rounded border p-2" value={emojiFilter} onChange={e => setEmojiFilter(e.target.value)}>
+          <option value="all">Tất cả ({list.length})</option>
+          <option value="unmarked">Chưa đánh dấu ({list.filter(p => !emojiOf(p)).length})</option>
+          {CONCEPT_EMOJIS.map(emoji => <option key={emoji} value={emoji}>{emoji} ({list.filter(p => emojiOf(p) === emoji).length})</option>)}
+        </select></label>
+        <span className="text-xs text-muted-foreground">Hiện {visibleList.length}/{list.length} · Đánh dấu được lưu trong trình duyệt này; concept mặc định dùng chung giữa các dự án.</span>
+        {emojiFilter !== 'all' && <Button size="sm" variant="outline" disabled={!visibleList.length} onClick={() => { setPicked(visibleList.map(p => p.slot)); setConfirmed(false) }}>Chỉ chọn các concept đang hiện</Button>}
+      </div>
+      {!visibleList.length && <p className="text-sm text-muted-foreground">Không có concept khớp emoji này.</p>}
+      {groupConcepts(visibleList).map(group => {
         const selectedCount = group.items.filter(p => picked === null || picked.includes(p.slot)).length
         return <section key={group.name} className="space-y-3 rounded-lg border p-3" aria-label={group.name}>
           <div className="flex flex-wrap items-center gap-3">
@@ -231,8 +254,14 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
                 setConfirmed(false)
               }} />Chọn
           </label>
+          <label className="mt-2 flex items-center gap-2 text-xs">Đánh dấu
+            <select aria-label={`Emoji concept ${p.slot}`} className="rounded border p-1 text-base" value={emojiOf(p)} onChange={e => markEmoji(p, e.target.value)}>
+              <option value="">—</option>
+              {CONCEPT_EMOJIS.map(emoji => <option key={emoji} value={emoji}>{emoji}</option>)}
+            </select>
+          </label>
           <button type="button" className="mt-2 w-full space-y-2 text-left" onClick={() => setDetailSlot(p.slot)} aria-label={`Xem chi tiết concept ${p.slot}`}>
-            <span className="block font-semibold">{p.slot}. {fieldOf(p.slot, 'title', p.title)}</span>
+            <span className="block font-semibold">{emojiOf(p) && `${emojiOf(p)} `}{p.slot}. {fieldOf(p.slot, 'title', p.title)}</span>
             <span className="block line-clamp-2 text-xs text-muted-foreground">{fieldOf(p.slot, 'setting', p.brief.setting)}</span>
             <span className="block text-xs underline">Xem / sửa chi tiết{edits[p.slot] ? ' · đã sửa' : ''}</span>
           </button>

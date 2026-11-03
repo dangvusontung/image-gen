@@ -1,0 +1,32 @@
+import { expect, test } from '@playwright/test'
+
+test('emoji marks filter concepts, persist after reload, and share defaults across projects', async ({ page, request }) => {
+  for (const name of ['Emoji first', 'Emoji second']) {
+    await request.post('http://127.0.0.1:8100/api/projects', { data: { name } })
+  }
+  await page.goto('/')
+  await page.getByText('Emoji first', { exact: true }).click()
+  await page.getByRole('tab', { name: '4. Concept' }).click()
+  await page.getByText('119 concept · Mở/đóng danh sách', { exact: true }).click()
+  await page.getByLabel('Emoji concept 131', { exact: true }).selectOption('⭐')
+  await page.getByLabel('Emoji concept 135', { exact: true }).selectOption('⭐')
+  await page.getByLabel('Lọc concept theo emoji').selectOption('⭐')
+  await expect(page.getByRole('button', { name: 'Xem chi tiết concept 131', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Xem chi tiết concept 135', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Xem chi tiết concept 132', exact: true })).toHaveCount(0)
+  await page.getByRole('button', { name: 'Chỉ chọn các concept đang hiện' }).click()
+  await expect(page.getByRole('button', { name: 'Tạo ảnh cho 2 concept', exact: true })).toBeVisible()
+  await page.reload()
+  await page.getByRole('tab', { name: '4. Concept' }).click()
+  await page.getByText('119 concept · Mở/đóng danh sách', { exact: true }).click()
+  await expect(page.getByLabel('Emoji concept 131', { exact: true })).toHaveValue('⭐')
+  await page.goto('/')
+  await page.getByText('Emoji second', { exact: true }).click()
+  await page.getByRole('tab', { name: '4. Concept' }).click()
+  await page.getByText('119 concept · Mở/đóng danh sách', { exact: true }).click()
+  await expect(page.getByLabel('Emoji concept 131', { exact: true })).toHaveValue('⭐')
+  await page.getByLabel('Emoji concept 131', { exact: true }).selectOption('')
+  await page.getByLabel('Lọc concept theo emoji').selectOption('⭐')
+  await expect(page.getByRole('button', { name: 'Xem chi tiết concept 131', exact: true })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Xem chi tiết concept 135', exact: true })).toBeVisible()
+})
