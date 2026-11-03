@@ -230,7 +230,7 @@ def test_exports_validation_and_project_isolation(client, studio):
     assert client.get(f"{base}/contact-sheet").status_code == 400
     # With no proposed round, the step offers the built-in nine straight from the prompt.
     built_in = client.get(f"{base}/concept-proposals").json()
-    assert len(built_in) == 130 and all(p["run"] == 0 for p in built_in)
+    assert len(built_in) == 135 and all(p["run"] == 0 for p in built_in)
     propose(client, base)
     unknown = client.post(f"{base}/concepts/generate", json={"proposal_ids": ["nope"], "confirmed": True})
     assert unknown.status_code == 404 and unknown.json()["detail"]["code"] == "proposal_not_found"
@@ -264,7 +264,7 @@ def test_concepts_can_exclude_an_approved_turnaround(client, studio):
 def test_default_concepts_mix_direct_and_slightly_off_camera_gaze():
     from app.concept_defaults import DEFAULT_CONCEPTS
     from app.routes.concepts import preferred_angle
-    assert len(DEFAULT_CONCEPTS) == 130
+    assert len(DEFAULT_CONCEPTS) == 135
     direct = [c for c in DEFAULT_CONCEPTS[:9] if c["gaze"] == "looking directly into the camera lens, eyes open"]
     assert len(direct) == 5
     off_camera = [c for c in DEFAULT_CONCEPTS[:9] if c not in direct]
@@ -298,7 +298,7 @@ def test_regenerate_uses_exact_edited_prompt_and_keeps_it_for_next_revision(clie
 def test_seven_added_concepts_are_selectable_and_renderable(client, studio):
     base, _, _ = studio
     defaults = client.get(f'{base}/concept-proposals').json()
-    assert len(defaults) == 130
+    assert len(defaults) == 135
     added = defaults[9:16]
     assert [p['slot'] for p in added] == list(range(10, 17))
     assert [p['title'] for p in added] == ['At-home manicure', 'Soft morning knit', 'Kitchen daydream',
@@ -704,7 +704,7 @@ def test_bedroom_beach_reference_concepts_keep_outfit_and_scene(client, studio):
     base, _, _ = studio
     defaults = client.get(f'{base}/concept-proposals').json()
     added = defaults[126:130]
-    assert len(defaults) == 130
+    assert len(defaults) == 135
     assert [p['slot'] for p in added] == [127, 128, 129, 130]
     assert len({p['brief']['outfit'] for p in added}) == 4
     assert 'headland' in added[2]['brief']['setting']
@@ -715,4 +715,23 @@ def test_bedroom_beach_reference_concepts_keep_outfit_and_scene(client, studio):
         job = wait_for_job(client, job_id)
         assert job['status'] == 'succeeded'
         for field in ('setting', 'outfit', 'pose'):
+            assert proposal['brief'][field] in job['prompt']
+
+
+def test_neutral_living_room_references_preserve_outfits_and_composition(client, studio):
+    base, _, _ = studio
+    defaults = client.get(f'{base}/concept-proposals').json()
+    added = defaults[130:135]
+    assert [p['slot'] for p in added] == [131, 132, 133, 134, 135]
+    assert len({p['brief']['pose'] for p in added}) == 5
+    assert added[2]['brief']['outfit'] == added[3]['brief']['outfit']
+    assert 'phone' in added[0]['brief']['activity']
+    assert 'wall space' in added[1]['brief']['framing']
+    assert 'photography book' in added[4]['brief']['activity']
+    response = client.post(f'{base}/concepts/generate', json={'slots': [131, 132, 133, 134, 135], 'choices': {'outfit': 'auto'}, 'confirmed': True})
+    assert response.status_code == 201, response.text
+    for proposal, job_id in zip(added, response.json()['job_ids'], strict=True):
+        job = wait_for_job(client, job_id)
+        assert job['status'] == 'succeeded'
+        for field in ('setting', 'outfit', 'pose', 'framing'):
             assert proposal['brief'][field] in job['prompt']
