@@ -1774,3 +1774,15 @@ DEFAULT_CONCEPTS += ({'title': 'Cream sofa phone break',
              'visible',
   'lighting': 'soft low-contrast natural side light, warm gray and beige tones, subtle grain and quiet '
               'shadows rather than glossy studio lighting'})
+
+# Retain historical slots for saved images and explicit reruns. Only the strongest
+# composition from each reviewed near-duplicate cluster remains in the picker.
+RETIRED_CONCEPT_SLOTS = {
+    16: 15, 48: 96, 49: 92, 65: 112, 73: 111, 93: 88, 94: 111,
+    95: 113, 98: 112, 99: 101, 100: 101, 103: 102, 104: 102,
+    107: 127, 122: 123, 126: 124,
+}
+ACTIVE_DEFAULT_CONCEPTS = tuple(
+    (slot, concept) for slot, concept in enumerate(DEFAULT_CONCEPTS, start=1)
+    if slot not in RETIRED_CONCEPT_SLOTS
+)

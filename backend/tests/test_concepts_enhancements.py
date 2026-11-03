@@ -230,7 +230,7 @@ def test_exports_validation_and_project_isolation(client, studio):
     assert client.get(f"{base}/contact-sheet").status_code == 400
     # With no proposed round, the step offers the built-in nine straight from the prompt.
     built_in = client.get(f"{base}/concept-proposals").json()
-    assert len(built_in) == 135 and all(p["run"] == 0 for p in built_in)
+    assert len(built_in) == 119 and all(p["run"] == 0 for p in built_in)
     propose(client, base)
     unknown = client.post(f"{base}/concepts/generate", json={"proposal_ids": ["nope"], "confirmed": True})
     assert unknown.status_code == 404 and unknown.json()["detail"]["code"] == "proposal_not_found"
@@ -297,7 +297,8 @@ def test_regenerate_uses_exact_edited_prompt_and_keeps_it_for_next_revision(clie
 
 def test_seven_added_concepts_are_selectable_and_renderable(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     assert len(defaults) == 135
     added = defaults[9:16]
     assert [p['slot'] for p in added] == list(range(10, 17))
@@ -317,7 +318,8 @@ def test_seven_added_concepts_are_selectable_and_renderable(client, studio):
 
 def test_latest_reference_scenes_generate_only_selected_slots(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     assert [p['slot'] for p in defaults[16:23]] == list(range(17, 24))
     assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 23}).status_code == 200
     response = client.post(f'{base}/concepts/generate', json={'slots': [17, 23], 'confirmed': True})
@@ -332,7 +334,8 @@ def test_latest_reference_scenes_generate_only_selected_slots(client, studio):
 
 def test_reference_concepts_use_bikini_outfits(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[23:26]
     assert [p['slot'] for p in added] == [24, 25, 26]
     for concept in defaults[:66]:
@@ -349,7 +352,8 @@ def test_reference_concepts_use_bikini_outfits(client, studio):
 
 def test_optional_glasses_are_added_to_prompt_without_replacing_outfit(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     assert [p['slot'] for p in defaults[26:28]] == [27, 28]
     for slot, choices in [(27, {'glasses': True}), (28, {})]:
         result = client.post(f'{base}/concepts/generate', json={'slots': [slot], 'choices': choices, 'confirmed': True})
@@ -385,7 +389,8 @@ def test_download_all_concepts_zip_includes_runs_and_revisions(client, studio):
 
 def test_pool_concepts_support_distinct_poses_and_selected_generation(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     pool = defaults[28:40]
     assert [p['slot'] for p in pool] == list(range(29, 41))
     assert len({p['brief']['pose'] for p in pool}) == 12
@@ -401,7 +406,8 @@ def test_pool_concepts_support_distinct_poses_and_selected_generation(client, st
 
 def test_bed_and_bath_additions_render_selected_scenes(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     assert [p['slot'] for p in defaults[40:48]] == list(range(41, 49))
     assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 48}).status_code == 200
     result = client.post(f'{base}/concepts/generate', json={'slots': [41, 47, 48], 'confirmed': True})
@@ -415,7 +421,8 @@ def test_bed_and_bath_additions_render_selected_scenes(client, studio):
 
 def test_beach_home_portrait_concepts_generate_selected_scenes(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     assert [p['slot'] for p in defaults[48:60]] == list(range(49, 61))
     assert all('head-and-shoulders' in p['brief']['framing'] for p in defaults[56:60])
     assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 60}).status_code == 200
@@ -430,7 +437,8 @@ def test_beach_home_portrait_concepts_generate_selected_scenes(client, studio):
 
 def test_glamour_additions_are_selectable_and_keep_scene_outfits(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     assert [p['slot'] for p in defaults[60:66]] == list(range(61, 67))
     assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 66}).status_code == 200
     result = client.post(f'{base}/concepts/generate', json={'slots': [61, 66], 'confirmed': True})
@@ -488,7 +496,8 @@ def test_gallery_bulk_zip_contains_only_selected_generated_images(client, studio
 
 def test_fashion_glamour_keeps_varied_outfits_in_generated_prompts(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[66:72]
     assert [p['slot'] for p in added] == list(range(67, 73))
     assert len({p['brief']['outfit'] for p in added}) == 6
@@ -506,7 +515,8 @@ def test_fashion_glamour_keeps_varied_outfits_in_generated_prompts(client, studi
 
 def test_dressing_studio_kitchen_additions_support_outfit_switch(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     assert [p['slot'] for p in defaults[72:84]] == list(range(73, 85))
     assert all('bikini' in p['brief']['outfit'] for p in defaults[72:84])
     assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 84}).status_code == 200
@@ -521,7 +531,8 @@ def test_dressing_studio_kitchen_additions_support_outfit_switch(client, studio)
 
 def test_vietnam_scenes_are_selectable_and_support_outfit_switch(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[84:92]
     assert [p['slot'] for p in added] == list(range(85, 93))
     assert [p['title'] for p in added] == ['Hoi An lantern evening', 'Hanoi balcony coffee', 'Hue garden-house pause',
@@ -539,7 +550,8 @@ def test_vietnam_scenes_are_selectable_and_support_outfit_switch(client, studio)
 
 def test_private_moments_preserve_original_clothing_or_use_outfit_switch(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     assert [p['slot'] for p in defaults[92:98]] == list(range(93, 99))
     assert client.get(f'{base}/generation-estimate', params={'purpose': 'concept', 'count': 98}).status_code == 200
     for slot, outfit in [(93, 'auto'), (96, 'bikini'), (98, 'satin_pyjamas')]:
@@ -555,7 +567,8 @@ def test_private_moments_preserve_original_clothing_or_use_outfit_switch(client,
 
 def test_vintage_cafe_reference_concepts_and_scene_switch(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[98:101]
     assert [p['slot'] for p in added] == [99, 100, 101]
     assert len({p['brief']['pose'] for p in added}) == 3
@@ -578,7 +591,8 @@ def test_vintage_cafe_reference_concepts_and_scene_switch(client, studio):
 
 def test_garden_cafe_reference_concepts_and_scene_switch(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[101:104]
     assert [p['slot'] for p in added] == [102, 103, 104]
     assert len({p['brief']['pose'] for p in added}) == 3
@@ -601,7 +615,8 @@ def test_garden_cafe_reference_concepts_and_scene_switch(client, studio):
 
 def test_olive_retro_bath_reference_concepts_and_scene_switch(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[104:106]
     assert [p['slot'] for p in added] == [105, 106]
     assert len({p['brief']['pose'] for p in added}) == 2
@@ -624,7 +639,8 @@ def test_olive_retro_bath_reference_concepts_and_scene_switch(client, studio):
 
 def test_new_bedroom_portraits_keep_distinct_angles_and_switch_outfits(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     assert [p['slot'] for p in defaults[106:108]] == [107, 108]
     assert 'mattress height' in defaults[106]['brief']['camera']
     assert 'overhead' in defaults[107]['brief']['camera']
@@ -638,7 +654,8 @@ def test_new_bedroom_portraits_keep_distinct_angles_and_switch_outfits(client, s
 
 def test_lace_concepts_keep_original_outfits_and_support_switching(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[108:114]
     assert [p['slot'] for p in added] == list(range(109, 115))
     assert len({p['brief']['outfit'] for p in added}) == 6
@@ -658,7 +675,8 @@ def test_lace_concepts_keep_original_outfits_and_support_switching(client, studi
 
 def test_cozy_sofa_armchair_and_camper_reference_concepts(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[114:117]
     assert [p['slot'] for p in added] == [115, 116, 117]
     assert [p['title'] for p in added] == ['White sofa yarn afternoon', 'Powder-blue armchair lounge', 'Warm timber camper pause']
@@ -677,7 +695,8 @@ def test_cozy_sofa_armchair_and_camper_reference_concepts(client, studio):
 
 def test_tropical_pool_reference_concepts_and_outfit_switch(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[121:126]
     assert [p['slot'] for p in added] == [122, 123, 124, 125, 126]
     assert len({p['brief']['pose'] for p in added}) == 5
@@ -702,7 +721,8 @@ def test_tropical_pool_reference_concepts_and_outfit_switch(client, studio):
 
 def test_bedroom_beach_reference_concepts_keep_outfit_and_scene(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[126:130]
     assert len(defaults) == 135
     assert [p['slot'] for p in added] == [127, 128, 129, 130]
@@ -720,7 +740,8 @@ def test_bedroom_beach_reference_concepts_keep_outfit_and_scene(client, studio):
 
 def test_neutral_living_room_references_preserve_outfits_and_composition(client, studio):
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[130:135]
     assert [p['slot'] for p in added] == [131, 132, 133, 134, 135]
     assert len({p['brief']['pose'] for p in added}) == 5

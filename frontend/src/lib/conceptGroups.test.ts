@@ -23,3 +23,14 @@ it('groups every default once and keeps proposed slot numbers out of default gro
   expect(groups.find(g => g.name === 'Bể bơi')?.items.map(p => p.slot)).toEqual([4, ...Array.from({ length: 12 }, (_, i) => i + 29), 122, 123, 124, 125, 126])
   expect(groupConcepts([{ ...defaults[3], run: 1 }])[0].name).toBe('Concept đề xuất')
 })
+
+
+it('groups curated defaults by their stable slot IDs even when earlier slots are retired', () => {
+  const slots = [88, 92, 96, 101, 102, 111, 112, 113, 123, 124, 125, 127, 131, 135]
+  const concepts = slots.map(slot => ({ id: `default-${slot}`, slot, run: 0 }) as ConceptProposal)
+  const groups = groupConcepts(concepts)
+  expect(groups.flatMap(g => g.items).map(p => p.slot).sort((a, b) => a - b)).toEqual(slots)
+  expect(groups.find(g => g.name === 'Café vintage & bên cửa sổ')?.items.map(p => p.slot)).toEqual([101])
+  expect(groups.find(g => g.name === 'Bể bơi')?.items.map(p => p.slot)).toEqual([123, 124, 125])
+  expect(groups.some(g => g.name === 'Khác')).toBe(false)
+})

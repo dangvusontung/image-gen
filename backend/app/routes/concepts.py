@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.concept_defaults import DEFAULT_CONCEPTS
+from app.concept_defaults import ACTIVE_DEFAULT_CONCEPTS, DEFAULT_CONCEPTS
 from app.concept_options import ConceptChoices, MENU, apply_choices, style_instruction
 from app.database import get_db
 from app.generation_policy import generation_target
@@ -283,8 +283,8 @@ def proposal_out(row):
 
 
 @router.get("/concept-proposals", response_model=list[ConceptProposalOut])
-def list_proposals(project_id: str, db: Session = Depends(get_db)):
-    """The model-proposed round if there is one, else the built-in nine the prompt renders."""
+def list_proposals(project_id: str, include_retired: bool = False, db: Session = Depends(get_db)):
+    """List the latest proposed round or curated defaults, with optional historical slots."""
     project = get_project_or_404(db, project_id)
     latest = db.query(func.max(ConceptProposal.run)).filter_by(project_id=project.id).scalar()
     if latest is None:
@@ -293,7 +293,7 @@ def list_proposals(project_id: str, db: Session = Depends(get_db)):
                                brief={k: v for k, v in concept.items() if k != "title"},
                                master_version_id=project.approved_master_id or "",
                                created_at=project.created_at)
-            for index, concept in enumerate(DEFAULT_CONCEPTS, start=1)
+            for index, concept in (enumerate(DEFAULT_CONCEPTS, start=1) if include_retired else ACTIVE_DEFAULT_CONCEPTS)
         ]
     rows = db.query(ConceptProposal).filter_by(project_id=project.id, run=latest).order_by(ConceptProposal.slot).all()
     return [proposal_out(r) for r in rows]
@@ -359,8 +359,8 @@ def generate_concepts(project_id: str, data: GenerateRequest, request: Request, 
         return GenerationResult(job_ids=[j.id for j in jobs], concept_ids=[c.id for c in concepts])
     latest = db.query(func.max(ConceptProposal.run)).filter_by(project_id=project_id).scalar()
     if latest is None:
-        # No model-proposed round: render the built-in nine straight from the prompt.
-        chosen = [(index, dict(c)) for index, c in enumerate(DEFAULT_CONCEPTS, start=1)]
+        # Bulk generation uses curated defaults; explicit historical slots support reruns.
+        chosen = [(index, dict(c)) for index, c in (enumerate(DEFAULT_CONCEPTS, start=1) if data.slots else ACTIVE_DEFAULT_CONCEPTS)]
         if data.slots:
             chosen = [(slot, brief) for slot, brief in chosen if slot in data.slots]
             if not chosen:

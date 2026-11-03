@@ -174,7 +174,8 @@ def test_tank_pleated_outfits_keep_background_and_pose():
 def test_tank_pleated_concepts_and_outfit_override_generate(client, studio):
     from app.outfit_presets import TANK_PLEATED_OUTFITS
     base, _, _ = studio
-    defaults = client.get(f'{base}/concept-proposals').json()
+    # Include historical slots when checking the original reference batches.
+    defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     assert [p['slot'] for p in defaults[117:121]] == [118, 119, 120, 121]
     assert [p['brief']['outfit'] for p in defaults[117:121]] == [v[1] for v in TANK_PLEATED_OUTFITS.values()]
     menu = dict(client.get(f'{base}/concept-options').json()['outfit'])
