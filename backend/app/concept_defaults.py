@@ -1831,6 +1831,22 @@ DEFAULT_CONCEPTS += (
     },
 )
 
+DEFAULT_CONCEPTS += (
+    {
+        "title": "Retro apartment flash portrait",
+        "setting": "a lived-in retro apartment with a white laundry counter above a front-loading washing machine, leafy plants in terracotta pots, framed graphic prints and a dark television in the background",
+        "activity": "pausing with a clear ribbed tumbler in one hand",
+        "pose": "sitting sideways on the edge of the white counter with knees bent and legs angled to one side, one hand relaxed beside her and the other holding the tumbler near cheek height without blocking her face",
+        "expression": "a quiet, slightly curious candid expression",
+        "gaze": "off camera to one side",
+        "camera": "a close, eye-level three-quarter view with the apartment details visible",
+        "framing": "a vertical environmental portrait from head to below the knees, including the raised glass, potted plants and the edge of the washing machine",
+        "outfit": "an opaque pale blush-pink cropped camisole and matching fitted lounge shorts, both with fine black scalloped trim, plus a white crocheted headscarf",
+        "silhouette": "a coordinated pink two-piece lounge set with dark contrast trim",
+        "lighting": "direct on-camera flash with warm ambient shadows, muted 35 mm film colors and visible analog grain",
+    },
+)
+
 # Retain historical slots for saved images and explicit reruns. Only the strongest
 # composition from each reviewed near-duplicate cluster remains in the picker.
 RETIRED_CONCEPT_SLOTS = {
