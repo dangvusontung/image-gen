@@ -2036,6 +2036,50 @@
       "framing": "a vertical environmental portrait including the pillow, bedding, plush toys and warmly lit bedside table",
       "lighting": "warm bedside lamp and fairy lights with soft direct flash and subtle analog film grain",
       "footwear": "bare feet, without socks or shoes"
+    },
+    {
+      "slot": 146,
+      "title": "Wood-framed mirror portrait",
+      "setting": "a lived-in bedroom corner seen in a broad warm wood-framed mirror, with cream curtains, a wall-mounted television and a few everyday items on the dresser",
+      "activity": "pausing at the dresser for an unposed mirror portrait",
+      "pose": "standing close to the dresser and leaning forward slightly with both hands supported on its surface; shoulders relaxed and head tilted softly down to one side",
+      "outfit": "an opaque ivory ribbed sleeveless crop tank with a high round neckline and plain black lounge shorts",
+      "silhouette": "a casual high-neck tank and black lounge shorts with a relaxed forward lean",
+      "expression": "a candid expression with lips slightly parted",
+      "gaze": "downward and slightly to the side",
+      "camera": "an eye-level view into the mirror with one coherent reflection, no visible camera or phone",
+      "framing": "a close vertical crop from head to upper thighs, with the thick wooden mirror frame visible along one edge",
+      "lighting": "soft muted daylight from the curtained window with warm shadows and a subtle film look"
+    },
+    {
+      "slot": 147,
+      "title": "Denim editorial on a cognac leather sofa",
+      "setting": "a cognac-brown leather sofa with matching cushions against a textured beige plaster wall in a minimalist loft",
+      "activity": "resting on the sofa for a relaxed denim fashion portrait",
+      "pose": "sitting centered and leaning back with both arms extended along the top of the sofa; one leg folded loosely on the seat, the other knee bent with that foot touching the floor",
+      "outfit": "an open cropped blue denim jacket with a gently frayed hem over an opaque white ribbed crop tank and high-waisted blue denim shorts",
+      "silhouette": "a broad, relaxed line across the sofa back contrasted with cropped denim layers",
+      "expression": "composed and self-assured",
+      "gaze": "directly at the camera",
+      "camera": "a straight-on eye-level view centered on the sofa",
+      "framing": "a vertical full-body composition including both hands and feet, the leather seat and open wall space above",
+      "lighting": "warm diffused front light bringing out the leather grain, plaster and denim texture",
+      "footwear": "bare feet, without socks or shoes"
+    },
+    {
+      "slot": 148,
+      "title": "Chair leg-lift mirror selfie",
+      "setting": "a bright minimalist apartment with a tall floor mirror, a simple wooden armchair, light tile floors and a framed portrait print resting on a white cabinet",
+      "activity": "taking a playful mirror selfie while seated on the wooden chair",
+      "pose": "leaning back against the chair, one hand resting on the armrest and the other holding a smartphone vertically at eye level; one leg extends diagonally upward in a controlled lift, while the other bends naturally toward the floor",
+      "outfit": "an opaque white short-sleeve T-shirt tied loosely at the waist and white cotton lounge shorts",
+      "silhouette": "a clean white lounge set with the raised leg forming a long diagonal through the reflection",
+      "expression": "relaxed and playful, partially hidden by the phone",
+      "gaze": "at the phone screen",
+      "camera": "a full-length mirror selfie with one consistent reflection; phone partly obscuring the face",
+      "framing": "a vertical full-body reflection including the wooden chair, the raised foot and the surrounding apartment",
+      "lighting": "soft indirect daylight with neutral tones and gentle indoor shadows",
+      "footwear": "bare feet, without socks or shoes"
     }
   ],
   "retired_slots": {

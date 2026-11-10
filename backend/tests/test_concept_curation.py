@@ -6,12 +6,12 @@ def test_curated_picker_keeps_stable_slots_and_archive(client, project):
     base = f'/api/projects/{project}'
     visible = client.get(f'{base}/concept-proposals').json()
     archive = client.get(f'{base}/concept-proposals?include_retired=true').json()
-    assert len(visible) == 129
-    assert len(archive) == 145
+    assert len(visible) == 132
+    assert len(archive) == 148
     assert [p['slot'] for p in visible] == [slot for slot, _ in ACTIVE_DEFAULT_CONCEPTS]
     assert not set(RETIRED_CONCEPT_SLOTS) & {p['slot'] for p in visible}
     assert set(RETIRED_CONCEPT_SLOTS.values()) <= {p['slot'] for p in visible}
-    assert [p['slot'] for p in visible[-5:]] == [141, 142, 143, 144, 145]
+    assert [p['slot'] for p in visible[-5:]] == [144, 145, 146, 147, 148]
     for p in visible:
         assert p['id'] == f"default-{p['slot']}"
         assert p['title'] == DEFAULT_CONCEPTS[p['slot'] - 1]['title']
@@ -29,7 +29,7 @@ def test_bulk_defaults_skip_retired_but_historical_reruns_work(client, project, 
     assert wait_for_job(client, old.json()['job_ids'][0])['status'] == 'succeeded'
     result = client.post(f'{base}/concepts/generate', json={'confirmed': True})
     assert result.status_code == 201, result.text
-    assert len(result.json()['job_ids']) == 129
+    assert len(result.json()['job_ids']) == 132
     concepts = client.get(f'{base}/concepts').json()
     new_ids = set(result.json()['concept_ids'])
     assert {c['slot'] for c in concepts if c['id'] in new_ids} == {s for s, _ in ACTIVE_DEFAULT_CONCEPTS}
