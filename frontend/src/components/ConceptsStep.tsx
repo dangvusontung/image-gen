@@ -97,6 +97,9 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     try { localStorage.setItem(CONCEPT_EMOJI_STORAGE, JSON.stringify(next)) } catch { /* Browser storage may be unavailable. */ }
   }
   const [selectedRun, setSelectedRun] = useState<number | null>(null)
+  const [rerunSelection, setRerunSelection] = useState<{ run: number; slots: number[] } | null>(null)
+  const [rerunConfirmed, setRerunConfirmed] = useState(false)
+  const [useCatalogBriefs, setUseCatalogBriefs] = useState(false)
   const [compact, setCompact] = useState(true)
   const [detailSlot, setDetailSlot] = useState<number | null>(null)
   const [confirmed, setConfirmed] = useState(false)
@@ -131,6 +134,11 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const all = concepts.data?.filter(c => c.run === run) ?? []
   const slots = [...new Set(all.map(c => c.slot))].sort((a, b) => a - b)
   const cards = slots.map(slot => all.filter(c => c.slot === slot).sort((a, b) => b.revision - a.revision)[0]).filter(Boolean)
+  const rerunSlots = rerunSelection?.run === run ? slots.filter(slot => rerunSelection.slots.includes(slot)) : []
+  const pickForRerun = (next: number[]) => {
+    setRerunSelection({ run, slots: next })
+    setRerunConfirmed(false)
+  }
   const paid = project.provider !== 'mock'
   const resolvedSize = size || defaultGenerationSize(project, model?.default_size)
   const unitPrice = (resolvedSize ? model?.price_table?.[resolvedSize] : undefined) ?? model?.price_per_image_usd
@@ -160,7 +168,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     <h2 className="text-xl font-semibold">Concept</h2>
     {concepts.isPending && <Skeleton className="h-64" />}
     {!!runs.length && <div className="flex flex-wrap items-center gap-4">
-      <label>Đợt ảnh <select className="ml-2 rounded border p-2" aria-label="Đợt concept" value={run} onChange={e => setSelectedRun(Number(e.target.value))}>
+      <label>Đợt ảnh <select className="ml-2 rounded border p-2" aria-label="Đợt concept" value={run} onChange={e => { setSelectedRun(Number(e.target.value)); setRerunSelection(null); setRerunConfirmed(false) }}>
         {runs.map(n => <option key={n} value={n}>{n}</option>)}
       </select></label>
       <Button variant="outline" onClick={() => setCompact(!compact)}>{compact ? 'Xem thẻ chi tiết' : 'Xem bảng ảnh'}</Button>
@@ -168,8 +176,24 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       <a className="text-sm underline" href={`/api${base}/concepts/download`}>Tải toàn bộ concept (ZIP)</a>
       <span className="text-sm">{cards.filter(c => c?.job.status === 'succeeded').length}/{cards.length} hoàn tất</span>
     </div>}
+    {!!runs.length && <div className="space-y-2 rounded-lg border p-3">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button size="sm" variant="outline" onClick={() => pickForRerun(rerunSlots.length === slots.length ? [] : slots)}>
+          {rerunSlots.length === slots.length ? 'Bỏ chọn cả đợt' : 'Chọn cả đợt'}
+        </Button>
+        <span className="text-sm">Đã chọn {rerunSlots.length}/{slots.length}</span>
+        <Button size="sm" disabled={!ready || pending || !rerunSlots.length || (paid && !rerunConfirmed)} onClick={() => action.mutate({
+          path: `${base}/concepts/generate`,
+          data: { source_run: run, slots: rerunSlots, use_catalog_briefs: useCatalogBriefs, choices, size: size || null, confirmed: rerunConfirmed },
+        }, { onSuccess: () => { setSelectedRun(null); setRerunSelection(null); setRerunConfirmed(false) } })}>Tạo lại concept đã chọn</Button>
+      </div>
+      <p className="text-xs text-muted-foreground">Tạo một đợt mới bằng model, kích thước và trang phục đang chọn.</p>
+      <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={useCatalogBriefs} onChange={e => { setUseCatalogBriefs(e.target.checked); setRerunConfirmed(false) }} /> Dùng mô tả mới từ catalog theo số concept</label>
+      {paid && !!rerunSlots.length && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={rerunConfirmed} onChange={e => setRerunConfirmed(e.target.checked)} /> Xác nhận gửi {rerunSlots.length} ảnh tới nhà cung cấp có phí ({costLabel(unitPrice == null ? null : unitPrice * rerunSlots.length)})</label>}
+    </div>}
     {!!runs.length && <div className={`grid gap-4 ${compact ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1'}`}>
       {cards.map(c => c ? <article key={c.id} className="space-y-3 rounded-xl border p-4" aria-label={`Concept ${c.slot}`}>
+        <label className="flex items-center gap-2 text-xs"><input type="checkbox" aria-label={`Chọn tạo lại ô ${c.slot}`} checked={rerunSlots.includes(c.slot)} onChange={e => pickForRerun(e.target.checked ? [...rerunSlots, c.slot] : rerunSlots.filter(slot => slot !== c.slot))} /> Chọn tạo lại</label>
         <div className={compact ? 'space-y-3' : 'grid gap-4 sm:grid-cols-[10rem_minmax(0,1fr)]'}>
           <div className="space-y-2">
         {c.job.output_asset_ids[0] ? <><ImagePreview assetId={c.job.output_asset_ids[0]} title={`Concept ${c.slot} · ${c.mood}`} /><DownloadLinks assetId={c.job.output_asset_ids[0]} /></> : active(c.job) ? <JobPlaceholder job={c.job} /> : <div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-muted text-sm">Chưa có ảnh kết quả</div>}
@@ -218,7 +242,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       setPicked([])
       setConfirmed(false)
     }} />
-    <OutfitSwitcher choices={choices} onChange={next => { setChoices(next); setConfirmed(false); setCustomConfirmed(false) }} />
+    <OutfitSwitcher choices={choices} onChange={next => { setChoices(next); setConfirmed(false); setCustomConfirmed(false); setRerunConfirmed(false) }} />
     {list.length > 0 && <details className="space-y-4 rounded-xl border p-4">
       <summary className="cursor-pointer font-semibold">{list.length} concept · Mở/đóng danh sách</summary>
       <div className="flex flex-wrap items-center gap-3">
@@ -301,7 +325,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         Tạo ảnh riêng từ menu bên dưới, không liên quan tới các concept ở trên.
       </p>
       <div className="mt-3 space-y-3">
-        <ConceptMenu projectId={project.id} choices={choices} onChange={value => { setChoices(value); setCustomConfirmed(false) }} />
+        <ConceptMenu projectId={project.id} choices={choices} onChange={value => { setChoices(value); setCustomConfirmed(false); setRerunConfirmed(false) }} />
         <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
           <label className="text-sm">Số ảnh
             <select aria-label="Số ảnh tùy chỉnh" className="ml-2 rounded border p-2" value={customCount}

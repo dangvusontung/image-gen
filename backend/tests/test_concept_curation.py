@@ -49,3 +49,32 @@ def test_bulk_defaults_skip_retired_but_historical_reruns_work(client, project, 
     new_ids = set(result.json()['concept_ids'])
     assert {c['slot'] for c in concepts if c['id'] in new_ids} == {s for s, _ in ACTIVE_DEFAULT_CONCEPTS}
     assert any(c['slot'] == 48 for c in concepts)
+
+
+def test_rerun_selected_slots_creates_new_batch_with_saved_or_current_brief(client, project, reference_ids):
+    base = f'/api/projects/{project}'
+    result = client.post(f'{base}/master/generate', json={}).json()
+    assert wait_for_job(client, result['job_ids'][0])['status'] == 'succeeded'
+    master = client.get(f'{base}/workflow').json()['masters'][0]
+    assert client.post(f"{base}/master/{master['id']}/approve").status_code == 200
+    url = f'{base}/concepts/generate'
+    original = client.post(url, json={'slots': [149, 152], 'briefs': {'152': {'pose': 'A saved pose from the source run'}}})
+    assert original.status_code == 201
+    assert client.post(url, json={'source_run': 1, 'slots': []}).status_code == 400
+    assert client.post(url, json={'source_run': 1, 'slots': [151]}).status_code == 400
+    for new_run, use_catalog, pose in [
+        (2, False, 'A saved pose from the source run'),
+        (3, True, DEFAULT_CONCEPTS[151]['pose']),
+    ]:
+        response = client.post(url, json={
+            'source_run': 1,
+            'slots': [152],
+            'use_catalog_briefs': use_catalog,
+            'choices': {'outfit': 'bikini', 'footwear': 'barefoot'},
+        })
+        assert response.status_code == 201, response.text
+        rows = [c for c in client.get(f'{base}/concepts').json() if c['run'] == new_run]
+        assert [c['slot'] for c in rows] == [152]
+        assert rows[0]['brief']['pose'] == pose
+        assert 'bikini' in rows[0]['brief']['outfit']
+        assert 'bare feet' in rows[0]['brief']['footwear']

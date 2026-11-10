@@ -30,6 +30,8 @@ class GenerateRequest(BaseModel):
     proposal_ids: list[str] = Field(default_factory=list, max_length=9)
     #: Slot numbers, used when rendering the built-in concepts rather than proposed ones.
     slots: list[int] = Field(default_factory=list)
+    source_run: int | None = Field(default=None, ge=1)
+    use_catalog_briefs: bool = False
     #: Per-slot edits to the concept wording, merged over whatever that slot would otherwise use.
     briefs: dict[int, dict[str, str]] = Field(default_factory=dict)
     #: Per-slot title overrides.
@@ -346,8 +348,10 @@ def generate_concepts(project_id: str, data: GenerateRequest, request: Request, 
     """Render the chosen proposals. Each proposal keeps its slot, so reruns stay comparable."""
     project = get_project_or_404(db, project_id)
     catalog = get_catalog()
-    if len(data.slots) > len(catalog.concepts):
+    if data.source_run is None and len(data.slots) > len(catalog.concepts):
         fail("invalid_slots", "Số lượng ô vượt quá số concept hiện có", 422)
+    if data.source_run is not None and (not data.slots or data.proposal_ids or data.custom):
+        fail("invalid_selection", "Chọn ít nhất một ô từ đợt ảnh cần tạo lại", 400)
     if data.custom:
         if data.choices is None or not data.choices.overrides_concept():
             fail("choices_required", "Chọn ít nhất một mục trong menu trang phục/bối cảnh", 400)
@@ -364,7 +368,20 @@ def generate_concepts(project_id: str, data: GenerateRequest, request: Request, 
         finish(db, request, jobs, data.confirmed)
         return GenerationResult(job_ids=[j.id for j in jobs], concept_ids=[c.id for c in concepts])
     latest = db.query(func.max(ConceptProposal.run)).filter_by(project_id=project_id).scalar()
-    if latest is None:
+    if data.source_run is not None:
+        originals = (db.query(Concept)
+                     .filter_by(project_id=project_id, run=data.source_run)
+                     .filter(Concept.slot.in_(set(data.slots)))
+                     .order_by(Concept.slot, Concept.revision.desc()).all())
+        saved = {}
+        for concept in originals:
+            saved.setdefault(concept.slot, concept)
+        if set(saved) != set(data.slots):
+            fail("invalid_slots", "Một số ô không thuộc đợt ảnh đã chọn", 400)
+        current = dict(catalog_entries(catalog)) if data.use_catalog_briefs else {}
+        chosen = [(slot, current.get(slot, {**concept.brief, "title": concept.mood}))
+                  for slot, concept in saved.items()]
+    elif latest is None:
         # Bulk generation uses curated defaults; explicit historical slots support reruns.
         chosen = list(catalog_entries(catalog, include_retired=bool(data.slots)))
         if data.slots:

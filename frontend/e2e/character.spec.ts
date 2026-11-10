@@ -188,7 +188,7 @@ test('turnaround can be skipped without generating any angle jobs', async ({ pag
 })
 
 
-test('compact concept selection creates an edited concept with its title', async ({ page, request }) => {
+test('compact concept selection creates an edited concept and reruns it in a new batch', async ({ page, request }) => {
   const created = await request.post('http://127.0.0.1:8100/api/projects', { data: { name: 'Concept grid E2E' } })
   const project = await created.json()
   const base = `http://127.0.0.1:8100/api/projects/${project.id}`
@@ -206,6 +206,7 @@ test('compact concept selection creates an edited concept with its title', async
   await page.evaluate(({ id }) => localStorage.setItem(`concept-edits:${id}`, JSON.stringify({ 1: { title: 'Copied title', outfit: 'blue shirt' } })), { id: project.id })
   await page.goto(`/#/projects/${project.id}`)
   await page.getByRole('tab', { name: '4. Concept' }).click()
+  await page.getByLabel('Đổi trang phục concept').selectOption('auto')
   await expect(page.getByRole('button', { name: 'Tạo ảnh cho 0 concept', exact: true })).toBeDisabled()
   await page.getByText('141 concept · Mở/đóng danh sách', { exact: true }).click()
   await expect(page.getByRole('checkbox', { name: 'Chọn concept 1', exact: true })).not.toBeChecked()
@@ -219,6 +220,13 @@ test('compact concept selection creates an edited concept with its title', async
   expect(concepts).toHaveLength(1)
   expect(concepts[0].brief.outfit).toBe('blue shirt')
   expect(concepts[0].mood).toBe('Copied title')
+  const rerun = page.getByRole('button', { name: 'Tạo lại concept đã chọn', exact: true })
+  await expect(rerun).toBeDisabled()
+  await page.getByRole('checkbox', { name: 'Chọn tạo lại ô 1', exact: true }).check()
+  await rerun.click()
+  await expect(page.getByLabel('Đợt concept')).toHaveValue('2')
+  const batches = await (await request.get(`${base}/concepts`)).json()
+  expect(batches.find((c: { run: number }) => c.run === 2)).toMatchObject({ slot: 1, mood: 'Copied title', brief: { outfit: 'blue shirt' } })
 })
 
 
