@@ -2007,6 +2007,35 @@
       "footwear": "bare feet, without socks or shoes",
       "silhouette": "a relaxed seated shape in soft tonal activewear",
       "lighting": "low golden light with gentle warm shadows"
+    },
+    {
+      "slot": 144,
+      "title": "Warm bubble bath in a clawfoot tub",
+      "setting": "a warm beige stone-tiled bathroom with a white oval clawfoot bathtub, brass feet and soft clusters of white bath bubbles",
+      "activity": "taking a quiet break in a warm bubble bath",
+      "pose": "reclining against the rounded back of the tub with shoulders relaxed, both knees comfortably bent and the lower legs under the water; arms resting naturally at her sides",
+      "outfit": "an opaque two-piece swimsuit with muted teal, rust-orange and navy stripes, ivory trim and thin shoulder straps",
+      "silhouette": "a relaxed recline framed by the curved bathtub rim and scattered bubbles",
+      "expression": "calm, with a relaxed neutral expression",
+      "gaze": "gently toward the camera",
+      "camera": "an elevated three-quarter angle looking along the length of the tub",
+      "framing": "a vertical portrait including her face, the curved rim and soft foam in the foreground",
+      "lighting": "soft warm bathroom light with gentle reflections on the ceramic and water"
+    },
+    {
+      "slot": 145,
+      "title": "Cherry pajamas and fairy lights",
+      "setting": "a cozy bedroom with a light wood headboard, rumpled white bedding, pastel cushions, plush toys, a wall collage and warm fairy lights; a small bedside lamp glows beside a stack of books",
+      "activity": "leaning into a big pillow and glancing back during a quiet evening at home",
+      "pose": "kneeling comfortably on the mattress with both shins resting on the bedding and both forearms supported by a large white pillow; shoulders turn gently as she looks back toward the camera",
+      "outfit": "an opaque ivory long-sleeved pajama top and matching loose sleep shorts printed with tiny red cherries",
+      "silhouette": "a soft, relaxed shape in comfortable cotton sleepwear",
+      "expression": "a quiet, friendly expression",
+      "gaze": "back over her shoulder toward the camera",
+      "camera": "a slightly elevated three-quarter side view from beside the bed",
+      "framing": "a vertical environmental portrait including the pillow, bedding, plush toys and warmly lit bedside table",
+      "lighting": "warm bedside lamp and fairy lights with soft direct flash and subtle analog film grain",
+      "footwear": "bare feet, without socks or shoes"
     }
   ],
   "retired_slots": {
