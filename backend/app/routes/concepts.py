@@ -49,6 +49,7 @@ class ImageSettings(BaseModel):
 
 
 class RegenerateRequest(ImageSettings):
+    prompt_mode: Literal["saved", "current"] | None = None
     prompt: str | None = Field(default=None, min_length=1, max_length=50000)
     choices: ConceptChoices | None = None
     #: Edited brief fields, merged over the concept's own. Used to get past a moderation block.
@@ -419,16 +420,31 @@ def regenerate(project_id: str, concept_id: str, data: RegenerateRequest, reques
     old = owned(db, Concept, project_id, concept_id)
     revision = (db.query(func.max(Concept.revision)).filter_by(project_id=project_id, run=old.run, slot=old.slot).scalar() or 0) + 1
     brief = dict(old.brief)
+    title = old.mood
+    if data.prompt_mode == "current":
+        current = next((brief for slot, brief in catalog_entries(get_catalog(), include_retired=True) if slot == old.slot), None)
+        if current is not None:
+            title = current.pop("title")
+            brief = current
     if data.brief:
         unknown = sorted(set(data.brief) - set(PROPOSAL_FIELDS))
         if unknown:
             fail("unknown_brief_field", f"Trường không hợp lệ: {', '.join(unknown)}", 400)
         brief.update({k: v.strip() for k, v in data.brief.items()})
     camera = brief.get("camera") or old.camera
-    concept, job = new_concept(db, registry, project, old.run, old.slot, (data.title or old.mood).strip(), camera,
-                               revision, data.size,
-                               data.choices or (ConceptChoices.model_validate(old.job.meta["concept_choices"]) if old.job.meta.get("concept_choices") else None),
-                               brief=brief, prompt_override=data.prompt if data.prompt is not None else (old.job.prompt if old.job.meta.get("prompt_edited") else None))
+    choices = data.choices
+    prompt = data.prompt
+    if data.prompt_mode == "saved":
+        if any(value is not None for value in (data.choices, data.brief, data.title, data.prompt)):
+            fail("conflicting_prompt_mode", "Prompt cũ không dùng chung với chỉnh sửa prompt hoặc trang phục", 400)
+        prompt = old.job.prompt
+    elif data.prompt_mode is None:
+        if choices is None and old.job.meta.get("concept_choices"):
+            choices = ConceptChoices.model_validate(old.job.meta["concept_choices"])
+        if prompt is None and old.job.meta.get("prompt_edited"):
+            prompt = old.job.prompt
+    concept, job = new_concept(db, registry, project, old.run, old.slot, (data.title or title).strip(), camera,
+                               revision, data.size, choices, brief=brief, prompt_override=prompt)
     finish(db, request, [job], True)
     return GenerationResult(id=concept.id, job_ids=[job.id], concept_ids=[concept.id])
 

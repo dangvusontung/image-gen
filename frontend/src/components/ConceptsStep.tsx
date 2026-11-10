@@ -164,6 +164,20 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     },
     { onSuccess: () => setSelectedRun(null) })
 
+  const rerunImage = (concept: Concept, promptMode: 'saved' | 'current') => action.mutate({
+    path: `${base}/concepts/${concept.id}/regenerate`,
+    data: { size: size || null, prompt_mode: promptMode, ...(promptMode === 'current' ? { choices } : {}) },
+  })
+
+  const promptRerunButtons = (concept: Concept) => <>
+    <Button size="sm" variant="outline" title="Giữ nguyên prompt đã dùng để tạo ảnh này" disabled={pending || active(concept.job) || !ready || !concept.job.prompt?.trim()} onClick={() => rerunImage(concept, 'saved')}>
+      Tạo lại với prompt cũ
+    </Button>
+    <Button size="sm" variant="outline" title="Dùng mô tả mới nhất theo số concept và trang phục đang chọn" disabled={pending || active(concept.job) || !ready} onClick={() => rerunImage(concept, 'current')}>
+      Tạo lại với prompt mới
+    </Button>
+  </>
+
   return <section className="space-y-5">
     <h2 className="text-xl font-semibold">Concept</h2>
     {concepts.isPending && <Skeleton className="h-64" />}
@@ -209,7 +223,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
           <p className="text-sm">{c.brief.setting} · {c.brief.activity}</p>
           <details className="text-xs"><summary>Chi tiết concept và phiên bản trước</summary>
             <dl className="mt-2 space-y-1">{Object.entries(c.brief).filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="inline font-medium">{BRIEF_LABEL[k] ?? k}: </dt><dd className="inline">{v}</dd></div>)}</dl>
-            {all.filter(p => p.slot === c.slot && p.id !== c.id).map(p => <div key={p.id} className="mt-3 border-t pt-3"><p>Bản {p.revision}</p>{p.job.output_asset_ids[0] && <><ImagePreview assetId={p.job.output_asset_ids[0]} title={`Concept ${p.slot} bản ${p.revision}`} /><Button size="sm" variant="outline" onClick={() => onEnhance(p.id)}>Nâng cấp bản {p.revision}</Button></>}<JobDetails job={p.job} projectId={project.id} /></div>)}
+            {all.filter(p => p.slot === c.slot && p.id !== c.id).map(p => <div key={p.id} className="mt-3 border-t pt-3"><p>Bản {p.revision}</p>{p.job.output_asset_ids[0] && <><ImagePreview assetId={p.job.output_asset_ids[0]} title={`Concept ${p.slot} bản ${p.revision}`} /><Button size="sm" variant="outline" onClick={() => onEnhance(p.id)}>Nâng cấp bản {p.revision}</Button></>}<div className="my-2 flex flex-wrap gap-2">{promptRerunButtons(p)}</div><JobDetails job={p.job} projectId={project.id} /></div>)}
           </details>
           <JobDetails job={c.job} projectId={project.id} />
         </>}
@@ -217,7 +231,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
           <FixAndRetry concept={c} projectId={project.id} size={size} choices={choices} disabled={!ready} />}
         <div className="flex flex-wrap gap-2">
           <EditConceptPrompt key={c.id} concept={c} projectId={project.id} size={size} disabled={pending || active(c.job) || !ready} />
-          <Button size="sm" variant="outline" disabled={pending || active(c.job) || !ready} onClick={() => action.mutate({ path: `${base}/concepts/${c.id}/regenerate`, data: { size: size || null, choices } })}>Tạo lại ô {c.slot}</Button>
+          {promptRerunButtons(c)}
           <Button size="sm" disabled={c.job.status !== 'succeeded'} onClick={() => onEnhance(c.id)}>Nâng cấp ô {c.slot}</Button>
         </div>
           </div>

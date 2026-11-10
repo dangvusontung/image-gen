@@ -78,3 +78,32 @@ def test_rerun_selected_slots_creates_new_batch_with_saved_or_current_brief(clie
         assert rows[0]['brief']['pose'] == pose
         assert 'bikini' in rows[0]['brief']['outfit']
         assert 'bare feet' in rows[0]['brief']['footwear']
+
+
+def test_single_concept_rerun_can_keep_saved_prompt_or_use_current_catalog(client, project, reference_ids):
+    base = f'/api/projects/{project}'
+    master_job = client.post(f'{base}/master/generate', json={}).json()['job_ids'][0]
+    assert wait_for_job(client, master_job)['status'] == 'succeeded'
+    master = client.get(f'{base}/workflow').json()['masters'][0]
+    assert client.post(f"{base}/master/{master['id']}/approve").status_code == 200
+
+    created = client.post(f'{base}/concepts/generate', json={
+        'slots': [157], 'briefs': {'157': {'footwear': 'white ribbed leg warmers'}},
+    }).json()
+    url = f"{base}/concepts/{created['concept_ids'][0]}/regenerate"
+    initial = wait_for_job(client, created['job_ids'][0])
+    edited = client.post(url, json={'prompt': 'A saved custom prompt with white leg warmers.'}).json()
+    old_url = f"{base}/concepts/{edited['concept_ids'][0]}/regenerate"
+
+    saved = client.post(old_url, json={'prompt_mode': 'saved'})
+    assert saved.status_code == 201
+    saved_job = wait_for_job(client, saved.json()['job_ids'][0])
+    assert saved_job['prompt'] == 'A saved custom prompt with white leg warmers.'
+    assert saved_job['meta']['brief']['footwear'] == initial['meta']['brief']['footwear']
+
+    current = client.post(old_url, json={'prompt_mode': 'current'})
+    assert current.status_code == 201
+    current_job = wait_for_job(client, current.json()['job_ids'][0])
+    assert 'A saved custom prompt' not in current_job['prompt']
+    assert current_job['meta']['brief']['footwear'] == DEFAULT_CONCEPTS[156]['footwear']
+    assert 'uncovered ankles and calves' in current_job['prompt']
