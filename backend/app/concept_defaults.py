@@ -1847,6 +1847,65 @@ DEFAULT_CONCEPTS += (
     },
 )
 
+DEFAULT_CONCEPTS += (
+    {
+        "title": "Yoga tree pose by the window",
+        "setting": "a quiet sunlit studio with pale wood floors, a sage yoga mat and sheer curtains",
+        "activity": "holding Tree Pose during a quiet morning practice",
+        "pose": "standing tall on the left foot with the right sole resting against the inner left calf below the knee; the right knee opens outward and the palms meet at chest height",
+        "expression": "calm and focused",
+        "gaze": "straight ahead at a fixed point",
+        "camera": "eye-level front three-quarter view",
+        "framing": "full-length portrait including the supporting foot, raised knee and both hands",
+        "outfit": "an opaque sage-green sleeveless athletic top and matching high-waisted leggings",
+        "footwear": "bare feet, without socks or shoes",
+        "silhouette": "a clean fitted yoga set with a grounded upright stance",
+        "lighting": "soft morning window light and gentle shadows",
+    },
+    {
+        "title": "Yoga Warrior II on the terrace",
+        "setting": "a shaded garden terrace with a charcoal yoga mat, stone paving and soft green foliage",
+        "activity": "holding Warrior II in an outdoor yoga session",
+        "pose": "feet set wide along the mat; the front foot points toward the short end of the mat and the front knee bends over that ankle, while the back leg stays straight with the foot planted across the mat; torso upright, arms extended in opposite directions at shoulder height",
+        "expression": "steady and composed",
+        "gaze": "over the front fingertips",
+        "camera": "a wide three-quarter view from the long side of the mat",
+        "framing": "a full-body composition with space around both hands and both feet",
+        "outfit": "an opaque rust-colored athletic tank and charcoal full-length leggings",
+        "footwear": "bare feet, without socks or shoes",
+        "silhouette": "a strong open stance in understated activewear",
+        "lighting": "warm reflected daylight with softly shaded foliage",
+    },
+    {
+        "title": "Yoga downward dog in a loft",
+        "setting": "a bright minimalist loft with a blue yoga mat and tall windows",
+        "activity": "holding Downward-Facing Dog during a yoga flow",
+        "pose": "both palms flat at the front of the mat and the balls of both feet touching the mat at the back, arms extended and hips raised into an inverted V; knees gently bent, heels slightly lifted and head relaxed between the upper arms",
+        "expression": "relaxed and absorbed in the practice",
+        "gaze": "down toward the mat, with the neck relaxed",
+        "camera": "side view at mat height, showing the shape of the pose",
+        "framing": "the full figure and mat in view, with all four contact points visible",
+        "outfit": "an opaque slate-blue athletic top and matching full-length leggings",
+        "footwear": "bare feet, without socks or shoes",
+        "silhouette": "an inverted V in a fitted athletic set",
+        "lighting": "diffuse loft daylight with a soft shadow beneath the mat",
+    },
+    {
+        "title": "Yoga seated butterfly at sunset",
+        "setting": "a quiet room with an oatmeal-colored yoga mat and warm light from a low window",
+        "activity": "resting in a seated Butterfly Pose at the end of practice",
+        "pose": "sitting upright on the mat with the soles of both feet together, knees bent outward and both hands lightly holding the feet; shoulders relaxed and spine long",
+        "expression": "peaceful, with a subtle smile",
+        "gaze": "softly down and ahead",
+        "camera": "a slightly elevated front three-quarter view",
+        "framing": "the entire seated pose, including both knees, hands and feet",
+        "outfit": "an opaque mauve short-sleeved athletic top and matching stretch leggings",
+        "footwear": "bare feet, without socks or shoes",
+        "silhouette": "a relaxed seated shape in soft tonal activewear",
+        "lighting": "low golden light with gentle warm shadows",
+    },
+)
+
 # Retain historical slots for saved images and explicit reruns. Only the strongest
 # composition from each reviewed near-duplicate cluster remains in the picker.
 RETIRED_CONCEPT_SLOTS = {

@@ -3,9 +3,9 @@ import type { ConceptProposal } from '@/api/client'
 import { groupConcepts } from './conceptGroups'
 
 it('groups every default once and keeps proposed slot numbers out of default groups', () => {
-  const defaults = Array.from({ length: 139 }, (_, i) => ({ id: String(i), slot: i + 1, run: 0 }) as ConceptProposal)
+  const defaults = Array.from({ length: 143 }, (_, i) => ({ id: String(i), slot: i + 1, run: 0 }) as ConceptProposal)
   const groups = groupConcepts(defaults)
-  expect(groups.flatMap(g => g.items)).toHaveLength(139)
+  expect(groups.flatMap(g => g.items)).toHaveLength(143)
   expect(groups.find(g => g.name === 'Việt Nam')?.items.map(p => p.slot)).toEqual([85, 86, 87, 88, 89, 90, 91, 92])
   expect(groups.find(g => g.name === 'Private moments')?.items.map(p => p.slot)).toEqual([93, 94, 95, 96, 97, 98, 107, 108])
   expect(groups.find(g => g.name === 'Café vintage & bên cửa sổ')?.items.map(p => p.slot)).toEqual([99, 100, 101, 136, 137])
