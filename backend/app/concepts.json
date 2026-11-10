@@ -2080,6 +2080,21 @@
       "framing": "a vertical full-body reflection including the wooden chair, the raised foot and the surrounding apartment",
       "lighting": "soft indirect daylight with neutral tones and gentle indoor shadows",
       "footwear": "bare feet, without socks or shoes"
+    },
+    {
+      "slot": 149,
+      "title": "Sunlit floral sofa recline",
+      "setting": "a vintage living room with a cream sofa upholstered in faded orange and blue florals, a dusty blue cushion behind her and a pale cushion under her head; bright windows with partly lowered shades, small framed prints and a vase of flowers behind the sofa",
+      "activity": "lounging across the sofa and loosely twirling a strand of hair",
+      "pose": "reclining lengthwise along the seat, head and shoulders supported by the cushions at image left; one leg extends diagonally upward with the knee nearly straight, while the other knee bends and that foot rests against the right armrest; one hand holds a loose strand of hair near her shoulder and the other rests near her waist",
+      "outfit": "an opaque ivory fitted camisole, matching high-waisted drawstring lounge shorts and a light ivory cardigan worn open and slipped off one shoulder",
+      "silhouette": "a soft ivory lounge set and an asymmetrical recline, with the extended leg forming a clear diagonal above the sofa back",
+      "expression": "relaxed and quietly playful",
+      "gaze": "softly toward the camera",
+      "camera": "a nearly straight-on view from across the room, close to sofa-seat height",
+      "framing": "a wide environmental composition with the head on the lower left, raised foot toward the upper right, both feet visible and the floral sofa anchoring the lower frame",
+      "lighting": "warm late-afternoon window light, bright rectangular patches behind the sofa, soft shadows across the seat and a slightly hazy film finish",
+      "footwear": "bare feet, without socks or shoes"
     }
   ],
   "retired_slots": {

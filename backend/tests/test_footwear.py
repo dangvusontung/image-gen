@@ -31,7 +31,7 @@ def test_clothing_override_keeps_concept_shoes():
 def test_garden_cafe_concepts_and_shoe_only_generation(client, project, reference_ids):
     base = f'/api/projects/{project}'
     defaults = client.get(f'{base}/concept-proposals').json()
-    assert len(defaults) == 132
+    assert len(defaults) == 133
     cafe = [p for p in defaults if p['slot'] in (136, 137)]
     assert [p['slot'] for p in cafe] == [136, 137]
     assert cafe[0]['brief']['pose'] != cafe[1]['brief']['pose']
