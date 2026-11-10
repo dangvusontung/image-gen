@@ -1815,6 +1815,22 @@ DEFAULT_CONCEPTS += ({'title': 'Garden cafe table-side hair sweep',
   'lighting': 'natural afternoon sunlight softened by the parasols, gentle dappled shadows and realistic '
               'fabric texture'})
 
+DEFAULT_CONCEPTS += (
+    {
+        "title": "Slow morning under the duvet",
+        "setting": "a quiet bedroom with cream linen sheets, soft pillows and daylight through sheer curtains",
+        "activity": "resting in bed during a slow morning",
+        "pose": "lying on her side with her head resting on a pillow, one hand relaxed on top of the duvet; the duvet covers her lower half from the waist to the feet, leaving her shoulders and upper body visible",
+        "expression": "a relaxed, slightly sleepy expression",
+        "gaze": "softly toward the window",
+        "camera": "a slightly elevated three-quarter view from the side of the bed",
+        "framing": "an unposed bedside portrait showing the face, pillow and the duvet draped across her lower half",
+        "outfit": "an opaque soft ivory cotton pajama top and matching pajama bottoms under the duvet",
+        "silhouette": "loose cotton sleepwear under a softly folded linen duvet",
+        "lighting": "soft diffused morning window light, gentle shadows and warm neutral tones",
+    },
+)
+
 # Retain historical slots for saved images and explicit reruns. Only the strongest
 # composition from each reviewed near-duplicate cluster remains in the picker.
 RETIRED_CONCEPT_SLOTS = {

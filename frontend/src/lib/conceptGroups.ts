@@ -18,7 +18,7 @@ const GROUPS = [
   { name: 'Sinh hoạt ở nhà', slots: [53, 54, 55, 56] },
   { name: 'Chân dung cận', slots: [57, 58, 59, 60] },
   { name: 'Bể bơi', slots: [4, ...Array.from({ length: 12 }, (_, i) => i + 29), 122, 123, 124, 125, 126] },
-  { name: 'Phòng ngủ & nghỉ ngơi', slots: [2, 5, 11, 15, 16, 18, 19, 20, 24, 25, 41, 42, 43, 44, 127, 128, 130] },
+  { name: 'Phòng ngủ & nghỉ ngơi', slots: [2, 5, 11, 15, 16, 18, 19, 20, 24, 25, 41, 42, 43, 44, 127, 128, 130, 138] },
   { name: 'Phòng khách & sinh hoạt', slots: [1, 9, 10, 17, 21, 28, 115, 116, 131, 132, 133, 134, 135] },
   { name: 'Bếp & bên cửa sổ', slots: [12, 13, 14, 27] },
   { name: 'Ngoài trời & ban công', slots: [3, 6, 8, 26] },

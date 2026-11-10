@@ -31,10 +31,11 @@ def test_clothing_override_keeps_concept_shoes():
 def test_garden_cafe_concepts_and_shoe_only_generation(client, project, reference_ids):
     base = f'/api/projects/{project}'
     defaults = client.get(f'{base}/concept-proposals').json()
-    assert len(defaults) == 121
-    assert [p['slot'] for p in defaults[-2:]] == [136, 137]
-    assert defaults[-2]['brief']['pose'] != defaults[-1]['brief']['pose']
-    assert all(p['brief']['footwear'] == WHITE_SLINGBACK for p in defaults[-2:])
+    assert len(defaults) == 122
+    cafe = [p for p in defaults if p['slot'] in (136, 137)]
+    assert [p['slot'] for p in cafe] == [136, 137]
+    assert cafe[0]['brief']['pose'] != cafe[1]['brief']['pose']
+    assert all(p['brief']['footwear'] == WHITE_SLINGBACK for p in cafe)
     result = client.post(f'{base}/master/generate', json={}).json()
     wait_for_job(client, result['job_ids'][0])
     master = client.get(f'{base}/workflow').json()['masters'][0]
