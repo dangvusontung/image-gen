@@ -3,7 +3,7 @@ Use the approved MASTER as the identity authority and any supplied TURNAROUND vi
 Mood: {mood}. Camera: {camera}.
 Concept: {brief}
 
-Keep the master's face, hair, skin tone, body proportions and rendering style exactly as they are. Follow the concept's head angle and gaze: do not reuse the master's head pose, and do not make the character look at the camera unless the concept says so. Follow the concept's setting, activity, pose, outfit, framing and lighting as written. Keep the face clearly visible, the hands coherent, and the clothing opaque.
+Keep the master's face, hair, skin tone, body proportions and rendering style exactly as they are. Follow the concept's head angle and gaze: do not reuse the master's head pose, and do not make the character look at the camera unless the concept says so. Follow the concept's setting, activity, pose, outfit, framing and lighting as written. Show the face clearly when the framing calls for it; honor any explicit crop or occlusion. Keep the hands coherent and the clothing opaque.
 
 One portrait 3:4 image. No collage, panels, borders, captions or watermark.
 
