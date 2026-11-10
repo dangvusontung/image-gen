@@ -1,5 +1,20 @@
+import json
+
+from app import concept_defaults
 from app.concept_defaults import ACTIVE_DEFAULT_CONCEPTS, DEFAULT_CONCEPTS, RETIRED_CONCEPT_SLOTS
 from tests.conftest import wait_for_job
+
+
+def test_picker_reloads_edited_catalog_without_restarting(client, project, tmp_path, monkeypatch):
+    path = tmp_path / 'concepts.json'
+    catalog = json.loads(concept_defaults.CATALOG_PATH.read_text(encoding='utf-8'))
+    path.write_text(json.dumps(catalog), encoding='utf-8')
+    monkeypatch.setattr(concept_defaults, 'CATALOG_PATH', path)
+    url = f'/api/projects/{project}/concept-proposals'
+    assert client.get(url).json()[0]['title'] == catalog['concepts'][0]['title']
+    catalog['concepts'][0]['title'] = 'Updated while the server is running'
+    path.write_text(json.dumps(catalog), encoding='utf-8')
+    assert client.get(url).json()[0]['title'] == 'Updated while the server is running'
 
 
 def test_curated_picker_keeps_stable_slots_and_archive(client, project):

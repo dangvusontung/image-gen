@@ -9,8 +9,7 @@ export interface ConceptChoices {
   style: string; outfit: string; top: string; scene: string; lighting: string
   custom_outfit: string; custom_scene: string; activity: string
 }
-// Keep each concept's own clothing unless the user explicitly selects an override.
-export const CONCEPT_DEFAULTS: ConceptChoices = { footwear: 'auto', custom_footwear: '', glasses: false, style: 'auto', outfit: 'auto', top: 'auto', scene: 'auto', lighting: 'auto', custom_outfit: '', custom_scene: '', activity: '' }
+export const CONCEPT_DEFAULTS: ConceptChoices = { footwear: 'barefoot', custom_footwear: '', glasses: false, style: 'auto', outfit: 'bikini', top: 'auto', scene: 'auto', lighting: 'auto', custom_outfit: '', custom_scene: '', activity: '' }
 
 export const overridesConcept = (c: ConceptChoices) =>
   (c.footwear !== undefined && c.footwear !== 'auto') || Boolean(c.glasses) || c.style !== 'auto' || c.outfit !== 'auto' || c.top !== 'auto' || c.scene !== 'auto' ||
@@ -18,14 +17,18 @@ export const overridesConcept = (c: ConceptChoices) =>
 
 export function useConceptChoices(projectId: string) {
   const key = `concept-choices:${projectId}`
+  const defaultsVersion = `${key}:outfit-default-v3`
   const [choices, setChoices] = useState<ConceptChoices>(() => {
     try {
       const saved = JSON.parse(localStorage.getItem(key) || '{}')
-      if (!localStorage.getItem(`${key}:outfit-default-v2`) && saved.outfit === 'bikini') saved.outfit = 'auto'
+      if (!localStorage.getItem(defaultsVersion)) {
+        if (saved.outfit === 'auto') saved.outfit = CONCEPT_DEFAULTS.outfit
+        if (saved.footwear === 'auto') saved.footwear = CONCEPT_DEFAULTS.footwear
+      }
       return { ...CONCEPT_DEFAULTS, ...saved }
     } catch { return CONCEPT_DEFAULTS }
   })
-  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(choices)); localStorage.setItem(`${key}:outfit-default-v2`, '1') } catch { /* Browser storage may be unavailable. */ } }, [key, choices])
+  useEffect(() => { try { localStorage.setItem(key, JSON.stringify(choices)); localStorage.setItem(defaultsVersion, '1') } catch { /* Browser storage may be unavailable. */ } }, [key, defaultsVersion, choices])
   return [choices, setChoices] as const
 }
 
@@ -39,7 +42,7 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
       <span role="status" className="text-amber-800">
         Đang ghi đè mô tả của <strong>tất cả</strong> concept bằng lựa chọn bên dưới.
       </span>
-      <button type="button" className="rounded border bg-background px-3 py-1" onClick={() => onChange({ ...CONCEPT_DEFAULTS, outfit: 'auto' })}>
+      <button type="button" className="rounded border bg-background px-3 py-1" onClick={() => onChange({ ...CONCEPT_DEFAULTS, outfit: 'auto', footwear: 'auto' })}>
         Dùng mô tả gốc của từng concept
       </button>
     </div>}
@@ -69,7 +72,7 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
 
 
 export function OutfitSwitcher({ choices, onChange }: { choices: ConceptChoices; onChange: (next: ConceptChoices) => void }) {
-  const outfits = [['black_strapless_mini', 'Váy mini đen cúp ngực'], ['auto', 'Trang phục riêng của từng concept (mặc định)'], ['tank_pleated_classic', 'Tank trắng + mini xếp ly xám'], ['tank_pleated_minimal', 'Tank đen + mini xếp ly kem'], ['tank_pleated_sport', 'Tank xanh pastel + mini xếp ly trắng'], ['tank_pleated_vintage', 'Tank đỏ rượu + mini xếp ly taupe'], ['white_strapless_mini', 'Váy mini satin trắng cúp ngực'], ['black_white_lounge', 'Crop tank + short đen viền trắng'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
+  const outfits = [['black_strapless_mini', 'Váy mini đen cúp ngực'], ['auto', 'Trang phục riêng của từng concept'], ['tank_pleated_classic', 'Tank trắng + mini xếp ly xám'], ['tank_pleated_minimal', 'Tank đen + mini xếp ly kem'], ['tank_pleated_sport', 'Tank xanh pastel + mini xếp ly trắng'], ['tank_pleated_vintage', 'Tank đỏ rượu + mini xếp ly taupe'], ['white_strapless_mini', 'Váy mini satin trắng cúp ngực'], ['black_white_lounge', 'Crop tank + short đen viền trắng'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
   return <div className="flex flex-wrap items-end gap-4 rounded-xl border p-4">
     <label className="grid gap-2 text-sm font-medium">Trang phục
       <select aria-label="Đổi trang phục concept" className="rounded border bg-background p-2" value={choices.outfit} onChange={e => onChange({ ...choices, outfit: e.target.value, top: 'auto' })}>

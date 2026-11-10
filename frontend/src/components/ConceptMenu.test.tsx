@@ -9,10 +9,11 @@ function Harness() {
 }
 afterEach(() => localStorage.clear())
 
-it('defaults to per-concept clothing and remembers a selected outfit and glasses', async () => {
+it('defaults to bikini and bare feet and remembers a selected outfit and glasses', async () => {
   const user = userEvent.setup()
   const view = render(<Harness />)
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('bikini')
+  expect(screen.getByLabelText('Đổi giày concept')).toHaveValue('barefoot')
   await user.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'satin_dress')
   await user.click(screen.getByRole('checkbox', { name: '+ Kính' }))
   view.unmount()
@@ -21,14 +22,17 @@ it('defaults to per-concept clothing and remembers a selected outfit and glasses
   expect(screen.getByRole('checkbox', { name: '+ Kính' })).toBeChecked()
 })
 
-it('migrates the old bikini default once and still allows an explicit bikini selection', async () => {
-  localStorage.setItem('concept-choices:outfit-test', JSON.stringify({ outfit: 'bikini' }))
+it('migrates the old per-concept defaults once and remembers an explicit per-concept choice', async () => {
+  localStorage.setItem('concept-choices:outfit-test', JSON.stringify({ outfit: 'auto', footwear: 'auto' }))
   const view = render(<Harness />)
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
-  await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'bikini')
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('bikini')
+  expect(screen.getByLabelText('Đổi giày concept')).toHaveValue('barefoot')
+  await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'auto')
+  await userEvent.selectOptions(screen.getByLabelText('Đổi giày concept'), 'auto')
   view.unmount()
   render(<Harness />)
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('bikini')
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
+  expect(screen.getByLabelText('Đổi giày concept')).toHaveValue('auto')
 })
 
 
@@ -42,7 +46,7 @@ it('preserves an existing fashion outfit instead of resetting it during migratio
 
 it('selects and remembers the black lounge set without changing the default', async () => {
   const view = render(<Harness />)
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('bikini')
   await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'black_white_lounge')
   view.unmount()
   render(<Harness />)
@@ -67,7 +71,7 @@ it('offers all four tank and pleated-mini looks and remembers the chosen style',
   for (const label of ['Tank trắng + mini xếp ly xám', 'Tank đen + mini xếp ly kem', 'Tank xanh pastel + mini xếp ly trắng', 'Tank đỏ rượu + mini xếp ly taupe']) {
     expect(screen.getByRole('option', { name: label })).toBeInTheDocument()
   }
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('bikini')
   await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'tank_pleated_classic')
   view.unmount()
   render(<Harness />)

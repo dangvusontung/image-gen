@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.concept_defaults import ACTIVE_DEFAULT_CONCEPTS, DEFAULT_CONCEPTS
+from app.concept_defaults import catalog_entries, get_catalog
 from app.concept_options import ConceptChoices, MENU, apply_choices, style_instruction
 from app.database import get_db
 from app.generation_policy import generation_target
@@ -29,7 +29,7 @@ class GenerateRequest(BaseModel):
     """Render the picked concepts; empty means all nine."""
     proposal_ids: list[str] = Field(default_factory=list, max_length=9)
     #: Slot numbers, used when rendering the built-in concepts rather than proposed ones.
-    slots: list[int] = Field(default_factory=list, max_length=len(DEFAULT_CONCEPTS))
+    slots: list[int] = Field(default_factory=list)
     #: Per-slot edits to the concept wording, merged over whatever that slot would otherwise use.
     briefs: dict[int, dict[str, str]] = Field(default_factory=dict)
     #: Per-slot title overrides.
@@ -78,9 +78,11 @@ class EstimateOut(BaseModel):
 
 @router.get("/generation-estimate", response_model=EstimateOut)
 def generation_estimate(project_id: str, purpose: Literal["master", "turnaround", "concept"],
-                        count: int = Query(default=1, ge=1, le=len(DEFAULT_CONCEPTS)), size: str | None = None,
+                        count: int = Query(default=1, ge=1), size: str | None = None,
                         db: Session = Depends(get_db), registry=Depends(get_registry)):
     project = get_project_or_404(db, project_id)
+    if count > len(get_catalog().concepts):
+        fail("invalid_count", "Số lượng ảnh vượt quá số concept hiện có", 422)
     if purpose == "master":
         refs = [a.id for a in db.query(Asset).filter(Asset.project_id == project_id, Asset.kind.in_(["reference", "side_profile"]),
                                                      Asset.selected.is_(True))]
@@ -232,7 +234,6 @@ def new_concept(db, registry, project, run, slot, mood, camera, revision, size, 
 
 
 #: Custom images are numbered from here, clear of the nine concept slots.
-CUSTOM_SLOT_BASE = max(101, len(DEFAULT_CONCEPTS) + 1)
 #: A deliberately plain starting point: the styling menu supplies everything that matters.
 NEUTRAL_BRIEF = {
     "setting": "a simple setting suited to the outfit",
@@ -295,7 +296,7 @@ def list_proposals(project_id: str, include_retired: bool = False, db: Session =
                                brief={k: v for k, v in concept.items() if k != "title"},
                                master_version_id=project.approved_master_id or "",
                                created_at=project.created_at)
-            for index, concept in (enumerate(DEFAULT_CONCEPTS, start=1) if include_retired else ACTIVE_DEFAULT_CONCEPTS)
+            for index, concept in catalog_entries(get_catalog(), include_retired=include_retired)
         ]
     rows = db.query(ConceptProposal).filter_by(project_id=project.id, run=latest).order_by(ConceptProposal.slot).all()
     return [proposal_out(r) for r in rows]
@@ -344,12 +345,15 @@ async def propose_concepts(project_id: str, db: Session = Depends(get_db), regis
 def generate_concepts(project_id: str, data: GenerateRequest, request: Request, db: Session = Depends(get_db), registry=Depends(get_registry)):
     """Render the chosen proposals. Each proposal keeps its slot, so reruns stay comparable."""
     project = get_project_or_404(db, project_id)
+    catalog = get_catalog()
+    if len(data.slots) > len(catalog.concepts):
+        fail("invalid_slots", "Số lượng ô vượt quá số concept hiện có", 422)
     if data.custom:
         if data.choices is None or not data.choices.overrides_concept():
             fail("choices_required", "Chọn ít nhất một mục trong menu trang phục/bối cảnh", 400)
         run = (db.query(func.max(Concept.run)).filter_by(project_id=project_id).scalar() or 0) + 1
         # Custom images start after the built-in slots.
-        base_slot = CUSTOM_SLOT_BASE
+        base_slot = max(101, len(catalog.concepts) + 1)
         jobs, concepts = [], []
         for index in range(data.count):
             concept, job = new_concept(db, registry, project, run, base_slot + index, "Tùy chỉnh",
@@ -362,7 +366,7 @@ def generate_concepts(project_id: str, data: GenerateRequest, request: Request, 
     latest = db.query(func.max(ConceptProposal.run)).filter_by(project_id=project_id).scalar()
     if latest is None:
         # Bulk generation uses curated defaults; explicit historical slots support reruns.
-        chosen = [(index, dict(c)) for index, c in (enumerate(DEFAULT_CONCEPTS, start=1) if data.slots else ACTIVE_DEFAULT_CONCEPTS)]
+        chosen = list(catalog_entries(catalog, include_retired=bool(data.slots)))
         if data.slots:
             chosen = [(slot, brief) for slot, brief in chosen if slot in data.slots]
             if not chosen:

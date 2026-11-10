@@ -44,7 +44,7 @@ class ConceptChoices(BaseModel):
 MENU = {
     "footwear": [("auto", "Giày riêng của từng concept"), *[(key, label) for key, (label, _) in FOOTWEAR.items()], ("custom", "Giày tùy chỉnh")],
     "style": [("auto", "Theo từng concept (không ghi đè)"), ("cute", "Dễ thương · nhẹ nhàng, ấm áp"), ("glamour", "Glamour · táo bạo, cuốn hút")],
-    "outfit": [("auto", "Trang phục riêng của từng concept · mặc định"), ("black_strapless_mini", "Váy mini đen cúp ngực"),
+    "outfit": [("auto", "Trang phục riêng của từng concept"), ("black_strapless_mini", "Váy mini đen cúp ngực"),
                *[(key, label) for key, (label, _) in TANK_PLEATED_OUTFITS.items()], ("white_strapless_mini", "Váy mini satin trắng cúp ngực"), ("black_white_lounge", "Crop tank + short đen viền trắng"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
                ("shirt_shorts", "Sơ mi + quần short"), ("bodysuit_trousers", "Bodysuit + quần dài"),
                ("offshoulder_skirt", "Áo trễ vai + chân váy"), ("denim_mix", "Phối quần short jeans và chân váy"),
