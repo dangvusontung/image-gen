@@ -80,6 +80,15 @@ Open **http://127.0.0.1:5173**. The setup script creates `.env`, installs depend
 
 The Android app packages the existing React workflow with Capacitor ([native runtime documentation](https://capacitorjs.com/docs/android)). It uses the same running backend and data. Android 10 or later is required; provider keys stay on the backend.
 
+The native Android rewrite is being built in `frontend/native-android` alongside the Capacitor app. Its first slice is a Kotlin/Jetpack Compose backend connection screen; it will replace the WebView workflow incrementally without destabilizing the existing web app.
+
+To build the native slice while the machine has JDK 21+ installed:
+
+```bash
+cd frontend
+./android/gradlew -p native-android assembleDebug
+```
+
 Build with Node.js, JDK 21+, and Android SDK 36 installed:
 
 ```bash
