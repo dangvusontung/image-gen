@@ -21,12 +21,12 @@ def test_curated_picker_keeps_stable_slots_and_archive(client, project):
     base = f'/api/projects/{project}'
     visible = client.get(f'{base}/concept-proposals').json()
     archive = client.get(f'{base}/concept-proposals?include_retired=true').json()
-    assert len(visible) == 141
-    assert len(archive) == 157
+    assert len(visible) == 118
+    assert len(archive) == 158
     assert [p['slot'] for p in visible] == [slot for slot, _ in ACTIVE_DEFAULT_CONCEPTS]
     assert not set(RETIRED_CONCEPT_SLOTS) & {p['slot'] for p in visible}
     assert set(RETIRED_CONCEPT_SLOTS.values()) <= {p['slot'] for p in visible}
-    assert [p['slot'] for p in visible[-5:]] == [153, 154, 155, 156, 157]
+    assert [p['slot'] for p in visible[-5:]] == [154, 155, 156, 157, 158]
     for p in visible:
         assert p['id'] == f"default-{p['slot']}"
         assert p['title'] == DEFAULT_CONCEPTS[p['slot'] - 1]['title']
@@ -44,7 +44,7 @@ def test_bulk_defaults_skip_retired_but_historical_reruns_work(client, project, 
     assert wait_for_job(client, old.json()['job_ids'][0])['status'] == 'succeeded'
     result = client.post(f'{base}/concepts/generate', json={'confirmed': True})
     assert result.status_code == 201, result.text
-    assert len(result.json()['job_ids']) == 141
+    assert len(result.json()['job_ids']) == 118
     concepts = client.get(f'{base}/concepts').json()
     new_ids = set(result.json()['concept_ids'])
     assert {c['slot'] for c in concepts if c['id'] in new_ids} == {s for s, _ in ACTIVE_DEFAULT_CONCEPTS}
@@ -107,3 +107,11 @@ def test_single_concept_rerun_can_keep_saved_prompt_or_use_current_catalog(clien
     assert 'A saved custom prompt' not in current_job['prompt']
     assert current_job['meta']['brief']['footwear'] == DEFAULT_CONCEPTS[156]['footwear']
     assert 'uncovered ankles and calves' in current_job['prompt']
+
+
+def test_removed_concepts_and_private_collection_are_not_selectable(client, project):
+    removed = {7, 76, 85, 86, 87, 88, 89, 90, 91, 92, 2, 9, 10, 15, 25, 30, 33, 35, 38, 44, 59, 93, 94, 95, 96, 97, 98, 107, 108}
+    response = client.get(f'/api/projects/{project}/concept-proposals')
+    assert response.status_code == 200
+    assert removed.isdisjoint(p['slot'] for p in response.json())
+    assert removed <= RETIRED_CONCEPT_SLOTS.keys()

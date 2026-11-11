@@ -1,5 +1,5 @@
 import { CONCEPT_EMOJIS, CONCEPT_EMOJI_STORAGE, conceptMarkKey, readEmojiMarks } from '@/lib/conceptEmoji'
-import { groupConcepts } from '@/lib/conceptGroups'
+import { conceptDisplayNumbers, groupConcepts } from '@/lib/conceptGroups'
 import EditConceptPrompt from '@/components/EditConceptPrompt'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import CopyConceptConfiguration from '@/components/CopyConceptConfiguration'
@@ -146,6 +146,8 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const pending = action.isPending
   const ready = project.rights_confirmed && Boolean(workflow.data?.approved_master_id)
   const list = proposals.data ?? []
+  const displayNumbers = conceptDisplayNumbers(list)
+  const displayNumber = (slot: number) => displayNumbers.get(slot) ?? slot
   const visibleList = list.filter(p => emojiFilter === 'all' || (emojiFilter === 'bookmarked' ? bookmarked(p) : emojiFilter === 'unmarked' ? !emojiOf(p) : emojiOf(p) === emojiFilter))
   const chosen = picked === null ? list : list.filter(p => picked.includes(p.slot))
   const estimate = useQuery({ queryKey: ['estimate', project.id, project.provider, project.model, size, chosen.length], enabled: ready && chosen.length > 0,
@@ -294,7 +296,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
           <ul className="grid gap-3 grid-cols-2 md:grid-cols-3">
         {group.items.map(p => <li key={p.id} className={`min-w-0 rounded-xl border p-3 text-sm ${picked !== null && !picked.includes(p.slot) ? 'opacity-60' : ''}`}>
           <label className="flex items-center gap-2 text-xs">
-            <input type="checkbox" aria-label={`Chọn concept ${p.slot}`}
+            <input type="checkbox" aria-label={`Chọn concept ${displayNumber(p.slot)}`}
               checked={picked === null || picked.includes(p.slot)}
               onChange={e => {
                 const current = picked ?? list.map(x => x.slot)
@@ -303,15 +305,15 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
                 setConfirmed(false)
               }} />Chọn
           </label>
-          <button type="button" className="mt-2 rounded border px-2 py-1 text-xs" aria-label={`Bookmark concept ${p.slot}`} aria-pressed={bookmarked(p)} onClick={() => toggleBookmark(p)}>{bookmarked(p) ? '🔖 Đã lưu' : '🔖 Bookmark'}</button>
+          <button type="button" className="mt-2 rounded border px-2 py-1 text-xs" aria-label={`Bookmark concept ${displayNumber(p.slot)}`} aria-pressed={bookmarked(p)} onClick={() => toggleBookmark(p)}>{bookmarked(p) ? '🔖 Đã lưu' : '🔖 Bookmark'}</button>
           <label className="mt-2 flex items-center gap-2 text-xs">Đánh dấu
-            <select aria-label={`Emoji concept ${p.slot}`} className="rounded border p-1 text-base" value={emojiOf(p)} onChange={e => markEmoji(p, e.target.value)}>
+            <select aria-label={`Emoji concept ${displayNumber(p.slot)}`} className="rounded border p-1 text-base" value={emojiOf(p)} onChange={e => markEmoji(p, e.target.value)}>
               <option value="">—</option>
               {CONCEPT_EMOJIS.map(emoji => <option key={emoji} value={emoji}>{emoji}</option>)}
             </select>
           </label>
-          <button type="button" className="mt-2 w-full space-y-2 text-left" onClick={() => setDetailSlot(p.slot)} aria-label={`Xem chi tiết concept ${p.slot}`}>
-            <span className="block font-semibold">{emojiOf(p) && `${emojiOf(p)} `}{p.slot}. {fieldOf(p.slot, 'title', p.title)}</span>
+          <button type="button" className="mt-2 w-full space-y-2 text-left" onClick={() => setDetailSlot(p.slot)} aria-label={`Xem chi tiết concept ${displayNumber(p.slot)}`}>
+            <span className="block font-semibold">{emojiOf(p) && `${emojiOf(p)} `}{displayNumber(p.slot)}. {fieldOf(p.slot, 'title', p.title)}</span>
             <span className="block line-clamp-2 text-xs text-muted-foreground">{fieldOf(p.slot, 'setting', p.brief.setting)}</span>
             <span className="block text-xs underline">Xem / sửa chi tiết{edits[p.slot] ? ' · đã sửa' : ''}</span>
           </button>
@@ -367,14 +369,14 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
 
     <Dialog open={detailSlot !== null} onOpenChange={open => { if (!open) setDetailSlot(null) }}>
       <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-2xl">
-        <DialogTitle>Chi tiết concept {detailSlot}</DialogTitle>
+        <DialogTitle>Chi tiết concept {detailSlot === null ? '' : displayNumber(detailSlot)}</DialogTitle>
         <DialogDescription>Xem và chỉnh mô tả trước khi tạo ảnh.</DialogDescription>
         {list.filter(p => p.slot === detailSlot).map(p => <div key={p.id} className="grid gap-3">
           <label className="grid gap-1 text-sm">Tiêu đề
             <input className="rounded border p-2" value={fieldOf(p.slot, 'title', p.title)} onChange={e => editField(p.slot, 'title', e.target.value)} />
           </label>
           {Object.entries(p.brief).map(([field, value]) => <label key={field} className="grid gap-1 text-sm">{BRIEF_LABEL[field] ?? field}
-            <input className="rounded border p-2" aria-label={`${BRIEF_LABEL[field] ?? field} của concept ${p.slot}`}
+            <input className="rounded border p-2" aria-label={`${BRIEF_LABEL[field] ?? field} của concept ${displayNumber(p.slot)}`}
               value={fieldOf(p.slot, field, value)} onChange={e => editField(p.slot, field, e.target.value)} />
           </label>)}
           <Button variant="outline" onClick={() => { const next = { ...edits }; delete next[p.slot]; saveEdits(next) }}>Hoàn tác về mặc định</Button>
