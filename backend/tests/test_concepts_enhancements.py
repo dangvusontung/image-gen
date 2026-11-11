@@ -379,7 +379,9 @@ def test_download_all_concepts_zip_includes_runs_and_revisions(client, studio):
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         names = archive.namelist()
         assert len(names) == 3
-        assert len({n.split('/')[0] for n in names}) == 2
+        assert len(set(names)) == 3
+        assert all('/' not in n for n in names)
+        assert len({n.split('-concept-')[0] for n in names}) == 2
         assert any('concept-01-v2-' in n for n in names)
         assert all(archive.read(n) for n in names)
     other = client.post('/api/projects', json={'name': 'Empty project'}).json()
@@ -484,6 +486,7 @@ def test_gallery_bulk_zip_contains_only_selected_generated_images(client, studio
     assert response.status_code == 200
     with zipfile.ZipFile(io.BytesIO(response.content)) as archive:
         assert len(archive.namelist()) == 1
+        assert all('/' not in name for name in archive.namelist())
         assert chosen in archive.namelist()[0]
         assert archive.read(archive.namelist()[0])
     assert client.post('/api/gallery/download', json={'asset_ids': []}).status_code == 422

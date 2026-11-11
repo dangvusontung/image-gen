@@ -47,6 +47,19 @@ def size_for_aspect(aspect_ratio: str, long_side: int = 1024) -> tuple[int, int]
 
 
 def render_placeholder(request: ImageRequest, note: str = "") -> bytes:
+    if request.options.get("sticker"):
+        image = Image.new("RGBA", (512, 512))
+        draw = ImageDraw.Draw(image)
+        draw.rounded_rectangle((45, 40, 467, 465), radius=95, fill="#eee3ff", outline="white", width=14)
+        draw.ellipse((140, 125, 372, 357), fill="#ffc85c", outline="#51337c", width=6)
+        draw.ellipse((205, 205, 220, 228), fill="#51337c")
+        draw.ellipse((292, 205, 307, 228), fill="#51337c")
+        draw.arc((210, 230, 302, 305), 0, 180, fill="#51337c", width=7)
+        draw.text((256, 385), "MOCK STICKER", anchor="mm", font=_font(26), fill="#51337c")
+        draw.text((256, 418), "Offline preview", anchor="mm", font=_font(17), fill="#51337c")
+        buffer = io.BytesIO()
+        image.save(buffer, format="PNG")
+        return buffer.getvalue()
     width, height = size_for_aspect(request.aspect_ratio)
     digest = hashlib.sha256(f"{request.prompt}|{request.seed}".encode()).digest()
     top, bottom = (digest[0] // 2 + 60, digest[1] // 2 + 60, digest[2] // 2 + 90), (digest[3] // 3, digest[4] // 3, digest[5] // 3 + 40)

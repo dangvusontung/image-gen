@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.jobs.service import JobRequestError, request_cancel, retry_job
-from app.models import GenerationJob, Project
+from app.models import GenerationJob, Project, StickerPack
 from app.providers.registry import ProviderRegistry, get_registry
 from app.routes.projects import get_project_or_404
 from app.schemas import JobHistoryOut, JobOut
@@ -57,6 +57,8 @@ def list_all_jobs(
 ):
     """Newest generations across every project, for the global history popup."""
     query = db.query(GenerationJob, Project.name).join(Project, Project.id == GenerationJob.project_id).filter(GenerationJob.dismissed.is_(False))
+    if purpose != "sticker":
+        query = query.filter(~Project.id.in_(db.query(StickerPack.project_id)))
     if status:
         query = query.filter(GenerationJob.status.in_(status.split(",")))
     if purpose:

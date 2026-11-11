@@ -1,7 +1,6 @@
 import { QueryClient, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 
-const API_BASE = '/api'
-
+import { apiUrl } from '@/lib/backend'
 
 export type AssetKind = 'reference' | 'side_profile' | 'template'
 
@@ -130,7 +129,7 @@ export class ApiError extends Error {
 export async function request<T>(path: string, init?: RequestInit, responseType: 'json' | 'blob' = 'json'): Promise<T> {
   let resp: Response
   try {
-    resp = await fetch(`${API_BASE}${path}`, init)
+    resp = await fetch(apiUrl(path), init)
   } catch {
     throw new ApiError(0, 'network_error', 'Không kết nối được tới server. Kiểm tra backend đang chạy.')
   }
@@ -156,8 +155,8 @@ const json = (method: string, data: unknown): RequestInit => ({
   body: JSON.stringify(data),
 })
 
-export const assetUrl = (assetId: string) => `${API_BASE}/assets/${assetId}/content`
-export const downloadUrl = (assetId: string, format = 'original') => `${API_BASE}/assets/${assetId}/download?format=${format}`
+export const assetUrl = (assetId: string) => apiUrl(`/assets/${assetId}/content`)
+export const downloadUrl = (assetId: string, format = 'original') => apiUrl(`/assets/${assetId}/download?format=${format}`)
 
 export interface GenerationJob {
   id: string; project_id: string; purpose: string; provider: string; model: string; status: string

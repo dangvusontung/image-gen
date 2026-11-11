@@ -4,6 +4,8 @@ import ProjectWorkspace from '@/pages/ProjectWorkspace'
 import ProviderSettings from '@/pages/ProviderSettings'
 import GlobalHistory from '@/components/GlobalHistory'
 import { useHashRoute } from '@/lib/useHashRoute'
+import BackendConnection from '@/components/BackendConnection'
+import { isAndroid } from '@/lib/backend'
 
 export default function App() {
   const { route, navigate } = useHashRoute()
@@ -11,6 +13,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-muted/40">
+      {isAndroid() && <BackendConnection />}
       {route.page === 'project' && <ProjectWorkspace key={route.projectId} projectId={route.projectId} onBack={home} />}
       {route.page === 'gallery' && <Gallery onBack={home} />}
       {route.page === 'settings' && <ProviderSettings onBack={home} />}

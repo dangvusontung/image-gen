@@ -5,7 +5,7 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Asset, GenerationJob, JobStatus, Project
+from app.models import Asset, GenerationJob, JobStatus, Project, StickerPack
 from app.routes.projects import get_project_or_404
 
 router = APIRouter(prefix="/api/gallery", tags=["gallery"])
@@ -28,6 +28,8 @@ def list_gallery(
                      GenerationJob.project_id == Asset.project_id))
     if project_id:
         query = query.filter(Asset.project_id == project_id)
+    else:
+        query = query.filter(~Project.id.in_(db.query(StickerPack.project_id)))
     if purpose:
         query = query.filter(GenerationJob.purpose == purpose)
     total = query.count()

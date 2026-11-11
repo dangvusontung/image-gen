@@ -1,5 +1,6 @@
 import ImageGallery from '@/components/ImageGallery'
 import { generationProject, generationPromptName } from '@/lib/generationPolicy'
+import { apiUrl } from '@/lib/backend'
 import { useEffect, useRef, useState } from 'react'
 import { ArrowLeftIcon } from 'lucide-react'
 import { request, usePresets, useProject, type GenerationJob } from '@/api/client'
@@ -75,7 +76,7 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
               {project.description && <p className="mt-1 text-muted-foreground">{project.description}</p>}
             </div>
             <div className="flex flex-wrap gap-4 text-sm">
-              <a className="underline" href={`/api/projects/${projectId}/export`}>Tải toàn bộ dự án (ZIP)</a>
+              <a className="underline" href={apiUrl(`/projects/${projectId}/export`)}>Tải toàn bộ dự án (ZIP)</a>
             </div>
           </header>
 

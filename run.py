@@ -39,6 +39,7 @@ def main():
         processes.append(subprocess.Popen([str(python), "-m", "uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"], cwd=ROOT / "backend", **group_options))
         processes.append(subprocess.Popen([npm, "run", "dev", "--", "--port", "5173", "--strictPort"], cwd=ROOT / "frontend", **group_options))
         print("Open http://127.0.0.1:5173 — press Ctrl+C to stop both servers.", flush=True)
+        print("Sticker Studio: http://127.0.0.1:5173/stickers.html", flush=True)
         while all(process.poll() is None for process in processes):
             time.sleep(0.5)
         raise SystemExit("A server exited; both servers have been stopped. Check the logs above.")

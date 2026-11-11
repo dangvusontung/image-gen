@@ -11,6 +11,14 @@ export default defineConfig({
   resolve: {
     alias: { '@': path.resolve(import.meta.dirname, './src') },
   },
+  build: {
+    rolldownOptions: {
+      input: {
+        studio: path.resolve(import.meta.dirname, 'index.html'),
+        stickers: path.resolve(import.meta.dirname, 'stickers.html'),
+      },
+    },
+  },
   server: {
     host: '127.0.0.1',
     proxy: {

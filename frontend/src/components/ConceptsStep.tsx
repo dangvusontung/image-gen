@@ -9,6 +9,7 @@ import { useImageSize } from '@/lib/imageSize'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { request, useProviders, type Concept, type ConceptProposal, type ProjectDetail } from '@/api/client'
+import { apiUrl } from '@/lib/backend'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -186,8 +187,8 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         {runs.map(n => <option key={n} value={n}>{n}</option>)}
       </select></label>
       <Button variant="outline" onClick={() => setCompact(!compact)}>{compact ? 'Xem thẻ chi tiết' : 'Xem bảng ảnh'}</Button>
-      <a className="text-sm underline" href={`/api${base}/contact-sheet?run=${run}`}>Tải bảng ảnh</a>
-      <a className="text-sm underline" href={`/api${base}/concepts/download`}>Tải toàn bộ concept (ZIP)</a>
+      <a className="text-sm underline" href={apiUrl(`${base}/contact-sheet?run=${run}`)}>Tải bảng ảnh</a>
+      <a className="text-sm underline" href={apiUrl(`${base}/concepts/download`)}>Tải toàn bộ concept (ZIP)</a>
       <span className="text-sm">{cards.filter(c => c?.job.status === 'succeeded').length}/{cards.length} hoàn tất</span>
     </div>}
     {!!runs.length && <div className="space-y-2 rounded-lg border p-3">

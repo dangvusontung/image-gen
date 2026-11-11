@@ -4,6 +4,9 @@ import { createRoot } from 'react-dom/client'
 import { queryClient } from '@/api/client'
 import App from '@/App'
 import '@/index.css'
+import { initializeAndroid } from '@/lib/android'
+
+initializeAndroid()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>

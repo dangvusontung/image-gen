@@ -51,6 +51,18 @@ class Project(Base):
     jobs = relationship("GenerationJob", back_populates="project", cascade="all, delete-orphan")
 
 
+class StickerPack(Base):
+    __tablename__ = "sticker_packs"
+
+    project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), primary_key=True)
+    publisher = Column(String(128), nullable=False, default="Made with Sticker Studio")
+    style = Column(String(32), nullable=False, default="chibi")
+    concept_brief = Column(Text, nullable=False, default="", server_default="")
+    approved_concept_id = Column(String(36), nullable=True)
+    items = Column(JSON, nullable=False, default=list)
+    project = relationship("Project")
+
+
 class Asset(Base):
     __tablename__ = "assets"
 

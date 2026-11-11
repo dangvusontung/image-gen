@@ -146,7 +146,7 @@ def download_concepts(project_id: str, db: Session = Depends(get_db)):
                     if asset is None or asset.project_id != project_id:
                         continue
                     path = file_for(asset)
-                    zipped.write(path, f"run-{concept.run}/concept-{concept.slot:02d}-v{concept.revision}-{index}{path.suffix}")
+                    zipped.write(path, f"run-{concept.run}-concept-{concept.slot:02d}-v{concept.revision}-{index}{path.suffix}")
                     count += 1
         if not count:
             fail("no_concepts", "Chưa có ảnh concept hoàn tất để tải", 400)
@@ -183,7 +183,7 @@ def download_gallery(data: GalleryDownloadRequest, db: Session = Depends(get_db)
             for asset_id in ids:
                 asset = by_id[asset_id]
                 path = file_for(asset)
-                zipped.write(path, f"{asset.project_id}/{asset.id}{path.suffix}")
+                zipped.write(path, f"{asset.id}{path.suffix}")
         archive.seek(0)
     except BaseException:
         archive.close()

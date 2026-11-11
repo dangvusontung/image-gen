@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session, selectinload
 
 from app.builtin import is_builtin
 from app.database import get_db
-from app.models import SOURCE_KINDS, Asset, GenerationJob, JobStatus, MasterVersion, Preset, Project
+from app.models import SOURCE_KINDS, Asset, GenerationJob, JobStatus, MasterVersion, Preset, Project, StickerPack
 from app.providers.base import CapabilityError
 from app.providers.registry import ProviderRegistry, get_registry
 from app.routes.assets import storage
@@ -41,7 +41,8 @@ def _detail(project: Project) -> ProjectDetail:
 @router.get("", response_model=list[ProjectSummary])
 def list_projects(db: Session = Depends(get_db)):
     projects = (
-        db.query(Project).options(selectinload(Project.source_assets)).order_by(Project.updated_at.desc()).all()
+        db.query(Project).filter(~Project.id.in_(db.query(StickerPack.project_id)))
+        .options(selectinload(Project.source_assets)).order_by(Project.updated_at.desc()).all()
     )
     jobs = db.query(GenerationJob).order_by(GenerationJob.updated_at.desc()).all()
     by_project = {}

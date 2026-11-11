@@ -13,7 +13,7 @@ from app.logging_setup import configure_logging
 from app.models import ProviderCatalog
 from app.providers.base import ProviderError
 from app.providers.registry import build_registry
-from app.routes import assets, jobs, presets, projects, providers, workflow, concepts, exports, gallery
+from app.routes import assets, jobs, presets, projects, providers, workflow, concepts, exports, gallery, stickers
 from app.schemas import HealthResponse
 
 configure_logging()
@@ -80,6 +80,7 @@ app.include_router(workflow.router)
 app.include_router(concepts.router)
 app.include_router(exports.router)
 app.include_router(gallery.router)
+app.include_router(stickers.router)
 
 
 @app.get("/health", response_model=HealthResponse)

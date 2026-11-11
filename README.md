@@ -1,5 +1,51 @@
 # Character Studio
 
+## Sticker Studio
+
+A separate app at **http://127.0.0.1:5173/stickers.html** reuses this backend's providers,
+photo storage, persistent generation queue, retries, spending guard and API keys. Start both
+apps with `python3 run.py`; the launcher applies the new sticker-pack migration automatically.
+Production builds include both `index.html` and `stickers.html`.
+
+Create a pack from uploaded photos or an approved Character Studio master. Choose Chibi,
+3D clay, Comic or Kawaii, describe the character's design in a concept brief, and generate 1–4
+character concepts. Review and **approve a look** before generating any stickers. That approved
+concept is the single identity reference for every expression; the original photos are used
+for concept design. Changing the photos, style or concept brief requires a new approval.
+Choosing another approved look marks previous sticker artwork for regeneration. After approval,
+edit expressions, captions and emoji tags; review the cost estimate; then generate individual
+stickers or a selected batch. Each regeneration keeps previous jobs and concept options.
+To add a copied photo, use **Paste image** in Pack setup or press **Ctrl/Cmd+V** on the page
+outside text fields. Confirm photo rights first. If clipboard access is denied, the keyboard
+shortcut still works; normal text paste in dialogue fields is preserved.
+Mock mode is free and renders clearly labeled placeholders. Real provider quality, likeness,
+and cutout quality need visual review; no paid generation was used to validate this feature.
+
+Dialogue is a separate, locally rendered text layer and is never included in the image prompt.
+In the expression editor, enter **What they say**, choose an outlined caption, speech bubble or
+thought bubble, adjust size/color, and drag the move handle (or use arrow keys) to position it.
+Text wraps and fits automatically; previews and exports use the same bundled Noto Sans Bold
+font, including Vietnamese accents. The font and its OFL license live in `backend/app/fonts/`.
+**Suggest reaction** offers an editable local pose preset from the dialogue without an API call.
+Text, layout and emoji edits reuse the same artwork; reaction or art-style changes require a
+new generation. Legacy outputs with model-generated lettering require one regeneration.
+
+Exports contain transparent 512×512 WebP files, a 96×96 tray icon, `contents.json` and
+`IMPORT.txt`. WhatsApp exports enforce 3–30 stickers and a 100 KiB limit per sticker;
+import the extracted images into a sticker-maker app or use the assets with WhatsApp's native
+sample integration. The ZIP does **not** install directly into WhatsApp. Telegram exports
+enforce a 512 KiB limit per sticker; publish the extracted images as files through
+[@Stickers](https://t.me/Stickers), assigning the supplied emoji tags. Publishing remains a
+manual action. See the [WhatsApp requirements](https://github.com/WhatsApp/stickers) and
+[Telegram requirements](https://core.telegram.org/stickers).
+
+The generation prompt requests a flat magenta background. The export processor removes
+magenta connected to the outside, preserves existing alpha, trims and centers the artwork
+with a margin, and compresses WebP to the platform limit. Opaque outputs that do not follow
+the background instructions are rejected; regenerate those stickers. Edited expressions or
+styles must be regenerated before export. Packs persist locally and stay out of the Character
+Studio project list. Test the complete offline flow with `cd frontend && npx playwright test e2e/stickers.spec.ts`.
+
 Ứng dụng local-first biến nhiều ảnh của MỘT người thành nhân vật 3D phong cách hoá nhất quán, kèm turnaround 6 góc, 9 concept (5+4) và bản nâng cấp. Xem đặc tả đầy đủ trong [SPEC.md](SPEC.md).
 
 **Trạng thái:**
@@ -29,6 +75,31 @@ Open **http://127.0.0.1:5173**. The setup script creates `.env`, installs depend
 **Optional real images:** edit the root `.env` and add `GEMINI_API_KEY` and `BFL_API_KEY`, then restart the launcher. In a project, select **Tiết kiệm · Gemini 1K → FLUX.2 Pro**. Without keys, use **Mock** to test for free. Concurrency defaults to 9; the app spending cap is disabled (`SPEND_LIMIT_USD_PER_DAY=0`).
 
 **Data stays local:** GitHub contains source code only. Photos, generated images, SQLite databases, `.env`, installed dependencies and build/test outputs are ignored. Another device starts with an empty workspace. To transfer projects, stop the app on both devices and copy the `data/` folder privately; configure API keys separately. Back up the destination's data before replacing it.
+
+## Android app
+
+The Android app packages the existing React workflow with Capacitor ([native runtime documentation](https://capacitorjs.com/docs/android)). It uses the same running backend and data. Android 10 or later is required; provider keys stay on the backend.
+
+Build with Node.js, JDK 21+, and Android SDK 36 installed:
+
+```bash
+cd frontend
+npm install
+npm run android:build
+```
+
+The installable debug APK is `frontend/android/app/build/outputs/apk/debug/app-debug.apk`. To install and connect a USB device with USB debugging enabled while the backend is running on port 8000:
+
+For wireless pairing with Tailscale, connect the computer and phone to the same tailnet. On the computer, run `tailscale serve --bg --tcp=8000 tcp://127.0.0.1:8000`, then `node frontend/scripts/backend-qr.mjs` from the repository root. Open the generated `data/android-backend-qr.png` and tap **Scan QR** in the Android app. Allow camera access when asked. The app validates the scanned address and checks health and project access before saving it. Cancelled scans and failed connections keep the previous server. This proxy only serves the tailnet; disable it with `tailscale serve --tcp=8000 off`. You can also pass a different backend origin to the QR script.
+
+```bash
+cd frontend
+npm run android:install
+```
+
+This forwards the device's port 8000 to the computer (`adb reverse`) and opens Character Studio. Re-run it after reconnecting the device. The app defaults to `http://127.0.0.1:8000`; **Backend → Test and connect** can save another server address. An Android emulator can alternatively use `http://10.0.2.2:8000`. The connection test checks both health and project access before saving. Changing servers clears the app's cached projects by reloading it.
+
+Photos use Android's file picker; generated images and project ZIP files save to the device's Downloads folder. The app needs a reachable backend to create images. USB forwarding keeps the current backend bound to loopback and needs no backend restart. The app permits HTTP for this local connection; use HTTPS for any remote server. For Android Studio, run `npm run android:open`; after frontend changes, run `npm run android:sync` before rebuilding.
 
 ## Yêu cầu
 
