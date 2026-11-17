@@ -209,7 +209,16 @@ class HealthResponse(BaseModel):
     message: str
 
 
-class ConceptProposalOut(BaseModel):
+class ConceptPresentation(BaseModel):
+    label: str = ""
+    group: str = ""
+    family: str = ""
+    tags: list[str] = Field(default_factory=list)
+    catalog_code: str = ""
+    display_number: int | None = None
+
+
+class ConceptProposalOut(ConceptPresentation):
     bookmark_key: str = ""
     id: str
     run: int
@@ -220,7 +229,7 @@ class ConceptProposalOut(BaseModel):
     created_at: datetime
 
 
-class ConceptOut(BaseModel):
+class ConceptOut(ConceptPresentation):
     bookmark_key: str = ""
     id: str
     run: int

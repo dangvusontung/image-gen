@@ -41,3 +41,16 @@ it('numbers the grouped picker continuously while preserving stable slot IDs', a
   // A filter uses the full catalog map, so a visible concept keeps its number.
   expect(concepts.filter(p => p.slot === 140).map(p => numbers.get(p.slot))).toEqual([11])
 })
+
+it('uses backend taxonomy to group similar poses across scenes without losing variants', async () => {
+  const { conceptDisplayNumbers } = await import('./conceptGroups')
+  const concepts = [
+    { ...proposal(183), group: 'Phòng khách & sinh hoạt', family: 'Ôm gối & ôm chân', display_number: 12 },
+    { ...proposal(170), group: 'Studio & chân dung', family: 'Ôm gối & ôm chân', display_number: 131 },
+    { ...proposal(54), group: 'Bếp & bên cửa sổ', family: 'Cầm cốc & đồ uống', display_number: 70 },
+  ]
+  const families = groupConcepts(concepts, 'family')
+  expect(families.find(group => group.name === 'Ôm gối & ôm chân')?.items.map(row => row.slot)).toEqual([183, 170])
+  expect(groupConcepts(concepts).find(group => group.name === 'Bếp & bên cửa sổ')?.items[0].slot).toBe(54)
+  expect(conceptDisplayNumbers(concepts.filter(row => row.slot === 170)).get(170)).toBe(131)
+})

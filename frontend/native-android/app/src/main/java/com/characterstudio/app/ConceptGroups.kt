@@ -18,8 +18,22 @@ private val catalogGroups = listOf(
     "Studio & portraits" to setOf(57, 58, 59, 60, 77, 78, 79, 80, 154, 157, 170, 177, 179, 181, 188, 189),
     "Yoga" to setOf(140, 141, 142, 143)
 )
-internal fun conceptGroup(row: JSONObject): String = catalogGroups.firstOrNull { row.optInt("slot") in it.second }?.first ?: "Other concepts"
+internal fun conceptGroup(row: JSONObject): String = row.optString("group").takeIf { it.isNotBlank() }
+    ?: if (row.optInt("run") > 0 && !row.optString("bookmark_key").startsWith("default:")) "Concept đề xuất"
+    else catalogGroups.firstOrNull { row.optInt("slot") in it.second }?.first ?: "Other concepts"
+internal fun conceptLabel(row: JSONObject): String = row.optString("label").takeIf { it.isNotBlank() }
+    ?: row.optString("title", row.optString("mood"))
+internal fun conceptTags(row: JSONObject): List<String> = row.optJSONArray("tags")?.let { tags ->
+    (0 until tags.length()).map { tags.optString(it) }
+} ?: emptyList()
+internal fun conceptOrder(row: JSONObject): Int = if (row.has("display_number") && !row.isNull("display_number")) row.optInt("display_number") else row.optInt("slot")
 internal fun conceptIdentity(row: JSONObject): String = row.optString("bookmark_key").takeIf { it.isNotBlank() }
     ?: (row.optString("master_version_id")+":"+row.optInt("slot"))
 internal fun searchable(value: String): String = Normalizer.normalize(value, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").lowercase()
-internal fun matchesConcept(row: JSONObject, query: String): Boolean = query.isBlank() || searchable(row.optString("title", row.optString("mood"))+" "+row.optJSONObject("brief")?.toString().orEmpty()+" "+conceptGroup(row)+" "+row.optInt("slot")).contains(searchable(query.trim()))
+internal fun matchesConcept(row: JSONObject, query: String): Boolean {
+    val text = searchable(listOf(conceptLabel(row), row.optString("title", row.optString("mood")),
+        row.optJSONObject("brief")?.toString().orEmpty(), conceptGroup(row), row.optString("family"),
+        conceptTags(row).joinToString(" "), row.optString("catalog_code"), row.optInt("slot").toString(),
+        conceptOrder(row).toString()).joinToString(" "))
+    return query.isBlank() || searchable(query.trim()).split(Regex("\\s+")).all { text.contains(it) }
+}

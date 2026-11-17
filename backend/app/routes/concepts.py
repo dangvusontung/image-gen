@@ -8,7 +8,7 @@ from pydantic import BaseModel, Field
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.concept_defaults import catalog_entries, get_catalog
+from app.concept_defaults import catalog_entries, catalog_presentation, get_catalog
 from app.concept_options import ConceptChoices, MENU, apply_choices, style_instruction
 from app.database import get_db
 from app.generation_policy import generation_target
@@ -185,6 +185,7 @@ def concept_out(concept, project):
         f"default:{concept.slot}" if catalog and title == catalog_title
         else f"project:{project.id}:run:{concept.run}:slot:{concept.slot}")
     return ConceptOut(
+        **(catalog_presentation(get_catalog()).get(concept.slot, {}) if bookmark_key.startswith("default:") else {}),
         bookmark_key=bookmark_key,
         id=concept.id, run=concept.run, slot=concept.slot, revision=concept.revision,
         mood=concept.mood, camera=concept.camera, brief=concept.brief, master_version_id=concept.master_version_id,
@@ -301,12 +302,14 @@ def list_proposals(project_id: str, include_retired: bool = False, db: Session =
     project = get_project_or_404(db, project_id)
     latest = db.query(func.max(ConceptProposal.run)).filter_by(project_id=project.id).scalar()
     if latest is None:
+        catalog = get_catalog()
+        presentation = catalog_presentation(catalog)
         return [
-            ConceptProposalOut(bookmark_key=f"default:{index}", id=f"default-{index}", run=0, slot=index, title=concept["title"],
+            ConceptProposalOut(**presentation[index], bookmark_key=f"default:{index}", id=f"default-{index}", run=0, slot=index, title=concept["title"],
                                brief={k: v for k, v in concept.items() if k != "title"},
                                master_version_id=project.approved_master_id or "",
                                created_at=project.created_at)
-            for index, concept in catalog_entries(get_catalog(), include_retired=include_retired)
+            for index, concept in catalog_entries(catalog, include_retired=include_retired)
         ]
     rows = db.query(ConceptProposal).filter_by(project_id=project.id, run=latest).order_by(ConceptProposal.slot).all()
     return [proposal_out(r) for r in rows]

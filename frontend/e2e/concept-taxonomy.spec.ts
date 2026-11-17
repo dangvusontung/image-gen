@@ -1,0 +1,25 @@
+import { expect, test } from '@playwright/test'
+
+test('labels and similar poses remain discoverable when grouping and numbering change', async ({ page, request }) => {
+  const api = 'http://127.0.0.1:8100/api'
+  const project = await (await request.post(`${api}/projects`, { data: { name: 'Catalog taxonomy' } })).json()
+  const proposals = await (await request.get(`${api}/projects/${project.id}/concept-proposals`)).json()
+  const flower = proposals.find((row: { slot: number }) => row.slot === 171)
+  await page.goto(`/#/projects/${project.id}`)
+  await page.getByRole('tab', { name: /Concept/ }).click()
+  await page.getByText(/concept · Mở\/đóng danh sách/).click()
+  await expect(page.getByLabel('Gom nhóm concept')).toHaveValue('family')
+  const similar = page.getByRole('region', { name: 'Ôm gối & ôm chân', exact: true })
+  await expect(similar.locator('[data-concept-progress="170"]')).toBeVisible()
+  await expect(similar.locator('[data-concept-progress="183"]')).toBeVisible()
+  const search = page.getByRole('searchbox', { name: 'Tìm concept' })
+  await search.fill('C171 hoa su')
+  await expect(page.locator('[data-concept-progress]')).toHaveCount(1)
+  await expect(page.getByText(flower.label, { exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: `Bookmark concept ${flower.display_number}`, exact: true })).toBeVisible()
+  await page.getByLabel('Gom nhóm concept').selectOption('scene')
+  await expect(page.getByRole('region', { name: flower.group, exact: true }).locator('[data-concept-progress="171"]')).toBeVisible()
+  await expect(page.getByRole('button', { name: `Bookmark concept ${flower.display_number}`, exact: true })).toBeVisible()
+  await search.fill('')
+  await expect(page.locator('[data-concept-progress]')).toHaveCount(proposals.length)
+})

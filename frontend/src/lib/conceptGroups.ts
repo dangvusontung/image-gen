@@ -258,23 +258,36 @@ const GROUPS = [
   }
 ]
 
-export function groupConcepts(concepts: ConceptProposal[]) {
+export function groupConcepts(concepts: ConceptProposal[], mode: 'scene' | 'family' = 'scene') {
+  if (mode === 'family') {
+    const families = new Map<string, ConceptProposal[]>()
+    for (const concept of concepts) {
+      const name = concept.family || (concept.run === 0 ? 'Chưa phân loại' : 'Concept đề xuất')
+      families.set(name, [...(families.get(name) ?? []), concept])
+    }
+    return [...families].sort(([a], [b]) => a.localeCompare(b, 'vi'))
+      .map(([name, items]) => ({ name, items: items.sort((a, b) => (a.display_number ?? a.slot) - (b.display_number ?? b.slot)) }))
+  }
   const grouped = new Map<string, ConceptProposal[]>()
   for (const concept of concepts) {
     const name = concept.run === 0
-      ? GROUPS.find(group => group.slots.includes(concept.slot))?.name ?? 'Khác'
+      ? concept.group || GROUPS.find(group => group.slots.includes(concept.slot))?.name || 'Khác'
       : 'Concept đề xuất'
     const items = grouped.get(name) ?? []
     items.push(concept)
     grouped.set(name, items)
   }
-  return [...GROUPS.map(group => group.name), 'Khác', 'Concept đề xuất']
+  return [...new Set([...GROUPS.map(group => group.name), ...grouped.keys(), 'Khác', 'Concept đề xuất'])]
     .filter(name => grouped.has(name))
-    .map(name => ({ name, items: grouped.get(name)! }))
+    .map(name => ({ name, items: grouped.get(name)!.sort((a, b) => {
+      if (a.display_number != null && b.display_number != null) return a.display_number - b.display_number
+      if (!a.family && !b.family) return 0
+      return (a.family ?? '').localeCompare(b.family ?? '', 'vi') || a.slot - b.slot
+    }) }))
 }
 
 /** Number the full picker before filtering, without changing catalog or storage IDs. */
 export function conceptDisplayNumbers(concepts: ConceptProposal[]) {
   return new Map(groupConcepts(concepts).flatMap(group => group.items)
-    .map((concept, index) => [concept.slot, index + 1]))
+    .map((concept, index) => [concept.slot, concept.display_number ?? index + 1]))
 }

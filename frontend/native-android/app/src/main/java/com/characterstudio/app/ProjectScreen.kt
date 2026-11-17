@@ -54,6 +54,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     var progressFilter by rememberSaveable(projectId) { mutableStateOf("all") }
     var historyKey by remember { mutableStateOf<String?>(null) }
     var groupFilter by rememberSaveable(projectId) { mutableStateOf("All groups") }
+    var groupMode by rememberSaveable(projectId) { mutableStateOf("Tư thế / hoạt động") }
     var versions by remember { mutableStateOf(emptyMap<Int, String>()) }
     val stylingPrefs = remember { context.getSharedPreferences("concept-styling", android.content.Context.MODE_PRIVATE) }
     val stylingKey = origin+"/"+projectId
@@ -169,9 +170,10 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     val projectProgress = projectConceptProgress(concepts)
     fun progressOf(row: JSONObject) = projectProgress[conceptIdentity(row)] ?: ProjectConceptProgress()
     fun visible(row: JSONObject) = matchesConcept(row, query) && (!favouritesOnly || conceptIdentity(row) in favourites) && (groupFilter == "All groups" || conceptGroup(row) == groupFilter) && progressOf(row).matches(progressFilter)
-    val visibleProposals = proposals.filter { visible(it) }.groupBy { conceptGroup(it) }
+    fun section(row: JSONObject) = if (groupMode == "Bối cảnh") conceptGroup(row) else row.optString("family").ifBlank { conceptGroup(row) }
+    val visibleProposals = proposals.filter { visible(it) }.sortedBy { conceptOrder(it) }.groupBy { section(it) }
     val groupedResults = batchConcepts.groupBy { it.optInt("slot") }.mapValues { (_, rows) -> rows.sortedByDescending { it.optInt("revision") } }
-    val visibleResults = groupedResults.values.filter { rows -> rows.any { visible(it) } }.groupBy { conceptGroup(it.first()) }
+    val visibleResults = groupedResults.values.filter { rows -> rows.any { visible(it) } }.groupBy { section(it.first()) }
     val groupOptions = listOf("All groups") + (proposals + batchConcepts).map { conceptGroup(it) }.distinct().sorted()
     val favouriteVisibleCount = if (showCreateConcepts) proposals.count { conceptIdentity(it) in favourites }
         else groupedResults.values.count { rows -> rows.any { conceptIdentity(it) in favourites } }
@@ -266,7 +268,9 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                     items(rows, key = { "proposal-${it.getString("id")}" }) { row -> val id = row.getString("id")
                         var expanded by remember(id) { mutableStateOf(false) }
                         Card { Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                            Row { Checkbox(id in picked, onCheckedChange = { checked -> picked = if (checked) picked + id else picked - id }); Text(row.optString("title"), Modifier.weight(1f).padding(top = 12.dp), style = MaterialTheme.typography.titleMedium); TextButton(onClick = { toggleFavourite(row) }, enabled = !bookmarkSaving) { Text(if (conceptIdentity(row) in favourites) "★" else "☆") } }
+                            Row { Checkbox(id in picked, onCheckedChange = { checked -> picked = if (checked) picked + id else picked - id }); Text(conceptLabel(row), Modifier.weight(1f).padding(top = 12.dp), style = MaterialTheme.typography.titleMedium); TextButton(onClick = { toggleFavourite(row) }, enabled = !bookmarkSaving) { Text(if (conceptIdentity(row) in favourites) "★" else "☆") } }
+                            if (row.optString("catalog_code").isNotBlank()) Text("${row.optString("catalog_code")} · #${conceptOrder(row)} · ${row.optString("family")}", style = MaterialTheme.typography.labelSmall)
+                            if (conceptTags(row).isNotEmpty()) Text(conceptTags(row).joinToString(" · "), style = MaterialTheme.typography.bodySmall)
                             val state = progressOf(row)
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
                                 Text(state.label(), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = if (state.imageIds.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -274,7 +278,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                             }
                             Text(row.optJSONObject("brief")?.optString("setting").orEmpty(), maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
                             Row { TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "Less" else "Details") }; TextButton(onClick = { edit = row }) { Text("Edit") } }
-                            if (expanded) BriefText(row.optJSONObject("brief"))
+                            if (expanded) { Text(row.optString("title")); BriefText(row.optJSONObject("brief")) }
                         } }
                     }
                     }
@@ -296,7 +300,8 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                         var expanded by remember(row.getString("id")) { mutableStateOf(false) }
                         val canRerun = !busy && approved && job.optString("status") !in listOf("queued", "submitting", "running")
                         Card { Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("${row.optString("mood")} · Run ${row.optInt("run")} / ${row.optInt("slot")} · v${row.optInt("revision")}", style = MaterialTheme.typography.titleMedium)
+                            Text("${conceptLabel(row)} · Run ${row.optInt("run")} / ${row.optInt("slot")} · v${row.optInt("revision")}", style = MaterialTheme.typography.titleMedium)
+                            if (row.optString("catalog_code").isNotBlank()) Text("${row.optString("catalog_code")} · #${conceptOrder(row)} · ${row.optString("family")}", style = MaterialTheme.typography.labelSmall)
                             job.outputs().forEach { id -> ResultImage(origin, id) { preview = id } }
                             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                                 TextButton(onClick = { toggleFavourite(row) }) { Text(if (conceptIdentity(row) in favourites) "★" else "☆") }
@@ -352,6 +357,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             Text(favouriteVisibleCount.toString()+" available here · "+favourites.size+" saved on server", style = MaterialTheme.typography.bodySmall)
             ServerChoice("Created in this project", progressFilter, listOf("all", "created", "uncreated", "active", "failed"), enabled = true,
                 labels = mapOf("all" to "All concepts", "created" to "Has images", "uncreated" to "Not created", "active" to "Creating", "failed" to "Failed, no image")) { progressFilter = it }
+            ServerChoice("Gom nhóm theo", groupMode, listOf("Tư thế / hoạt động", "Bối cảnh"), enabled = true) { groupMode = it }
             ServerChoice("Group", groupFilter, groupOptions, enabled = true) { groupFilter = it }
         }
     }, confirmButton = { TextButton(onClick = { showFilters = false; scope.launch { lists[2].scrollToItem(0) } }) { Text("Done") } }, dismissButton = { TextButton(onClick = { favouritesOnly = false; groupFilter = "All groups"; progressFilter = "all"; query = "" }) { Text("Reset") } })

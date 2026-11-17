@@ -172,6 +172,8 @@ API: `PATCH /api/projects/{id}` với `workflow_mode: "manual" | "hybrid" | "hyb
 
 ## Concept, nâng cấp và xuất ảnh
 
+Catalog có nhãn tiếng Việt, nhóm bối cảnh và nhóm tư thế/hoạt động cho từng concept. Mặc định picker gom các biến thể tương tự vào cùng nhóm; có thể chuyển sang nhóm theo bối cảnh. Tìm bằng nhãn, tag hoặc mã cố định như `C171`. Số hiển thị do backend cấp và không đổi khi lọc hoặc đổi kiểu gom nhóm; mã `C` và bookmark vẫn gắn với slot gốc. Các trường `label`, `group`, `family`, `tags` trong `backend/app/concepts.json` chỉ phục vụ phân loại, không được ghép vào brief tạo ảnh. Concept lưu trữ vẫn được giữ để đọc lịch sử và tạo lại.
+
 Menu **Chọn trang phục và bối cảnh** cho phép chọn quần short jeans, chân váy jeans/xếp ly, váy mùa hè, áo phối cùng, cảnh hồ bơi/bãi biển/cafe/vườn/phố và ánh sáng. Mặc định phối short jeans và chân váy giữa các ô. Chọn **Tùy chỉnh** để nhập trang phục hoặc bối cảnh riêng; có thể nhập hoạt động. Chọn **Số ảnh** để tạo 1–5 ảnh trong A hoặc 1–4 ảnh trong B, rồi tạo thêm đợt khi cần. Lựa chọn menu được lưu trong trình duyệt theo dự án và áp dụng khi tạo mới hoặc tạo lại ô. Backend lưu lựa chọn trong metadata job và lưu brief/prompt thực tế trong lịch sử. Tạo lại qua API mà không gửi lựa chọn giữ menu của ảnh nguồn; nút **Thử lại job** luôn giữ nguyên prompt và cấu hình gốc.
 
 1. Mở **Concept**, chọn **Batch A · 5 ảnh**, rồi **Tạo batch A**. Chuyển sang **Batch B · 4 ảnh** để tạo bốn ảnh còn lại. Batch trả phí cần xác nhận chi phí. Mỗi ô có mood, góc máy, brief (bối cảnh/hoạt động/trang phục/tư thế/biểu cảm/hướng nhìn/ánh sáng), trạng thái job, prompt đã dùng và các nút tạo lại/nâng cấp/tải ảnh.

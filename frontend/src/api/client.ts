@@ -168,13 +168,18 @@ export interface GenerationJob {
   created_at: string; updated_at: string
 }
 
-export interface ConceptProposal {
+export interface ConceptPresentation {
+  label?: string; group?: string; family?: string; tags?: string[]
+  catalog_code?: string; display_number?: number | null
+}
+
+export interface ConceptProposal extends ConceptPresentation {
   bookmark_key?: string
   id: string; run: number; slot: number; title: string
   brief: Record<string, string>; master_version_id: string; created_at: string
 }
 
-export interface Concept {
+export interface Concept extends ConceptPresentation {
   bookmark_key?: string
   id: string; run: number; slot: number; revision: number
   mood: string; camera: string; brief: Record<string, string>; stale: boolean

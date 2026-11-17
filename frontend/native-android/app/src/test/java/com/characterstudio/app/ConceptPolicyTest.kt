@@ -5,6 +5,18 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class ConceptPolicyTest {
+    @Test fun catalogLabelsAndNumbersComeFromBackendAndDoNotChangeBookmarkIdentity() {
+        val row = JSONObject().put("slot", 171).put("run", 0).put("bookmark_key", "default:171")
+            .put("group", "Phòng khách & sinh hoạt").put("family", "Hoa & đạo cụ")
+            .put("label", "Cầm hoa sứ trắng bên má trên sofa").put("catalog_code", "C171")
+            .put("display_number", 12).put("tags", org.json.JSONArray(listOf("Hoa & đạo cụ", "Bikini")))
+        assertEquals("Phòng khách & sinh hoạt", conceptGroup(row))
+        assertEquals(12, conceptOrder(row))
+        assertEquals("default:171", conceptIdentity(row))
+        assertTrue(matchesConcept(row, "C171 hoa su"))
+        assertTrue(matchesConcept(row, "bikini"))
+        assertFalse(matchesConcept(row, "C171 missing"))
+    }
     @Test fun backendBookmarkIdentityWinsOverCharacterAndVersion() {
         val a = JSONObject().put("bookmark_key", "default:155").put("master_version_id", "first-character").put("slot", 155)
         val b = JSONObject().put("bookmark_key", "default:155").put("master_version_id", "second-character").put("slot", 155).put("revision", 4)

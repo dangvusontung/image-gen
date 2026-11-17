@@ -5,6 +5,27 @@ from app.concept_defaults import ACTIVE_DEFAULT_CONCEPTS, DEFAULT_CONCEPTS, RETI
 from tests.conftest import wait_for_job
 
 
+def test_catalog_labels_grouping_and_numbers_do_not_change_identity_or_prompts(client, project):
+    catalog = concept_defaults.get_catalog()
+    metadata = concept_defaults.catalog_presentation(catalog)
+    assert len(metadata) == 190
+    assert len({row['label'] for row in metadata.values()}) == 190
+    assert all(row['group'] and row['family'] and row['tags'] for row in metadata.values())
+    assert metadata[170]['family'] == metadata[183]['family']
+    assert metadata[174]['family'] == metadata[184]['family']
+    active = client.get(f'/api/projects/{project}/concept-proposals').json()
+    assert sorted(row['display_number'] for row in active) == list(range(1, 146))
+    for row in active:
+        slot = row['slot']
+        assert row['catalog_code'] == f'C{slot:03d}'
+        assert row['bookmark_key'] == f'default:{slot}'
+        assert row['label'] == metadata[slot]['label']
+        assert not concept_defaults.PRESENTATION_FIELDS.intersection(row['brief'])
+        assert row['brief'] == {key: value for key, value in DEFAULT_CONCEPTS[slot - 1].items() if key != 'title'}
+    archived = client.get(f'/api/projects/{project}/concept-proposals?include_retired=true').json()
+    assert all(row['display_number'] is None for row in archived if row['slot'] in RETIRED_CONCEPT_SLOTS)
+
+
 def test_picker_reloads_edited_catalog_without_restarting(client, project, tmp_path, monkeypatch):
     path = tmp_path / 'concepts.json'
     catalog = json.loads(concept_defaults.CATALOG_PATH.read_text(encoding='utf-8'))

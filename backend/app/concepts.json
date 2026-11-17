@@ -12,7 +12,15 @@
       "gaze": "looking directly into the camera lens, eyes open",
       "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
       "framing": "three-quarter-body",
-      "lighting": "soft morning light across the sofa"
+      "lighting": "soft morning light across the sofa",
+      "label": "Ôm cốc trên sofa buổi sáng",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Cầm cốc & đồ uống",
+      "tags": [
+        "Cầm cốc & đồ uống",
+        "Phòng khách & sinh hoạt",
+        "Bikini"
+      ]
     },
     {
       "slot": 2,
@@ -26,7 +34,15 @@
       "gaze": "looking directly into the camera lens, eyes open",
       "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
       "framing": "full-body, head to bare feet",
-      "lighting": "bright natural daylight falling across the bed and rug"
+      "lighting": "bright natural daylight falling across the bed and rug",
+      "label": "Cầm điện thoại bên mép giường",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Điện thoại & selfie",
+      "tags": [
+        "Điện thoại & selfie",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 3,
@@ -40,7 +56,15 @@
       "gaze": "looking just to the left of the camera lens by about 8 degrees, eyes open",
       "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
       "framing": "three-quarter-body",
-      "lighting": "low golden sun, hair lifting in the breeze"
+      "lighting": "low golden sun, hair lifting in the breeze",
+      "label": "Tựa lan can ban công hoàng hôn",
+      "group": "Ngoài trời & du lịch",
+      "family": "Tựa lan can & ngắm cảnh",
+      "tags": [
+        "Tựa lan can & ngắm cảnh",
+        "Ngoài trời & du lịch",
+        "Bikini"
+      ]
     },
     {
       "slot": 4,
@@ -54,7 +78,15 @@
       "gaze": "looking directly into the camera lens, eyes open",
       "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
       "framing": "full-body",
-      "lighting": "daylight"
+      "lighting": "daylight",
+      "label": "Ngồi bên mép bể bơi",
+      "group": "Bể bơi",
+      "family": "Ngồi mép nước",
+      "tags": [
+        "Ngồi mép nước",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 5,
@@ -68,7 +100,15 @@
       "gaze": "looking just to the right of the camera lens by about 5 degrees, eyes open",
       "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
       "framing": "medium shot",
-      "lighting": "warm bedroom lamp light, soft shadows"
+      "lighting": "warm bedroom lamp light, soft shadows",
+      "label": "Tựa gối trên giường buổi tối",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Tựa gối & nghỉ ngơi",
+      "tags": [
+        "Tựa gối & nghỉ ngơi",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 6,
@@ -82,7 +122,15 @@
       "gaze": "looking slightly past the camera to her left by about 10 degrees, eyes open",
       "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
       "framing": "three-quarter-body",
-      "lighting": "dappled afternoon light through leaves"
+      "lighting": "dappled afternoon light through leaves",
+      "label": "Nghỉ trên thảm picnic sân vườn",
+      "group": "Ngoài trời & du lịch",
+      "family": "Picnic & nghỉ ngoài trời",
+      "tags": [
+        "Picnic & nghỉ ngoài trời",
+        "Ngoài trời & du lịch",
+        "Bikini"
+      ]
     },
     {
       "slot": 7,
@@ -96,7 +144,15 @@
       "gaze": "looking directly into the camera lens, eyes open",
       "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
       "framing": "full-body",
-      "lighting": "clean daylight from a wall of windows"
+      "lighting": "clean daylight from a wall of windows",
+      "label": "Bước tới với máy tính bảng",
+      "group": "Làm đẹp & công việc",
+      "family": "Đi bộ & chuyển động",
+      "tags": [
+        "Đi bộ & chuyển động",
+        "Làm đẹp & công việc",
+        "Bikini"
+      ]
     },
     {
       "slot": 8,
@@ -110,7 +166,15 @@
       "gaze": "looking directly into the camera lens, eyes open",
       "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
       "framing": "full-body",
-      "lighting": "blue dusk with warm city lights behind her"
+      "lighting": "blue dusk with warm city lights behind her",
+      "label": "Tựa lan can sân thượng lên đèn",
+      "group": "Ngoài trời & du lịch",
+      "family": "Tựa lan can & ngắm cảnh",
+      "tags": [
+        "Tựa lan can & ngắm cảnh",
+        "Ngoài trời & du lịch",
+        "Bikini"
+      ]
     },
     {
       "slot": 9,
@@ -124,7 +188,15 @@
       "gaze": "looking slightly past the camera to her right by about 5 degrees, eyes open",
       "camera": "straight-on frontal view at eye level, camera directly in front; no side, profile, three-quarter, rear or over-the-shoulder view",
       "framing": "medium shot",
-      "lighting": "gentle window light across the page and her face"
+      "lighting": "gentle window light across the page and her face",
+      "label": "Dừng đọc sách bên cửa sổ",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Phòng khách & sinh hoạt",
+        "Bikini"
+      ]
     },
     {
       "slot": 10,
@@ -138,7 +210,15 @@
       "gaze": "down toward her fingernails",
       "camera": "near-frontal camera slightly above seated eye level",
       "framing": "three-quarter-body",
-      "lighting": "warm evening room light with a soft direct-flash snapshot feel"
+      "lighting": "warm evening room light with a soft direct-flash snapshot feel",
+      "label": "Sơn móng tay trên sofa hồng",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Làm đẹp & chỉnh tóc",
+      "tags": [
+        "Làm đẹp & chỉnh tóc",
+        "Phòng khách & sinh hoạt",
+        "Bikini"
+      ]
     },
     {
       "slot": 11,
@@ -152,7 +232,15 @@
       "gaze": "toward the window, slightly away from the lens",
       "camera": "near-frontal camera at eye level",
       "framing": "medium seated portrait",
-      "lighting": "soft diffused morning window light"
+      "lighting": "soft diffused morning window light",
+      "label": "Ngồi yên trên giường màu kem",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Ngồi chân dung",
+      "tags": [
+        "Ngồi chân dung",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 12,
@@ -166,7 +254,15 @@
       "gaze": "eyes closed while resting",
       "camera": "slightly elevated diagonal view that clearly shows the face, folded arms and bent legs",
       "framing": "full-body environmental portrait",
-      "lighting": "warm golden window light with soft leaf shadows"
+      "lighting": "warm golden window light with soft leaf shadows",
+      "label": "Ngồi trên mặt bàn bếp gỗ",
+      "group": "Bếp & bên cửa sổ",
+      "family": "Ngồi chân dung",
+      "tags": [
+        "Ngồi chân dung",
+        "Bếp & bên cửa sổ",
+        "Bikini"
+      ]
     },
     {
       "slot": 13,
@@ -180,7 +276,15 @@
       "gaze": "eyes closed during the stretch",
       "camera": "frontal camera at torso height",
       "framing": "full-body",
-      "lighting": "soft golden backlight from the window and gentle indoor fill"
+      "lighting": "soft golden backlight from the window and gentle indoor fill",
+      "label": "Vươn vai cạnh cửa sổ bếp",
+      "group": "Bếp & bên cửa sổ",
+      "family": "Vươn vai & giãn cơ",
+      "tags": [
+        "Vươn vai & giãn cơ",
+        "Bếp & bên cửa sổ",
+        "Bikini"
+      ]
     },
     {
       "slot": 14,
@@ -194,7 +298,15 @@
       "gaze": "toward the camera with a small natural head turn",
       "camera": "slightly angled front view, face clearly visible",
       "framing": "three-quarter-body seated portrait",
-      "lighting": "warm muted window light with soft indoor shadows"
+      "lighting": "warm muted window light with soft indoor shadows",
+      "label": "Ngồi trên bậu cửa sổ bếp",
+      "group": "Bếp & bên cửa sổ",
+      "family": "Ngồi chân dung",
+      "tags": [
+        "Ngồi chân dung",
+        "Bếp & bên cửa sổ",
+        "Bikini"
+      ]
     },
     {
       "slot": 15,
@@ -208,7 +320,15 @@
       "gaze": "eyes closed while resting",
       "camera": "overhead view from above the bed",
       "framing": "full-body",
-      "lighting": "soft diffused daylight with pale neutral tones"
+      "lighting": "soft diffused daylight with pale neutral tones",
+      "label": "Nằm nghỉ giữa cánh hoa hồng",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Nằm nghỉ trên giường",
+      "tags": [
+        "Nằm nghỉ trên giường",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 16,
@@ -222,7 +342,15 @@
       "gaze": "eyes closed while resting",
       "camera": "overhead camera centered above her face and upper body",
       "framing": "three-quarter-body",
-      "lighting": "airy diffused daylight with delicate floral shadows"
+      "lighting": "airy diffused daylight with delicate floral shadows",
+      "label": "Tựa gối cầm một nhành hoa",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Hoa & đạo cụ",
+      "tags": [
+        "Hoa & đạo cụ",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 17,
@@ -236,7 +364,15 @@
       "gaze": "looking down at her fingernails",
       "camera": "near-frontal camera at seated eye level",
       "framing": "full-body seated portrait",
-      "lighting": "soft cool daylight with a gentle film-grain snapshot feel"
+      "lighting": "soft cool daylight with a gentle film-grain snapshot feel",
+      "label": "Sơn móng tay trên thảm cạnh sofa",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Làm đẹp & chỉnh tóc",
+      "tags": [
+        "Làm đẹp & chỉnh tóc",
+        "Phòng khách & sinh hoạt",
+        "Bikini"
+      ]
     },
     {
       "slot": 18,
@@ -250,7 +386,15 @@
       "gaze": "down at the open book",
       "camera": "slightly elevated front diagonal view with the face clearly visible",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "warm diffused window light with a softly glowing bedside lamp"
+      "lighting": "warm diffused window light with a softly glowing bedside lamp",
+      "label": "Đọc sách trên thảm cạnh giường",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 19,
@@ -264,7 +408,15 @@
       "gaze": "downward just past her knees",
       "camera": "near-frontal view slightly above seated eye level",
       "framing": "three-quarter-body seated portrait",
-      "lighting": "muted natural window light with soft neutral shadows"
+      "lighting": "muted natural window light with soft neutral shadows",
+      "label": "Vén tóc trên ghế cạnh giường",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Làm đẹp & chỉnh tóc",
+      "tags": [
+        "Làm đẹp & chỉnh tóc",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 20,
@@ -278,7 +430,15 @@
       "gaze": "looking toward the camera",
       "camera": "straight-on frontal view at seated eye level",
       "framing": "full-body seated portrait",
-      "lighting": "soft airy daylight filtered through sheer curtains"
+      "lighting": "soft airy daylight filtered through sheer curtains",
+      "label": "Ôm gối trắng trên giường",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Ôm gối & ôm chân",
+      "tags": [
+        "Ôm gối & ôm chân",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 21,
@@ -292,7 +452,15 @@
       "gaze": "looking directly toward the camera",
       "camera": "front view close to cushion height, focus on her face and hands",
       "framing": "environmental portrait with face in the foreground and bent legs softly out of focus",
-      "lighting": "warm soft daylight with muted vintage colors"
+      "lighting": "warm soft daylight with muted vintage colors",
+      "label": "Ngả người trên sofa sáng màu",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Nằm & ngả trên sofa",
+      "tags": [
+        "Nằm & ngả trên sofa",
+        "Phòng khách & sinh hoạt",
+        "Bikini"
+      ]
     },
     {
       "slot": 22,
@@ -306,7 +474,15 @@
       "gaze": "toward the camera over her shoulder",
       "camera": "rear three-quarter view at shoulder height with the face in focus",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "warm amber wall lights with soft bathroom shadows"
+      "lighting": "warm amber wall lights with soft bathroom shadows",
+      "label": "Đứng cạnh bàn rửa mặt ánh đèn ấm",
+      "group": "Phòng tắm",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Phòng tắm",
+        "Bikini"
+      ]
     },
     {
       "slot": 23,
@@ -320,7 +496,15 @@
       "gaze": "at the phone screen",
       "camera": "mirror portrait from a slightly angled front view, face visible beside the phone",
       "framing": "three-quarter-body seated portrait",
-      "lighting": "soft warm indoor light with gentle natural fill"
+      "lighting": "soft warm indoor light with gentle natural fill",
+      "label": "Chỉnh tóc chụp điện thoại bàn trang điểm",
+      "group": "Làm đẹp & công việc",
+      "family": "Điện thoại & selfie",
+      "tags": [
+        "Điện thoại & selfie",
+        "Làm đẹp & công việc",
+        "Bikini"
+      ]
     },
     {
       "slot": 24,
@@ -334,7 +518,15 @@
       "gaze": "down at the phone screen",
       "camera": "side three-quarter view at mattress height, face visible in a natural profile",
       "framing": "full-body environmental portrait including the long skirt and hotel window",
-      "lighting": "cool blue dusk from the city window balanced with a warm bedside lamp"
+      "lighting": "cool blue dusk from the city window balanced with a warm bedside lamp",
+      "label": "Lướt điện thoại trên giường nhìn ra phố",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Điện thoại & selfie",
+      "tags": [
+        "Điện thoại & selfie",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 25,
@@ -348,7 +540,15 @@
       "gaze": "looking directly into the camera lens",
       "camera": "straight-on frontal view at seated eye level",
       "framing": "three-quarter-body seated portrait with the drawings visible around her",
-      "lighting": "soft neutral daylight from a nearby bedroom window"
+      "lighting": "soft neutral daylight from a nearby bedroom window",
+      "label": "Nghỉ cạnh bản vẽ trên giường",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 26,
@@ -362,7 +562,15 @@
       "gaze": "out toward the trees and buildings, away from the camera",
       "camera": "full rear view from inside the room, framed by the open glass balcony doors",
       "framing": "full-body environmental portrait including bare feet, railing and surrounding architecture",
-      "lighting": "soft overcast daylight with natural green reflections from the trees"
+      "lighting": "soft overcast daylight with natural green reflections from the trees",
+      "label": "Ngắm phố từ ban công cửa kính",
+      "group": "Ngoài trời & du lịch",
+      "family": "Tựa lan can & ngắm cảnh",
+      "tags": [
+        "Tựa lan can & ngắm cảnh",
+        "Ngoài trời & du lịch",
+        "Bikini"
+      ]
     },
     {
       "slot": 27,
@@ -376,7 +584,15 @@
       "gaze": "toward the camera",
       "camera": "slightly elevated front three-quarter view",
       "framing": "waist-up environmental portrait",
-      "lighting": "soft daylight through blinds casting narrow stripes across her face, arms and clothing"
+      "lighting": "soft daylight through blinds casting narrow stripes across her face, arms and clothing",
+      "label": "Gom tóc dưới ánh nắng rèm chớp",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Làm đẹp & chỉnh tóc",
+      "tags": [
+        "Làm đẹp & chỉnh tóc",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 28,
@@ -390,7 +606,15 @@
       "gaze": "slightly away from the camera toward the window",
       "camera": "near-frontal view at seated eye level",
       "framing": "full-body seated portrait",
-      "lighting": "soft cool diffused window light with muted film-like tones"
+      "lighting": "soft cool diffused window light with muted film-like tones",
+      "label": "Chỉnh áo khoác trên sofa tối màu",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Ngồi chân dung",
+      "tags": [
+        "Ngồi chân dung",
+        "Phòng khách & sinh hoạt",
+        "Bikini"
+      ]
     },
     {
       "slot": 29,
@@ -404,7 +628,15 @@
       "gaze": "looking directly into the camera",
       "camera": "frontal view at eye level",
       "framing": "full-body",
-      "lighting": "bright morning daylight with soft reflected pool light"
+      "lighting": "bright morning daylight with soft reflected pool light",
+      "label": "Đứng trên sàn đá cạnh bể",
+      "group": "Bể bơi",
+      "family": "Đứng bên bể",
+      "tags": [
+        "Đứng bên bể",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 30,
@@ -418,7 +650,15 @@
       "gaze": "looking slightly past the camera",
       "camera": "front three-quarter view at seated eye level",
       "framing": "full-body seated portrait",
-      "lighting": "soft late-afternoon daylight"
+      "lighting": "soft late-afternoon daylight",
+      "label": "Ngồi thả chân xuống nước",
+      "group": "Bể bơi",
+      "family": "Ngồi mép nước",
+      "tags": [
+        "Ngồi mép nước",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 31,
@@ -432,7 +672,15 @@
       "gaze": "looking toward the pool",
       "camera": "slightly elevated front diagonal view",
       "framing": "full-body including the lounger",
-      "lighting": "soft dappled shade beneath the parasol"
+      "lighting": "soft dappled shade beneath the parasol",
+      "label": "Ngả lưng trên ghế dài cạnh bể",
+      "group": "Bể bơi",
+      "family": "Nằm & ngả bên bể",
+      "tags": [
+        "Nằm & ngả bên bể",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 32,
@@ -446,7 +694,15 @@
       "gaze": "down at the book",
       "camera": "near-frontal view at seated eye level",
       "framing": "three-quarter-body",
-      "lighting": "diffused midday shade with turquoise reflections"
+      "lighting": "diffused midday shade with turquoise reflections",
+      "label": "Đọc sách trên ghế dài cạnh bể",
+      "group": "Bể bơi",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 33,
@@ -460,7 +716,15 @@
       "gaze": "down toward the next step",
       "camera": "front three-quarter view from the pool deck",
       "framing": "full-body showing the steps through the water",
-      "lighting": "crisp morning light with rippling water patterns"
+      "lighting": "crisp morning light with rippling water patterns",
+      "label": "Bước xuống bậc thang ngập nước",
+      "group": "Bể bơi",
+      "family": "Bậc thang & thang bể",
+      "tags": [
+        "Bậc thang & thang bể",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 34,
@@ -474,7 +738,15 @@
       "gaze": "toward the camera",
       "camera": "frontal view from the deck at shoulder height",
       "framing": "three-quarter-body including ladder and visible waterline",
-      "lighting": "gentle golden-hour light"
+      "lighting": "gentle golden-hour light",
+      "label": "Dừng trên thang inox lên bể",
+      "group": "Bể bơi",
+      "family": "Bậc thang & thang bể",
+      "tags": [
+        "Bậc thang & thang bể",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 35,
@@ -488,7 +760,15 @@
       "gaze": "slightly to the side toward the palms",
       "camera": "near-frontal view at eye level",
       "framing": "three-quarter-body with clear waterline",
-      "lighting": "warm late-afternoon sunlight"
+      "lighting": "warm late-afternoon sunlight",
+      "label": "Lội chậm qua vùng nước nông",
+      "group": "Bể bơi",
+      "family": "Bơi & chơi dưới nước",
+      "tags": [
+        "Bơi & chơi dưới nước",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 36,
@@ -502,7 +782,15 @@
       "gaze": "eyes closed while floating",
       "camera": "overhead view centered above the body",
       "framing": "full-body surrounded by water",
-      "lighting": "soft diffused daylight with subtle reflected patterns"
+      "lighting": "soft diffused daylight with subtle reflected patterns",
+      "label": "Nằm ngửa nổi trên mặt nước",
+      "group": "Bể bơi",
+      "family": "Bơi & chơi dưới nước",
+      "tags": [
+        "Bơi & chơi dưới nước",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 37,
@@ -516,7 +804,15 @@
       "gaze": "forward along the swimming lane",
       "camera": "front diagonal view close to water level",
       "framing": "environmental portrait showing upper body and surrounding ripples",
-      "lighting": "bright soft daylight with small sparkling highlights"
+      "lighting": "bright soft daylight with small sparkling highlights",
+      "label": "Bơi ếch giữa làn nước trong",
+      "group": "Bể bơi",
+      "family": "Bơi & chơi dưới nước",
+      "tags": [
+        "Bơi & chơi dưới nước",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 38,
@@ -530,7 +826,15 @@
       "gaze": "looking directly into the camera",
       "camera": "frontal view from across the coping at face height",
       "framing": "medium portrait with water and pool edge visible",
-      "lighting": "soft evening light with warm skin tones and cool water reflections"
+      "lighting": "soft evening light with warm skin tones and cool water reflections",
+      "label": "Tựa thành bể nghỉ dưới nước",
+      "group": "Bể bơi",
+      "family": "Ngồi mép nước",
+      "tags": [
+        "Ngồi mép nước",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 39,
@@ -544,7 +848,15 @@
       "gaze": "toward the small splash beside her",
       "camera": "front three-quarter view at eye level",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "warm daylight catching the small water droplets"
+      "lighting": "warm daylight catching the small water droplets",
+      "label": "Vẩy nước bằng một tay",
+      "group": "Bể bơi",
+      "family": "Bơi & chơi dưới nước",
+      "tags": [
+        "Bơi & chơi dưới nước",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 40,
@@ -558,7 +870,15 @@
       "gaze": "toward the camera over her shoulder",
       "camera": "rear three-quarter view with her face visible",
       "framing": "wide environmental portrait including pool edge and horizon",
-      "lighting": "warm sunset rim light balanced with soft reflected fill on the face"
+      "lighting": "warm sunset rim light balanced with soft reflected fill on the face",
+      "label": "Ngắm hoàng hôn bên bể vô cực",
+      "group": "Bể bơi",
+      "family": "Ngắm cảnh bên bể",
+      "tags": [
+        "Ngắm cảnh bên bể",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 41,
@@ -572,7 +892,15 @@
       "gaze": "slightly above the camera",
       "camera": "frontal view at seated eye level",
       "framing": "three-quarter-body",
-      "lighting": "gentle morning window light"
+      "lighting": "gentle morning window light",
+      "label": "Vươn vai trên giường nắng sớm",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Vươn vai & giãn cơ",
+      "tags": [
+        "Vươn vai & giãn cơ",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 42,
@@ -586,7 +914,15 @@
       "gaze": "down toward the mug",
       "camera": "slightly elevated front diagonal view",
       "framing": "three-quarter-body including tray",
-      "lighting": "soft warm morning daylight"
+      "lighting": "soft warm morning daylight",
+      "label": "Cầm cốc cạnh khay ăn sáng trên giường",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Cầm cốc & đồ uống",
+      "tags": [
+        "Cầm cốc & đồ uống",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 43,
@@ -600,7 +936,15 @@
       "gaze": "down at the journal",
       "camera": "front three-quarter view with face clearly visible",
       "framing": "three-quarter-body seated portrait",
-      "lighting": "warm bedside lamplight with gentle evening shadows"
+      "lighting": "warm bedside lamplight with gentle evening shadows",
+      "label": "Viết nhật ký bên đèn ngủ",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 44,
@@ -614,7 +958,15 @@
       "gaze": "toward the nearby window",
       "camera": "front diagonal view at mattress height",
       "framing": "full-body on the bed",
-      "lighting": "airy diffused afternoon daylight"
+      "lighting": "airy diffused afternoon daylight",
+      "label": "Nghe nhạc tựa gối đầu giường",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Tựa gối & nghỉ ngơi",
+      "tags": [
+        "Tựa gối & nghỉ ngơi",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 45,
@@ -628,7 +980,15 @@
       "gaze": "at her own reflection",
       "camera": "mirror portrait from a slight front angle, one coherent reflection",
       "framing": "three-quarter-body",
-      "lighting": "soft even morning light from a frosted window"
+      "lighting": "soft even morning light from a frosted window",
+      "label": "Chỉnh tóc trước gương phòng tắm",
+      "group": "Phòng tắm",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Phòng tắm",
+        "Bikini"
+      ]
     },
     {
       "slot": 46,
@@ -642,7 +1002,15 @@
       "gaze": "slightly past the camera",
       "camera": "frontal view at seated eye level",
       "framing": "full-body including tub and feet",
-      "lighting": "diffused daylight with gentle stone reflections"
+      "lighting": "diffused daylight with gentle stone reflections",
+      "label": "Ngồi trên thành bồn tắm",
+      "group": "Phòng tắm",
+      "family": "Ngồi chân dung",
+      "tags": [
+        "Ngồi chân dung",
+        "Phòng tắm",
+        "Bikini"
+      ]
     },
     {
       "slot": 47,
@@ -656,7 +1024,15 @@
       "gaze": "toward the light beside the shower",
       "camera": "front three-quarter view at eye level",
       "framing": "three-quarter-body",
-      "lighting": "soft diffused bathroom light with subtle water highlights"
+      "lighting": "soft diffused bathroom light with subtle water highlights",
+      "label": "Đứng dưới vòi sen",
+      "group": "Phòng tắm",
+      "family": "Tắm & thư giãn",
+      "tags": [
+        "Tắm & thư giãn",
+        "Phòng tắm",
+        "Bikini"
+      ]
     },
     {
       "slot": 48,
@@ -670,7 +1046,15 @@
       "gaze": "toward the camera",
       "camera": "near-frontal view at eye level",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "warm vanity lights balanced with soft daylight"
+      "lighting": "warm vanity lights balanced with soft daylight",
+      "label": "Lau tóc cạnh bàn rửa mặt",
+      "group": "Phòng tắm",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Phòng tắm",
+        "Bikini"
+      ]
     },
     {
       "slot": 49,
@@ -684,7 +1068,15 @@
       "gaze": "slightly toward the horizon",
       "camera": "front three-quarter view at eye level",
       "framing": "full-body environmental portrait",
-      "lighting": "soft golden morning light"
+      "lighting": "soft golden morning light",
+      "label": "Đi bộ sát mép sóng",
+      "group": "Biển",
+      "family": "Đi bộ & chuyển động",
+      "tags": [
+        "Đi bộ & chuyển động",
+        "Biển",
+        "Bikini"
+      ]
     },
     {
       "slot": 50,
@@ -698,7 +1090,15 @@
       "gaze": "toward the camera",
       "camera": "near-frontal view at seated eye level",
       "framing": "full-body seated portrait; the entire head from crown and forehead to chin fully inside the frame with breathing room above the hair; both eyes, nose and mouth unobstructed, face sharply focused and clearly readable; hair, arms and fabric must not cover the face; no cropped head, forehead or eyes",
-      "lighting": "warm late-afternoon daylight"
+      "lighting": "warm late-afternoon daylight",
+      "label": "Ngồi gập chân trên cát",
+      "group": "Biển",
+      "family": "Ngồi gập chân lệch bên",
+      "tags": [
+        "Ngồi gập chân lệch bên",
+        "Biển",
+        "Bikini"
+      ]
     },
     {
       "slot": 51,
@@ -712,7 +1112,15 @@
       "gaze": "out toward the sea",
       "camera": "front diagonal view with face clearly visible",
       "framing": "full-body including rock and shoreline",
-      "lighting": "soft overcast coastal light"
+      "lighting": "soft overcast coastal light",
+      "label": "Đón gió trên tảng đá ven biển",
+      "group": "Biển",
+      "family": "Picnic & nghỉ ngoài trời",
+      "tags": [
+        "Picnic & nghỉ ngoài trời",
+        "Biển",
+        "Bikini"
+      ]
     },
     {
       "slot": 52,
@@ -726,7 +1134,15 @@
       "gaze": "just past the camera",
       "camera": "slightly elevated front diagonal view",
       "framing": "full-body environmental portrait",
-      "lighting": "dappled parasol shade with gentle reflected light from the sand"
+      "lighting": "dappled parasol shade with gentle reflected light from the sand",
+      "label": "Nghỉ dưới ô trên bãi biển",
+      "group": "Biển",
+      "family": "Picnic & nghỉ ngoài trời",
+      "tags": [
+        "Picnic & nghỉ ngoài trời",
+        "Biển",
+        "Bikini"
+      ]
     },
     {
       "slot": 53,
@@ -740,7 +1156,15 @@
       "gaze": "down toward the leaves",
       "camera": "near-frontal view at eye level",
       "framing": "three-quarter-body including watering can and plant",
-      "lighting": "soft morning window light"
+      "lighting": "soft morning window light",
+      "label": "Tưới cây trong góc phòng khách",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Sinh hoạt & đồ vật",
+      "tags": [
+        "Sinh hoạt & đồ vật",
+        "Phòng khách & sinh hoạt",
+        "Bikini"
+      ]
     },
     {
       "slot": 54,
@@ -754,7 +1178,15 @@
       "gaze": "toward the bottle in her hand",
       "camera": "front three-quarter view at eye level",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "natural kitchen daylight with soft cool refrigerator light"
+      "lighting": "natural kitchen daylight with soft cool refrigerator light",
+      "label": "Chọn đồ uống trước tủ lạnh",
+      "group": "Bếp & bên cửa sổ",
+      "family": "Cầm cốc & đồ uống",
+      "tags": [
+        "Cầm cốc & đồ uống",
+        "Bếp & bên cửa sổ",
+        "Bikini"
+      ]
     },
     {
       "slot": 55,
@@ -768,7 +1200,15 @@
       "gaze": "down toward the flowers",
       "camera": "front diagonal view with face and hands visible",
       "framing": "three-quarter-body including vase and table",
-      "lighting": "airy diffused afternoon daylight"
+      "lighting": "airy diffused afternoon daylight",
+      "label": "Cắm hoa trên bàn ăn",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Hoa & đạo cụ",
+      "tags": [
+        "Hoa & đạo cụ",
+        "Phòng khách & sinh hoạt",
+        "Bikini"
+      ]
     },
     {
       "slot": 56,
@@ -782,7 +1222,15 @@
       "gaze": "at the record sleeve",
       "camera": "near-frontal view at seated eye level",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "warm evening lamplight"
+      "lighting": "warm evening lamplight",
+      "label": "Chọn đĩa than cạnh máy hát",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Sinh hoạt & đồ vật",
+      "tags": [
+        "Sinh hoạt & đồ vật",
+        "Phòng khách & sinh hoạt",
+        "Bikini"
+      ]
     },
     {
       "slot": 57,
@@ -796,7 +1244,15 @@
       "gaze": "directly into the camera lens",
       "camera": "frontal close portrait at eye level",
       "framing": "head-and-shoulders with bikini straps visible",
-      "lighting": "soft diffused window light"
+      "lighting": "soft diffused window light",
+      "label": "Cận cảnh vén tóc sau tai",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Chân dung cận & tay bên mặt",
+      "tags": [
+        "Chân dung cận & tay bên mặt",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 58,
@@ -810,7 +1266,15 @@
       "gaze": "slightly past the camera by a few degrees",
       "camera": "near-frontal close portrait at eye level",
       "framing": "head-and-shoulders with bikini neckline visible",
-      "lighting": "gentle natural side light with soft reflected fill"
+      "lighting": "gentle natural side light with soft reflected fill",
+      "label": "Cận cảnh chống cằm bằng một tay",
+      "group": "Studio & chân dung",
+      "family": "Chân dung cận & tay bên mặt",
+      "tags": [
+        "Chân dung cận & tay bên mặt",
+        "Studio & chân dung",
+        "Bikini"
+      ]
     },
     {
       "slot": 59,
@@ -824,7 +1288,15 @@
       "gaze": "toward the camera",
       "camera": "frontal close portrait at eye level",
       "framing": "head-and-shoulders with bikini straps visible",
-      "lighting": "soft open-shade daylight"
+      "lighting": "soft open-shade daylight",
+      "label": "Cận cảnh cầm hoa bên má",
+      "group": "Studio & chân dung",
+      "family": "Hoa & đạo cụ",
+      "tags": [
+        "Hoa & đạo cụ",
+        "Studio & chân dung",
+        "Bikini"
+      ]
     },
     {
       "slot": 60,
@@ -838,7 +1310,15 @@
       "gaze": "just to the side of the lens",
       "camera": "near-frontal close portrait at eye level",
       "framing": "head-and-shoulders with bikini neckline visible",
-      "lighting": "narrow sunlight bands across the face with gentle fill keeping both eyes readable"
+      "lighting": "narrow sunlight bands across the face with gentle fill keeping both eyes readable",
+      "label": "Chân dung dưới vệt sáng rèm chớp",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Chân dung ánh sáng & bóng đổ",
+      "tags": [
+        "Chân dung ánh sáng & bóng đổ",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 61,
@@ -852,7 +1332,15 @@
       "gaze": "direct eye contact with the camera",
       "camera": "front three-quarter view at eye level",
       "framing": "full-body fashion portrait",
-      "lighting": "warm amber side light with soft fill on both eyes"
+      "lighting": "warm amber side light with soft fill on both eyes",
+      "label": "Đứng ở khung cửa ánh hổ phách",
+      "group": "Thời trang & ánh đèn",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Thời trang & ánh đèn",
+        "Bikini"
+      ]
     },
     {
       "slot": 62,
@@ -866,7 +1354,15 @@
       "gaze": "toward the camera",
       "camera": "slightly elevated front diagonal view",
       "framing": "full-body editorial portrait",
-      "lighting": "warm low-key lamplight with gentle highlights along the shoulders"
+      "lighting": "warm low-key lamplight with gentle highlights along the shoulders",
+      "label": "Ngả trên ghế chaise buổi tối",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Nằm & ngả trên sofa",
+      "tags": [
+        "Nằm & ngả trên sofa",
+        "Phòng khách & sinh hoạt",
+        "Bikini"
+      ]
     },
     {
       "slot": 63,
@@ -880,7 +1376,15 @@
       "gaze": "back toward the camera with a small head turn",
       "camera": "front three-quarter view at eye level",
       "framing": "three-quarter-body fashion portrait",
-      "lighting": "golden rim light with soft frontal fill keeping the face and bikini fabric clearly visible"
+      "lighting": "golden rim light with soft frontal fill keeping the face and bikini fabric clearly visible",
+      "label": "Xoay nhẹ bên rèm cửa nắng vàng",
+      "group": "Thời trang & ánh đèn",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Thời trang & ánh đèn",
+        "Bikini"
+      ]
     },
     {
       "slot": 64,
@@ -894,7 +1398,15 @@
       "gaze": "toward the camera beside her reflection",
       "camera": "slightly angled frontal view with one coherent mirror reflection",
       "framing": "three-quarter-body editorial portrait",
-      "lighting": "warm vanity light with deep soft background shadows"
+      "lighting": "warm vanity light with deep soft background shadows",
+      "label": "Chân dung trước gương lên đèn",
+      "group": "Làm đẹp & công việc",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Làm đẹp & công việc",
+        "Bikini"
+      ]
     },
     {
       "slot": 65,
@@ -908,7 +1420,15 @@
       "gaze": "directly toward the lens",
       "camera": "front diagonal view at eye level",
       "framing": "three-quarter-body including the skyline",
-      "lighting": "cool blue-hour ambient light balanced with warm light from the open room"
+      "lighting": "cool blue-hour ambient light balanced with warm light from the open room",
+      "label": "Ban công xanh lúc chạng vạng",
+      "group": "Thời trang & ánh đèn",
+      "family": "Tựa lan can & ngắm cảnh",
+      "tags": [
+        "Tựa lan can & ngắm cảnh",
+        "Thời trang & ánh đèn",
+        "Bikini"
+      ]
     },
     {
       "slot": 66,
@@ -922,7 +1442,15 @@
       "gaze": "slightly past the lens",
       "camera": "front three-quarter view at seated eye level",
       "framing": "full-body seated editorial portrait; the entire head from crown and forehead to chin fully inside the frame with breathing room above the hair; both eyes, nose and mouth unobstructed, face sharply focused and clearly readable; hair, arms and fabric must not cover the face; no cropped head, forehead or eyes",
-      "lighting": "soft turquoise pool reflections and warm practical fill on the face"
+      "lighting": "soft turquoise pool reflections and warm practical fill on the face",
+      "label": "Ngồi cạnh bể bơi dưới ánh trăng",
+      "group": "Bể bơi",
+      "family": "Ngồi mép nước",
+      "tags": [
+        "Ngồi mép nước",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 67,
@@ -936,7 +1464,15 @@
       "gaze": "direct eye contact with the camera",
       "camera": "front three-quarter view at eye level",
       "framing": "full-body fashion portrait",
-      "lighting": "warm lamplight with soft window fill"
+      "lighting": "warm lamplight with soft window fill",
+      "label": "Đứng bên rèm với satin đỏ rượu",
+      "group": "Thời trang & ánh đèn",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Thời trang & ánh đèn",
+        "Satin"
+      ]
     },
     {
       "slot": 68,
@@ -950,7 +1486,14 @@
       "gaze": "toward the lens over her shoulder",
       "camera": "rear three-quarter view at shoulder height",
       "framing": "three-quarter-body editorial portrait",
-      "lighting": "cool blue-hour ambient light with warm reflected fill"
+      "lighting": "cool blue-hour ambient light with warm reflected fill",
+      "label": "Quay về máy ảnh trên sân hiên",
+      "group": "Thời trang & ánh đèn",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Thời trang & ánh đèn"
+      ]
     },
     {
       "slot": 69,
@@ -964,7 +1507,14 @@
       "gaze": "slightly past the camera",
       "camera": "near-frontal view at seated eye level",
       "framing": "three-quarter-body portrait",
-      "lighting": "soft morning window light"
+      "lighting": "soft morning window light",
+      "label": "Chỉnh tay áo sơ mi bên cửa sổ",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 70,
@@ -978,7 +1528,14 @@
       "gaze": "directly toward the camera",
       "camera": "front diagonal view at eye level",
       "framing": "full-body fashion portrait",
-      "lighting": "soft directional studio-style light with gentle rim highlights"
+      "lighting": "soft directional studio-style light with gentle rim highlights",
+      "label": "Đứng tạo dáng cạnh ghế studio",
+      "group": "Thời trang & ánh đèn",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Thời trang & ánh đèn"
+      ]
     },
     {
       "slot": 71,
@@ -992,7 +1549,14 @@
       "gaze": "toward the camera with a small natural head turn",
       "camera": "slightly elevated front three-quarter view",
       "framing": "three-quarter-body seated portrait",
-      "lighting": "warm late-afternoon daylight with soft shadows"
+      "lighting": "warm late-afternoon daylight with soft shadows",
+      "label": "Ngả ở góc sofa áo trễ vai",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Nằm & ngả trên sofa",
+      "tags": [
+        "Nằm & ngả trên sofa",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 72,
@@ -1006,7 +1570,17 @@
       "gaze": "toward the camera",
       "camera": "near-frontal view at seated eye level",
       "framing": "three-quarter-body bedroom editorial",
-      "lighting": "warm bedside lamplight with gentle ambient fill"
+      "lighting": "warm bedside lamplight with gentle ambient fill",
+      "label": "Đặt sách xuống trước khi nghỉ",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Phòng khách & sinh hoạt",
+        "Satin",
+        "Đồ ngủ",
+        "Ren"
+      ]
     },
     {
       "slot": 73,
@@ -1020,7 +1594,15 @@
       "gaze": "toward her reflection",
       "camera": "front three-quarter view with face visible beside one coherent reflection",
       "framing": "three-quarter-body seated portrait",
-      "lighting": "soft warm mirror lights with gentle room fill"
+      "lighting": "soft warm mirror lights with gentle room fill",
+      "label": "Chọn hoa tai trước buổi tối",
+      "group": "Làm đẹp & công việc",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Làm đẹp & công việc",
+        "Bikini"
+      ]
     },
     {
       "slot": 74,
@@ -1034,7 +1616,15 @@
       "gaze": "at her reflection",
       "camera": "slightly angled front view keeping her eyes and hands visible",
       "framing": "head-and-shoulders with bikini straps visible",
-      "lighting": "even warm vanity light with soft highlights"
+      "lighting": "even warm vanity light with soft highlights",
+      "label": "Tô son trước gương",
+      "group": "Làm đẹp & công việc",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Làm đẹp & công việc",
+        "Bikini"
+      ]
     },
     {
       "slot": 75,
@@ -1048,7 +1638,15 @@
       "gaze": "toward the camera through the mirror",
       "camera": "front three-quarter mirror portrait with one consistent reflection",
       "framing": "three-quarter-body",
-      "lighting": "warm vanity light balanced with cool window fill"
+      "lighting": "warm vanity light balanced with cool window fill",
+      "label": "Tháo kẹp tóc trong phòng thay đồ",
+      "group": "Làm đẹp & công việc",
+      "family": "Làm đẹp & chỉnh tóc",
+      "tags": [
+        "Làm đẹp & chỉnh tóc",
+        "Làm đẹp & công việc",
+        "Bikini"
+      ]
     },
     {
       "slot": 76,
@@ -1062,7 +1660,15 @@
       "gaze": "toward the camera",
       "camera": "near-frontal view at eye level",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "soft diffused room light with warm practical accents"
+      "lighting": "soft diffused room light with warm practical accents",
+      "label": "Cầm chai nước hoa trên bàn trang điểm",
+      "group": "Làm đẹp & công việc",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Làm đẹp & công việc",
+        "Bikini"
+      ]
     },
     {
       "slot": 77,
@@ -1076,7 +1682,15 @@
       "gaze": "directly into the camera lens",
       "camera": "frontal view at seated eye level",
       "framing": "full-body fashion portrait",
-      "lighting": "one large softbox with gentle fill and a subtle backdrop gradient"
+      "lighting": "one large softbox with gentle fill and a subtle backdrop gradient",
+      "label": "Ngồi trên ghế đẩu studio",
+      "group": "Studio & chân dung",
+      "family": "Ngồi chân dung",
+      "tags": [
+        "Ngồi chân dung",
+        "Studio & chân dung",
+        "Bikini"
+      ]
     },
     {
       "slot": 78,
@@ -1090,7 +1704,15 @@
       "gaze": "slightly past the lens",
       "camera": "front three-quarter view at eye level",
       "framing": "full-body portrait",
-      "lighting": "soft directional daylight showing the texture of the wall"
+      "lighting": "soft directional daylight showing the texture of the wall",
+      "label": "Đứng cạnh tường studio có vân",
+      "group": "Studio & chân dung",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Studio & chân dung",
+        "Bikini"
+      ]
     },
     {
       "slot": 79,
@@ -1104,7 +1726,15 @@
       "gaze": "toward the camera",
       "camera": "near-frontal close portrait at eye level",
       "framing": "head-and-shoulders with bikini neckline visible",
-      "lighting": "a controlled soft side key with gentle fill keeping both eyes readable"
+      "lighting": "a controlled soft side key with gentle fill keeping both eyes readable",
+      "label": "Cận mặt trong bóng đổ studio",
+      "group": "Studio & chân dung",
+      "family": "Chân dung ánh sáng & bóng đổ",
+      "tags": [
+        "Chân dung ánh sáng & bóng đổ",
+        "Studio & chân dung",
+        "Bikini"
+      ]
     },
     {
       "slot": 80,
@@ -1118,7 +1748,15 @@
       "gaze": "toward the lens",
       "camera": "slightly elevated front diagonal view",
       "framing": "full-body seated portrait",
-      "lighting": "broad diffused studio light with soft grounded shadows"
+      "lighting": "broad diffused studio light with soft grounded shadows",
+      "label": "Ngồi trên sàn studio trống",
+      "group": "Studio & chân dung",
+      "family": "Ngồi gập chân lệch bên",
+      "tags": [
+        "Ngồi gập chân lệch bên",
+        "Studio & chân dung",
+        "Bikini"
+      ]
     },
     {
       "slot": 81,
@@ -1132,7 +1770,15 @@
       "gaze": "down toward the glass",
       "camera": "front three-quarter view with hands and glass clearly visible",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "warm under-cabinet light with a soft dim room fill"
+      "lighting": "warm under-cabinet light with a soft dim room fill",
+      "label": "Rót nước trong bếp buổi đêm",
+      "group": "Bếp & bên cửa sổ",
+      "family": "Cầm cốc & đồ uống",
+      "tags": [
+        "Cầm cốc & đồ uống",
+        "Bếp & bên cửa sổ",
+        "Bikini"
+      ]
     },
     {
       "slot": 82,
@@ -1146,7 +1792,15 @@
       "gaze": "toward the camera",
       "camera": "near-frontal view at eye level",
       "framing": "waist-up environmental portrait",
-      "lighting": "warm pendant light and soft ambient kitchen shadows"
+      "lighting": "warm pendant light and soft ambient kitchen shadows",
+      "label": "Ăn dâu cạnh bàn bếp",
+      "group": "Bếp & bên cửa sổ",
+      "family": "Đồ ăn & trái cây",
+      "tags": [
+        "Đồ ăn & trái cây",
+        "Bếp & bên cửa sổ",
+        "Bikini"
+      ]
     },
     {
       "slot": 83,
@@ -1160,7 +1814,15 @@
       "gaze": "slightly past the lens as if listening to someone nearby",
       "camera": "front diagonal view at eye level",
       "framing": "three-quarter-body",
-      "lighting": "warm pendant lighting with soft reflected fill on the face"
+      "lighting": "warm pendant lighting with soft reflected fill on the face",
+      "label": "Cầm cốc bên đảo bếp lên đèn",
+      "group": "Bếp & bên cửa sổ",
+      "family": "Cầm cốc & đồ uống",
+      "tags": [
+        "Cầm cốc & đồ uống",
+        "Bếp & bên cửa sổ",
+        "Bikini"
+      ]
     },
     {
       "slot": 84,
@@ -1174,7 +1836,15 @@
       "gaze": "out through the window",
       "camera": "front three-quarter view with face clearly visible",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "cool blue window light mixed with a warm countertop lamp"
+      "lighting": "cool blue window light mixed with a warm countertop lamp",
+      "label": "Nghỉ cạnh cửa sổ bếp chạng vạng",
+      "group": "Bếp & bên cửa sổ",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Bếp & bên cửa sổ",
+        "Bikini"
+      ]
     },
     {
       "slot": 85,
@@ -1188,7 +1858,15 @@
       "gaze": "toward the camera",
       "camera": "front three-quarter view at eye level",
       "framing": "three-quarter-body environmental portrait including lanterns and old-town textures",
-      "lighting": "warm lantern light mixed with soft blue-hour ambient fill"
+      "lighting": "warm lantern light mixed with soft blue-hour ambient fill",
+      "label": "Đứng dưới đèn lồng Hội An",
+      "group": "Việt Nam",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Việt Nam",
+        "Bikini"
+      ]
     },
     {
       "slot": 86,
@@ -1202,7 +1880,15 @@
       "gaze": "down toward the phin filter",
       "camera": "near-frontal view at seated eye level",
       "framing": "three-quarter-body seated portrait with balcony and coffee visible",
-      "lighting": "soft morning daylight with muted street reflections"
+      "lighting": "soft morning daylight with muted street reflections",
+      "label": "Chờ cà phê phin ban công Hà Nội",
+      "group": "Việt Nam",
+      "family": "Cầm cốc & đồ uống",
+      "tags": [
+        "Cầm cốc & đồ uống",
+        "Việt Nam",
+        "Bikini"
+      ]
     },
     {
       "slot": 87,
@@ -1216,7 +1902,15 @@
       "gaze": "toward the camera",
       "camera": "front diagonal view at eye level",
       "framing": "full-body environmental portrait including the veranda and pond",
-      "lighting": "soft overcast garden light with gentle green reflections"
+      "lighting": "soft overcast garden light with gentle green reflections",
+      "label": "Nghỉ cạnh nhà vườn xứ Huế",
+      "group": "Việt Nam",
+      "family": "Picnic & nghỉ ngoài trời",
+      "tags": [
+        "Picnic & nghỉ ngoài trời",
+        "Việt Nam",
+        "Bikini"
+      ]
     },
     {
       "slot": 88,
@@ -1230,7 +1924,15 @@
       "gaze": "slightly past the camera toward the pine trees",
       "camera": "front three-quarter view at seated eye level",
       "framing": "full-body seated portrait including wicker chair and misty garden",
-      "lighting": "cool diffused morning light with a soft warm glow from the open room"
+      "lighting": "cool diffused morning light with a soft warm glow from the open room",
+      "label": "Ôm cốc trên hiên Đà Lạt",
+      "group": "Việt Nam",
+      "family": "Cầm cốc & đồ uống",
+      "tags": [
+        "Cầm cốc & đồ uống",
+        "Việt Nam",
+        "Bikini"
+      ]
     },
     {
       "slot": 89,
@@ -1244,7 +1946,15 @@
       "gaze": "out toward the terraces with a small head turn",
       "camera": "front three-quarter view with face clearly visible",
       "framing": "full-body environmental portrait with sweeping terrace layers",
-      "lighting": "warm late-afternoon sunlight with soft mountain haze"
+      "lighting": "warm late-afternoon sunlight with soft mountain haze",
+      "label": "Đứng ngắm ruộng bậc thang",
+      "group": "Việt Nam",
+      "family": "Picnic & nghỉ ngoài trời",
+      "tags": [
+        "Picnic & nghỉ ngoài trời",
+        "Việt Nam",
+        "Bikini"
+      ]
     },
     {
       "slot": 90,
@@ -1258,7 +1968,15 @@
       "gaze": "toward the lens",
       "camera": "front diagonal view at eye level",
       "framing": "three-quarter-body portrait with karsts and water clearly visible",
-      "lighting": "soft morning light with luminous reflections from the bay"
+      "lighting": "soft morning light with luminous reflections from the bay",
+      "label": "Tựa lan can boong tàu Hạ Long",
+      "group": "Việt Nam",
+      "family": "Tựa lan can & ngắm cảnh",
+      "tags": [
+        "Tựa lan can & ngắm cảnh",
+        "Việt Nam",
+        "Bikini"
+      ]
     },
     {
       "slot": 91,
@@ -1272,7 +1990,15 @@
       "gaze": "toward the camera",
       "camera": "near-frontal view at seated eye level",
       "framing": "three-quarter-body environmental portrait including boat details and palm-lined canal",
-      "lighting": "warm early-morning light softened by riverside palms"
+      "lighting": "warm early-morning light softened by riverside palms",
+      "label": "Ngồi trên thuyền cạnh giỏ trái cây",
+      "group": "Việt Nam",
+      "family": "Picnic & nghỉ ngoài trời",
+      "tags": [
+        "Picnic & nghỉ ngoài trời",
+        "Việt Nam",
+        "Bikini"
+      ]
     },
     {
       "slot": 92,
@@ -1286,7 +2012,15 @@
       "gaze": "toward the camera with a small natural head turn",
       "camera": "front three-quarter view at eye level",
       "framing": "full-body environmental portrait with palms, sea and sunset",
-      "lighting": "golden sunset rim light with soft reflected fill on the face"
+      "lighting": "golden sunset rim light with soft reflected fill on the face",
+      "label": "Đi dọc bờ biển Phú Quốc",
+      "group": "Việt Nam",
+      "family": "Đi bộ & chuyển động",
+      "tags": [
+        "Đi bộ & chuyển động",
+        "Việt Nam",
+        "Bikini"
+      ]
     },
     {
       "slot": 93,
@@ -1300,7 +2034,15 @@
       "gaze": "toward the morning light outside",
       "camera": "front three-quarter view at seated eye level",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "soft diffused morning window light with warm room fill"
+      "lighting": "soft diffused morning window light with warm room fill",
+      "label": "Cầm cốc trên ghế phòng khách sạn",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Cầm cốc & đồ uống",
+      "tags": [
+        "Cầm cốc & đồ uống",
+        "Phòng ngủ & nghỉ ngơi",
+        "Satin"
+      ]
     },
     {
       "slot": 94,
@@ -1314,7 +2056,15 @@
       "gaze": "toward her own reflection",
       "camera": "slightly angled frontal view with a single coherent mirror reflection",
       "framing": "head-and-shoulders with camisole neckline visible",
-      "lighting": "soft warm vanity light with gentle ambient fill"
+      "lighting": "soft warm vanity light with gentle ambient fill",
+      "label": "Đeo hoa tai trước gương phòng ngủ",
+      "group": "Làm đẹp & công việc",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Làm đẹp & công việc",
+        "Satin"
+      ]
     },
     {
       "slot": 95,
@@ -1328,7 +2078,15 @@
       "gaze": "slightly past the camera",
       "camera": "near-frontal view at seated eye level",
       "framing": "three-quarter-body seated portrait",
-      "lighting": "warm reading-lamp light with soft evening shadows"
+      "lighting": "warm reading-lamp light with soft evening shadows",
+      "label": "Khép sách nghỉ trên sofa ban đêm",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Phòng khách & sinh hoạt",
+        "Satin"
+      ]
     },
     {
       "slot": 96,
@@ -1342,7 +2100,14 @@
       "gaze": "toward the clear section of the mirror",
       "camera": "front three-quarter view with one consistent reflection",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "soft diffused bathroom lighting with warm mirror fill"
+      "lighting": "soft diffused bathroom lighting with warm mirror fill",
+      "label": "Lau tóc trước gương sau tắm",
+      "group": "Phòng tắm",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Phòng tắm"
+      ]
     },
     {
       "slot": 97,
@@ -1356,7 +2121,14 @@
       "gaze": "out through the rain-streaked window",
       "camera": "front diagonal view with face visible beside the window",
       "framing": "three-quarter-body seated portrait",
-      "lighting": "cool rainy daylight balanced with a warm bedside lamp"
+      "lighting": "cool rainy daylight balanced with a warm bedside lamp",
+      "label": "Ngắm mưa từ giường ngủ",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Tựa gối & nghỉ ngơi",
+      "tags": [
+        "Tựa gối & nghỉ ngơi",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 98,
@@ -1370,7 +2142,15 @@
       "gaze": "toward the camera with a small head turn",
       "camera": "front three-quarter view at eye level",
       "framing": "three-quarter-body environmental portrait",
-      "lighting": "cool city-night ambient light with warm light from the open suite"
+      "lighting": "cool city-night ambient light with warm light from the open suite",
+      "label": "Ngắm đèn phố từ ban công riêng",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Tựa lan can & ngắm cảnh",
+      "tags": [
+        "Tựa lan can & ngắm cảnh",
+        "Phòng ngủ & nghỉ ngơi",
+        "Satin"
+      ]
     },
     {
       "slot": 99,
@@ -1384,7 +2164,14 @@
       "gaze": "toward the sunlit window",
       "camera": "front diagonal view from beside the dining table",
       "framing": "full-body environmental portrait including stockings, shoes, plants and the tall window",
-      "lighting": "soft natural daylight through the sheer curtains, muted warm wood tones and gentle indoor shadows"
+      "lighting": "soft natural daylight through the sheer curtains, muted warm wood tones and gentle indoor shadows",
+      "label": "Xoay về cửa sổ quán café cổ điển",
+      "group": "Café",
+      "family": "Ngồi bên cửa sổ quán",
+      "tags": [
+        "Ngồi bên cửa sổ quán",
+        "Café"
+      ]
     },
     {
       "slot": 100,
@@ -1398,7 +2185,14 @@
       "gaze": "toward the window just past the camera",
       "camera": "near-frontal view across the dining table with a clear glass globe pendant lamp high in the foreground, face unobstructed",
       "framing": "three-quarter-body environmental portrait with pizza, pasta and salad visible in the foreground",
-      "lighting": "soft natural daylight through the sheer curtains, muted warm wood tones and gentle indoor shadows"
+      "lighting": "soft natural daylight through the sheer curtains, muted warm wood tones and gentle indoor shadows",
+      "label": "Dừng ăn trưa cầm nĩa trong quán",
+      "group": "Café",
+      "family": "Đồ ăn & trái cây",
+      "tags": [
+        "Đồ ăn & trái cây",
+        "Café"
+      ]
     },
     {
       "slot": 101,
@@ -1412,7 +2206,14 @@
       "gaze": "out through the window with face clearly visible",
       "camera": "front three-quarter view at eye level",
       "framing": "full-body environmental portrait including the floral dress, stockings, shoes and dining-table edge",
-      "lighting": "soft natural daylight through the sheer curtains, muted warm wood tones and gentle indoor shadows"
+      "lighting": "soft natural daylight through the sheer curtains, muted warm wood tones and gentle indoor shadows",
+      "label": "Tựa quầy cạnh cửa sổ café cổ điển",
+      "group": "Café",
+      "family": "Ngồi bên cửa sổ quán",
+      "tags": [
+        "Ngồi bên cửa sổ quán",
+        "Café"
+      ]
     },
     {
       "slot": 102,
@@ -1426,7 +2227,15 @@
       "gaze": "up toward the sunlit garden",
       "camera": "front three-quarter view at seated eye level",
       "framing": "three-quarter-body environmental portrait including green window frames and floral cushions",
-      "lighting": "bright natural garden sunlight with dappled leaf shadows, warm timber highlights and soft reflected fill from the curtains"
+      "lighting": "bright natural garden sunlight with dappled leaf shadows, warm timber highlights and soft reflected fill from the curtains",
+      "label": "Ngồi bậu cửa sổ café nhìn vườn",
+      "group": "Café",
+      "family": "Ngồi bên cửa sổ quán",
+      "tags": [
+        "Ngồi bên cửa sổ quán",
+        "Café",
+        "Ren"
+      ]
     },
     {
       "slot": 103,
@@ -1440,7 +2249,15 @@
       "gaze": "toward the camera over her shoulder with face clearly visible",
       "camera": "rear three-quarter view at seated eye level",
       "framing": "three-quarter-body portrait framed by both open green windows",
-      "lighting": "bright natural garden sunlight with dappled leaf shadows, warm timber highlights and soft reflected fill from the curtains"
+      "lighting": "bright natural garden sunlight with dappled leaf shadows, warm timber highlights and soft reflected fill from the curtains",
+      "label": "Ngoái vai từ bậu cửa sổ café",
+      "group": "Café",
+      "family": "Ngồi bên cửa sổ quán",
+      "tags": [
+        "Ngồi bên cửa sổ quán",
+        "Café",
+        "Ren"
+      ]
     },
     {
       "slot": 104,
@@ -1454,7 +2271,15 @@
       "gaze": "out toward the trees and flowers",
       "camera": "rear diagonal environmental view, face turned away naturally",
       "framing": "wide seated portrait with the green window, floral pillows, plush bear and croissant plate on the round table",
-      "lighting": "bright natural garden sunlight with dappled leaf shadows, warm timber highlights and soft reflected fill from the curtains"
+      "lighting": "bright natural garden sunlight with dappled leaf shadows, warm timber highlights and soft reflected fill from the curtains",
+      "label": "Ngắm vườn bên cửa sổ trước bữa sáng",
+      "group": "Café",
+      "family": "Ngồi bên cửa sổ quán",
+      "tags": [
+        "Ngồi bên cửa sổ quán",
+        "Café",
+        "Ren"
+      ]
     },
     {
       "slot": 105,
@@ -1468,7 +2293,14 @@
       "gaze": "directly toward the camera",
       "camera": "straight-on frontal view at eye level",
       "framing": "full-body environmental portrait framed by the doorway, with the olive wall and a rectangular mirror visible beside her",
-      "lighting": "warm soft globe and bathroom light with muted olive-green and burgundy tones, gentle shadows and even fill on the face"
+      "lighting": "warm soft globe and bathroom light with muted olive-green and burgundy tones, gentle shadows and even fill on the face",
+      "label": "Đứng ở cửa phòng tắm xanh olive",
+      "group": "Phòng tắm",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Phòng tắm"
+      ]
     },
     {
       "slot": 106,
@@ -1482,7 +2314,14 @@
       "gaze": "toward the camera",
       "camera": "near-frontal view at eye level",
       "framing": "three-quarter-body portrait including the round basin, burgundy mirror edge, olive walls and bathtub behind her",
-      "lighting": "warm soft globe and bathroom light with muted olive-green and burgundy tones, gentle shadows and even fill on the face"
+      "lighting": "warm soft globe and bathroom light with muted olive-green and burgundy tones, gentle shadows and even fill on the face",
+      "label": "Tựa bàn rửa mặt terrazzo cổ điển",
+      "group": "Phòng tắm",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Phòng tắm"
+      ]
     },
     {
       "slot": 107,
@@ -1496,7 +2335,15 @@
       "gaze": "directly toward the camera",
       "camera": "near-frontal view close to mattress height, focus on her face and eyes",
       "framing": "upper-body portrait with the surrounding bedding and softly out-of-focus bent legs visible",
-      "lighting": "soft warm bedside light with gentle frontal fill"
+      "lighting": "soft warm bedside light with gentle frontal fill",
+      "label": "Chống cằm trên giường xám xanh",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Chân dung cận & tay bên mặt",
+      "tags": [
+        "Chân dung cận & tay bên mặt",
+        "Phòng ngủ & nghỉ ngơi",
+        "Ren"
+      ]
     },
     {
       "slot": 108,
@@ -1510,7 +2357,14 @@
       "gaze": "up toward the camera",
       "camera": "overhead front-facing view centered above her face and shoulders, natural portrait perspective",
       "framing": "upper-body portrait including the pillow and a little surrounding bedding",
-      "lighting": "soft diffused daylight with bright neutral bedding reflections"
+      "lighting": "soft diffused daylight with bright neutral bedding reflections",
+      "label": "Chân dung tựa gối nhìn từ trên",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Góc cao & selfie",
+      "tags": [
+        "Góc cao & selfie",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 109,
@@ -1524,7 +2378,15 @@
       "gaze": "toward the camera",
       "camera": "front three-quarter view at eye level",
       "framing": "full-body fashion portrait",
-      "lighting": "soft diffused morning window light emphasizing the lace texture without harsh shadows"
+      "lighting": "soft diffused morning window light emphasizing the lace texture without harsh shadows",
+      "label": "Đứng bên cửa sổ với đồ ren ivory",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Phòng ngủ & nghỉ ngơi",
+        "Ren"
+      ]
     },
     {
       "slot": 110,
@@ -1538,7 +2400,15 @@
       "gaze": "directly into the camera lens",
       "camera": "near-frontal view at eye level",
       "framing": "full-body editorial portrait",
-      "lighting": "a broad soft studio key with a subtle rim light showing the lace details"
+      "lighting": "a broad soft studio key with a subtle rim light showing the lace details",
+      "label": "Đứng cạnh ghế đẩu với đồ ren đen",
+      "group": "Studio & chân dung",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Studio & chân dung",
+        "Ren"
+      ]
     },
     {
       "slot": 111,
@@ -1552,7 +2422,15 @@
       "gaze": "toward her reflection",
       "camera": "slightly angled frontal view with one coherent mirror reflection",
       "framing": "three-quarter-body seated portrait",
-      "lighting": "warm even vanity light with gentle room fill"
+      "lighting": "warm even vanity light with gentle room fill",
+      "label": "Chọn hoa tai bên bàn trang điểm",
+      "group": "Làm đẹp & công việc",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Làm đẹp & công việc",
+        "Ren"
+      ]
     },
     {
       "slot": 112,
@@ -1566,7 +2444,16 @@
       "gaze": "toward the camera with a small natural head turn",
       "camera": "front three-quarter view at eye level",
       "framing": "three-quarter-body fashion portrait",
-      "lighting": "cool blue-hour ambient light balanced with warm light from the open room"
+      "lighting": "cool blue-hour ambient light balanced with warm light from the open room",
+      "label": "Đứng ban công thành phố lúc chạng vạng",
+      "group": "Thời trang & ánh đèn",
+      "family": "Tựa lan can & ngắm cảnh",
+      "tags": [
+        "Tựa lan can & ngắm cảnh",
+        "Thời trang & ánh đèn",
+        "Satin",
+        "Ren"
+      ]
     },
     {
       "slot": 113,
@@ -1580,7 +2467,16 @@
       "gaze": "slightly past the camera",
       "camera": "near-frontal view at seated eye level",
       "framing": "three-quarter-body seated portrait",
-      "lighting": "soft late-afternoon window light with a warm reading-lamp accent"
+      "lighting": "soft late-afternoon window light with a warm reading-lamp accent",
+      "label": "Đặt sách cạnh người trên sofa kem",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Phòng khách & sinh hoạt",
+        "Satin",
+        "Ren"
+      ]
     },
     {
       "slot": 114,
@@ -1594,7 +2490,16 @@
       "gaze": "directly toward the camera",
       "camera": "front diagonal view at eye level, mirror kept unobtrusive in the background",
       "framing": "full-body fashion portrait",
-      "lighting": "warm soft practical lighting with gentle fill and subtle highlights across the lace"
+      "lighting": "warm soft practical lighting with gentle fill and subtle highlights across the lace",
+      "label": "Chân dung trước gương phòng thay đồ",
+      "group": "Làm đẹp & công việc",
+      "family": "Gương & trang điểm",
+      "tags": [
+        "Gương & trang điểm",
+        "Làm đẹp & công việc",
+        "Satin",
+        "Ren"
+      ]
     },
     {
       "slot": 115,
@@ -1608,7 +2513,14 @@
       "gaze": "toward the camera with a small natural head turn",
       "camera": "slightly elevated front diagonal view",
       "framing": "full-body environmental portrait including the sofa, yarn and mint knitted throw",
-      "lighting": "bright diffused window daylight with airy white tones and gentle warm highlights"
+      "lighting": "bright diffused window daylight with airy white tones and gentle warm highlights",
+      "label": "Xoắn nhẹ lọn tóc trên sofa trắng",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Làm đẹp & chỉnh tóc",
+      "tags": [
+        "Làm đẹp & chỉnh tóc",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 116,
@@ -1622,7 +2534,15 @@
       "gaze": "directly toward the camera",
       "camera": "near-frontal view at seated eye level",
       "framing": "full-body seated portrait framed by the rounded armchair",
-      "lighting": "soft warm afternoon daylight with natural skin tones and gentle room shadows"
+      "lighting": "soft warm afternoon daylight with natural skin tones and gentle room shadows",
+      "label": "Ngồi thư giãn trên ghế bành xanh nhạt",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Ngồi trên ghế bành",
+      "tags": [
+        "Ngồi trên ghế bành",
+        "Phòng khách & sinh hoạt",
+        "Ren"
+      ]
     },
     {
       "slot": 117,
@@ -1636,7 +2556,15 @@
       "gaze": "out toward the nearby window",
       "camera": "front three-quarter view from the aisle with face clearly visible",
       "framing": "three-quarter-body environmental portrait including the bench, cup and timber window frame",
-      "lighting": "warm golden window light with muted film-like colors and soft cabin shadows"
+      "lighting": "warm golden window light with muted film-like colors and soft cabin shadows",
+      "label": "Nghỉ bên cửa sổ xe camper gỗ",
+      "group": "Ngoài trời & du lịch",
+      "family": "Ngồi chân dung",
+      "tags": [
+        "Ngồi chân dung",
+        "Ngoài trời & du lịch",
+        "Bikini"
+      ]
     },
     {
       "slot": 118,
@@ -1650,7 +2578,14 @@
       "gaze": "down toward the open book",
       "camera": "front three-quarter view at eye level",
       "framing": "full-body fashion portrait including loafers and the cafe shelves",
-      "lighting": "soft morning window light with warm wood reflections"
+      "lighting": "soft morning window light with warm wood reflections",
+      "label": "Đọc sách trong café hiệu sách",
+      "group": "Café",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Café"
+      ]
     },
     {
       "slot": 119,
@@ -1664,7 +2599,15 @@
       "gaze": "toward the artwork just beside the camera",
       "camera": "near-frontal view at eye level",
       "framing": "full-body environmental portrait including the skirt pleats and cream sneakers",
-      "lighting": "broad diffused skylight with soft neutral shadows"
+      "lighting": "broad diffused skylight with soft neutral shadows",
+      "label": "Đứng ngắm tranh trong gallery",
+      "group": "Studio & chân dung",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Studio & chân dung",
+        "Ren"
+      ]
     },
     {
       "slot": 120,
@@ -1678,7 +2621,14 @@
       "gaze": "toward the camera",
       "camera": "front three-quarter view at eye level",
       "framing": "full-body sports-fashion portrait with racket and court shoes visible",
-      "lighting": "soft late-afternoon sunlight with gentle reflected fill"
+      "lighting": "soft late-afternoon sunlight with gentle reflected fill",
+      "label": "Nghỉ trên ghế cạnh sân tennis",
+      "group": "Yoga",
+      "family": "Nghỉ sau vận động",
+      "tags": [
+        "Nghỉ sau vận động",
+        "Yoga"
+      ]
     },
     {
       "slot": 121,
@@ -1692,7 +2642,14 @@
       "gaze": "slightly past the camera toward the window",
       "camera": "front diagonal view at eye level",
       "framing": "full-body environmental portrait including loafers and the warm record-shop interior",
-      "lighting": "warm window light with soft amber practical lighting"
+      "lighting": "warm window light with soft amber practical lighting",
+      "label": "Xem bìa đĩa tại cửa hàng vinyl",
+      "group": "Ngoài trời & du lịch",
+      "family": "Sinh hoạt & đồ vật",
+      "tags": [
+        "Sinh hoạt & đồ vật",
+        "Ngoài trời & du lịch"
+      ]
     },
     {
       "slot": 122,
@@ -1706,7 +2663,15 @@
       "gaze": "down toward her hands",
       "camera": "front three-quarter view at a natural eye-level angle with face visible",
       "framing": "full-body environmental portrait with feet, stone coping and palms visible",
-      "lighting": "soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain"
+      "lighting": "soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain",
+      "label": "Chỉnh tóc cạnh bể nhiệt đới",
+      "group": "Bể bơi",
+      "family": "Làm đẹp & chỉnh tóc",
+      "tags": [
+        "Làm đẹp & chỉnh tóc",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 123,
@@ -1720,7 +2685,15 @@
       "gaze": "off-camera across the pool",
       "camera": "front three-quarter view at a natural eye-level angle with face visible",
       "framing": "full-body environmental portrait including the pool edge and mountain backdrop",
-      "lighting": "soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain"
+      "lighting": "soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain",
+      "label": "Đứng đón gió cạnh bể vô cực",
+      "group": "Bể bơi",
+      "family": "Đứng bên bể",
+      "tags": [
+        "Đứng bên bể",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 124,
@@ -1734,7 +2707,15 @@
       "gaze": "down toward the entry steps",
       "camera": "front three-quarter view at a natural eye-level angle with face visible",
       "framing": "three-quarter-body environmental portrait including both wooden handrails and the waterline",
-      "lighting": "soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain"
+      "lighting": "soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain",
+      "label": "Bước xuống bậc gỗ vào bể",
+      "group": "Bể bơi",
+      "family": "Bậc thang & thang bể",
+      "tags": [
+        "Bậc thang & thang bể",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 125,
@@ -1748,7 +2729,15 @@
       "gaze": "toward her lifted hand",
       "camera": "front three-quarter view at a natural eye-level angle with face visible",
       "framing": "seated three-quarter-body portrait including the supporting hand, coping and rippling water",
-      "lighting": "soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain"
+      "lighting": "soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain",
+      "label": "Ngồi mép bể thả cẳng chân xuống nước",
+      "group": "Bể bơi",
+      "family": "Ngồi mép nước",
+      "tags": [
+        "Ngồi mép nước",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 126,
@@ -1762,7 +2751,15 @@
       "gaze": "toward the camera",
       "camera": "front three-quarter view at a natural eye-level angle with face visible",
       "framing": "three-quarter-body portrait framed by weathered wooden handrails, teal water and tropical greenery",
-      "lighting": "soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain"
+      "lighting": "soft overcast daylight with muted tropical greens, gentle skin tones and subtle film grain",
+      "label": "Dừng bên tay vịn bậc gỗ bể bơi",
+      "group": "Bể bơi",
+      "family": "Bậc thang & thang bể",
+      "tags": [
+        "Bậc thang & thang bể",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 127,
@@ -1776,7 +2773,14 @@
       "gaze": "toward the camera",
       "camera": "a natural mattress-height front diagonal view with face clearly visible",
       "framing": "wide three-quarter-body portrait including the raised feet, white duvet and bright room",
-      "lighting": "soft airy window daylight with creamy whites and gentle shadows"
+      "lighting": "soft airy window daylight with creamy whites and gentle shadows",
+      "label": "Chống cằm nghỉ trên giường trắng",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Chân dung cận & tay bên mặt",
+      "tags": [
+        "Chân dung cận & tay bên mặt",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 128,
@@ -1790,7 +2794,14 @@
       "gaze": "toward the camera",
       "camera": "slightly elevated front diagonal view with natural perspective",
       "framing": "three-quarter-body casual fashion portrait including the pillows and bent legs",
-      "lighting": "warm bedside lamplight mixed with soft ambient light"
+      "lighting": "warm bedside lamplight mixed with soft ambient light",
+      "label": "Ngả tựa gối áo thun trắng quần jeans",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Tựa gối & nghỉ ngơi",
+      "tags": [
+        "Tựa gối & nghỉ ngơi",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 129,
@@ -1804,7 +2815,15 @@
       "gaze": "off-camera toward the shoreline",
       "camera": "low front three-quarter view with face clearly visible",
       "framing": "wide environmental portrait showing the blanket, books, picnic objects, shoreline and headland",
-      "lighting": "warm late-afternoon coastal sunlight with soft film-like color and gentle shadows"
+      "lighting": "warm late-afternoon coastal sunlight with soft film-like color and gentle shadows",
+      "label": "Đọc sách trên thảm picnic bờ vịnh",
+      "group": "Biển",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Biển",
+        "Bikini"
+      ]
     },
     {
       "slot": 130,
@@ -1818,7 +2837,14 @@
       "gaze": "eyes softly closed toward the window light",
       "camera": "eye-level front three-quarter view",
       "framing": "full-body environmental portrait including bare feet, sheer curtains and the bed corner",
-      "lighting": "golden morning backlight through sheer curtains, soft rim light and warm hazy shadows"
+      "lighting": "golden morning backlight through sheer curtains, soft rim light and warm hazy shadows",
+      "label": "Chân dung cửa sổ phòng ngủ nắng vàng",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 131,
@@ -1832,7 +2858,14 @@
       "gaze": "down toward the phone",
       "camera": "casual front diagonal view from slightly below seated eye level, natural perspective",
       "framing": "loose seated portrait showing the spread of the trouser legs across the cream cushions, relaxed hands and bare feet; lived-in asymmetry rather than a formal fashion pose",
-      "lighting": "soft natural window light with warm neutral tones"
+      "lighting": "soft natural window light with warm neutral tones",
+      "label": "Lướt điện thoại lún trong sofa kem",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Điện thoại & selfie",
+      "tags": [
+        "Điện thoại & selfie",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 132,
@@ -1846,7 +2879,14 @@
       "gaze": "at the pages behind the open book",
       "camera": "straight-on wide view from across the room; the book intentionally obscures the face, prioritizing the reading composition",
       "framing": "distant full-sofa composition with the small seated figure centered low in frame, a large expanse of plain wall above and pale rug below, bare feet visible",
-      "lighting": "soft diffused daylight with gentle muted shadows"
+      "lighting": "soft diffused daylight with gentle muted shadows",
+      "label": "Đọc sách ngả trên sofa taupe",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 133,
@@ -1860,7 +2900,14 @@
       "gaze": "a quiet sideways glance toward the camera over the armrest",
       "camera": "wide side-on view at sofa-seat height, showing the natural length of the sofa",
       "framing": "horizontal-feeling full-sofa environmental portrait with the figure stretched along the cushions, both bare feet included, large quiet wall space above",
-      "lighting": "soft side-window daylight with subdued beige and ivory tones"
+      "lighting": "soft side-window daylight with subdued beige and ivory tones",
+      "label": "Nằm dài thả lỏng trên sofa beige",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Nằm & ngả trên sofa",
+      "tags": [
+        "Nằm & ngả trên sofa",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 134,
@@ -1874,7 +2921,14 @@
       "gaze": "gently toward the camera while her chin stays on her forearms",
       "camera": "close front diagonal view at cushion height, natural perspective",
       "framing": "intimate three-quarter seated portrait with folded legs, tucked bare feet, oversized sweater folds and the upright cushion filling the frame",
-      "lighting": "soft overcast window light with gentle fabric texture and natural shadows"
+      "lighting": "soft overcast window light with gentle fabric texture and natural shadows",
+      "label": "Cuộn người tựa đệm sofa beige",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Ôm gối & ôm chân",
+      "tags": [
+        "Ôm gối & ôm chân",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 135,
@@ -1888,7 +2942,14 @@
       "gaze": "down at the photography book",
       "camera": "slightly elevated wide front diagonal view, natural candid perspective",
       "framing": "full seated figure low in frame with generous quiet plaster wall above, open photography book large in the foreground, coffee cup and folded sunglasses to one side and both bare feet visible",
-      "lighting": "soft low-contrast natural side light, warm gray and beige tones, subtle grain and quiet shadows rather than glossy studio lighting"
+      "lighting": "soft low-contrast natural side light, warm gray and beige tones, subtle grain and quiet shadows rather than glossy studio lighting",
+      "label": "Đọc sách ảnh trên sàn cạnh cà phê",
+      "group": "Studio & chân dung",
+      "family": "Đọc sách & viết",
+      "tags": [
+        "Đọc sách & viết",
+        "Studio & chân dung"
+      ]
     },
     {
       "slot": 136,
@@ -1903,7 +2964,14 @@
       "outfit": "an opaque fitted black strapless mini dress with a softly curved neckline, gently gathered fabric at the waist, a small front hem slit and fully lined coverage",
       "footwear": "white pointed-toe leather slingback pumps with two slim buckled straps across the vamp, an open heel with a slim back strap, black insoles and slender black stiletto heels",
       "silhouette": "a fitted black strapless mini dress",
-      "lighting": "natural afternoon sunlight softened by the parasols, gentle dappled shadows and realistic fabric texture"
+      "lighting": "natural afternoon sunlight softened by the parasols, gentle dappled shadows and realistic fabric texture",
+      "label": "Vén tóc cạnh bàn café sân vườn",
+      "group": "Café",
+      "family": "Làm đẹp & chỉnh tóc",
+      "tags": [
+        "Làm đẹp & chỉnh tóc",
+        "Café"
+      ]
     },
     {
       "slot": 137,
@@ -1918,7 +2986,14 @@
       "outfit": "an opaque fitted black strapless mini dress with a softly curved neckline, gently gathered fabric at the waist, a small front hem slit and fully lined coverage",
       "footwear": "white pointed-toe leather slingback pumps with two slim buckled straps across the vamp, an open heel with a slim back strap, black insoles and slender black stiletto heels",
       "silhouette": "a fitted black strapless mini dress",
-      "lighting": "natural afternoon sunlight softened by the parasols, gentle dappled shadows and realistic fabric texture"
+      "lighting": "natural afternoon sunlight softened by the parasols, gentle dappled shadows and realistic fabric texture",
+      "label": "Ngả trên ghế café màu kem",
+      "group": "Café",
+      "family": "Ngồi trên ghế bành",
+      "tags": [
+        "Ngồi trên ghế bành",
+        "Café"
+      ]
     },
     {
       "slot": 138,
@@ -1932,7 +3007,15 @@
       "framing": "an unposed bedside portrait showing the face, pillow and the duvet draped across her lower half",
       "outfit": "an opaque soft ivory cotton pajama top and matching pajama bottoms under the duvet",
       "silhouette": "loose cotton sleepwear under a softly folded linen duvet",
-      "lighting": "soft diffused morning window light, gentle shadows and warm neutral tones"
+      "lighting": "soft diffused morning window light, gentle shadows and warm neutral tones",
+      "label": "Nằm nghỉ dưới chăn buổi sáng",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Nằm nghỉ trên giường",
+      "tags": [
+        "Nằm nghỉ trên giường",
+        "Phòng ngủ & nghỉ ngơi",
+        "Đồ ngủ"
+      ]
     },
     {
       "slot": 139,
@@ -1946,7 +3029,14 @@
       "framing": "a vertical environmental portrait from head to below the knees, including the raised glass, potted plants and the edge of the washing machine",
       "outfit": "an opaque pale blush-pink cropped camisole and matching fitted lounge shorts, both with fine black scalloped trim, plus a white crocheted headscarf",
       "silhouette": "a coordinated pink two-piece lounge set with dark contrast trim",
-      "lighting": "direct on-camera flash with warm ambient shadows, muted 35 mm film colors and visible analog grain"
+      "lighting": "direct on-camera flash with warm ambient shadows, muted 35 mm film colors and visible analog grain",
+      "label": "Cầm ly trong căn hộ retro đèn flash",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Cầm cốc & đồ uống",
+      "tags": [
+        "Cầm cốc & đồ uống",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 140,
@@ -1961,7 +3051,14 @@
       "outfit": "an opaque sage-green sleeveless athletic top and matching high-waisted leggings",
       "footwear": "bare feet, without socks or shoes",
       "silhouette": "a clean fitted yoga set with a grounded upright stance",
-      "lighting": "soft morning window light and gentle shadows"
+      "lighting": "soft morning window light and gentle shadows",
+      "label": "Yoga đứng một chân tư thế cái cây",
+      "group": "Yoga",
+      "family": "Yoga thăng bằng đứng",
+      "tags": [
+        "Yoga thăng bằng đứng",
+        "Yoga"
+      ]
     },
     {
       "slot": 141,
@@ -1976,7 +3073,14 @@
       "outfit": "an opaque rust-colored athletic tank and charcoal full-length leggings",
       "footwear": "bare feet, without socks or shoes",
       "silhouette": "a strong open stance in understated activewear",
-      "lighting": "warm reflected daylight with softly shaded foliage"
+      "lighting": "warm reflected daylight with softly shaded foliage",
+      "label": "Yoga chiến binh II trên sân hiên",
+      "group": "Yoga",
+      "family": "Yoga thăng bằng đứng",
+      "tags": [
+        "Yoga thăng bằng đứng",
+        "Yoga"
+      ]
     },
     {
       "slot": 142,
@@ -1991,7 +3095,14 @@
       "outfit": "an opaque slate-blue athletic top and matching full-length leggings",
       "footwear": "bare feet, without socks or shoes",
       "silhouette": "an inverted V in a fitted athletic set",
-      "lighting": "diffuse loft daylight with a soft shadow beneath the mat"
+      "lighting": "diffuse loft daylight with a soft shadow beneath the mat",
+      "label": "Yoga chó úp mặt trong loft",
+      "group": "Yoga",
+      "family": "Yoga gập & duỗi",
+      "tags": [
+        "Yoga gập & duỗi",
+        "Yoga"
+      ]
     },
     {
       "slot": 143,
@@ -2006,7 +3117,14 @@
       "outfit": "an opaque mauve short-sleeved athletic top and matching stretch leggings",
       "footwear": "bare feet, without socks or shoes",
       "silhouette": "a relaxed seated shape in soft tonal activewear",
-      "lighting": "low golden light with gentle warm shadows"
+      "lighting": "low golden light with gentle warm shadows",
+      "label": "Yoga ngồi cánh bướm lúc hoàng hôn",
+      "group": "Yoga",
+      "family": "Yoga gập & duỗi",
+      "tags": [
+        "Yoga gập & duỗi",
+        "Yoga"
+      ]
     },
     {
       "slot": 144,
@@ -2020,7 +3138,15 @@
       "gaze": "gently toward the camera",
       "camera": "an elevated three-quarter angle looking along the length of the tub",
       "framing": "a vertical portrait including her face, the curved rim and soft foam in the foreground",
-      "lighting": "soft warm bathroom light with gentle reflections on the ceramic and water"
+      "lighting": "soft warm bathroom light with gentle reflections on the ceramic and water",
+      "label": "Ngâm bồn chân sư tử với bọt trắng",
+      "group": "Phòng tắm",
+      "family": "Tắm & thư giãn",
+      "tags": [
+        "Tắm & thư giãn",
+        "Phòng tắm",
+        "Đồ bơi"
+      ]
     },
     {
       "slot": 145,
@@ -2035,7 +3161,15 @@
       "camera": "a slightly elevated three-quarter side view from beside the bed",
       "framing": "a vertical environmental portrait including the pillow, bedding, plush toys and warmly lit bedside table",
       "lighting": "warm bedside lamp and fairy lights with soft direct flash and subtle analog film grain",
-      "footwear": "bare feet, without socks or shoes"
+      "footwear": "bare feet, without socks or shoes",
+      "label": "Tựa gối đồ ngủ cherry và đèn dây",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Tựa gối & nghỉ ngơi",
+      "tags": [
+        "Tựa gối & nghỉ ngơi",
+        "Phòng ngủ & nghỉ ngơi",
+        "Đồ ngủ"
+      ]
     },
     {
       "slot": 146,
@@ -2049,7 +3183,15 @@
       "gaze": "down and to the left side of the image, away from the lens",
       "camera": "a close, nearly straight-on view into the mirror with one coherent reflection and no visible phone or camera",
       "framing": "a tight head-to-upper-thigh crop with the subject slightly right of center, the thick wood frame dominating the left edge and tracing the top, and both hands cropped near the dresser at the bottom edge",
-      "lighting": "dim, soft side daylight from the curtained window on the left, with muted warm tones and natural shadows on the right"
+      "lighting": "dim, soft side daylight from the curtained window on the left, with muted warm tones and natural shadows on the right",
+      "label": "Tựa bàn chụp gương khung gỗ",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Selfie gương",
+      "tags": [
+        "Selfie gương",
+        "Phòng ngủ & nghỉ ngơi",
+        "Bikini"
+      ]
     },
     {
       "slot": 147,
@@ -2064,7 +3206,15 @@
       "camera": "a straight-on eye-level view centered on the sofa",
       "framing": "a vertical full-body composition including both hands and feet, the leather seat and open wall space above",
       "lighting": "warm diffused front light bringing out the leather grain, plaster and denim texture",
-      "footwear": "bare feet, without socks or shoes"
+      "footwear": "bare feet, without socks or shoes",
+      "label": "Chân dung đồ jeans trên sofa da nâu",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Ngồi chân dung",
+      "tags": [
+        "Ngồi chân dung",
+        "Phòng khách & sinh hoạt",
+        "Jeans"
+      ]
     },
     {
       "slot": 148,
@@ -2079,7 +3229,14 @@
       "camera": "a full-length mirror selfie with one consistent reflection; phone partly obscuring the face",
       "framing": "a vertical full-body reflection including the wooden chair, the raised foot and the surrounding apartment",
       "lighting": "soft indirect daylight with neutral tones and gentle indoor shadows",
-      "footwear": "bare feet, without socks or shoes"
+      "footwear": "bare feet, without socks or shoes",
+      "label": "Selfie gương ngồi ghế nhấc một chân",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Selfie gương",
+      "tags": [
+        "Selfie gương",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 149,
@@ -2094,7 +3251,14 @@
       "camera": "a nearly straight-on view from across the room, close to sofa-seat height",
       "framing": "a wide environmental composition with the head on the lower left, raised foot toward the upper right, both feet visible and the floral sofa anchoring the lower frame",
       "lighting": "warm late-afternoon window light, bright rectangular patches behind the sofa, soft shadows across the seat and a slightly hazy film finish",
-      "footwear": "bare feet, without socks or shoes"
+      "footwear": "bare feet, without socks or shoes",
+      "label": "Nằm nghiêng xoắn tóc trên sofa hoa",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Nằm & ngả trên sofa",
+      "tags": [
+        "Nằm & ngả trên sofa",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 150,
@@ -2108,7 +3272,14 @@
       "gaze": "eyes closed, face tilted slightly down",
       "camera": "a low three-quarter view from the edge of the bed",
       "framing": "vertical composition with the face left of center, cream bedding filling the foreground and tall windows visible behind her",
-      "lighting": "strong golden backlight through the windows with softly veiled highlights, amber haze and a faint rainbow lens flare across the upper half"
+      "lighting": "strong golden backlight through the windows with softly veiled highlights, amber haze and a faint rainbow lens flare across the upper half",
+      "label": "Nằm trên giường dưới vệt nắng chói",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Nằm nghỉ trên giường",
+      "tags": [
+        "Nằm nghỉ trên giường",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 151,
@@ -2123,7 +3294,15 @@
       "camera": "a straight-on view into the full-length mirror with one coherent reflection, the phone beside rather than in front of the face",
       "framing": "vertical mirror composition including the phone, both feet, the hanging satin hem and generous empty wall space above",
       "lighting": "direct warm afternoon side light creating a geometric window shadow and soft satin highlights",
-      "footwear": "bare feet, without socks or shoes"
+      "footwear": "bare feet, without socks or shoes",
+      "label": "Selfie gương ngồi giường đồ satin đen",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Selfie gương",
+      "tags": [
+        "Selfie gương",
+        "Phòng ngủ & nghỉ ngơi",
+        "Satin"
+      ]
     },
     {
       "slot": 152,
@@ -2137,7 +3316,14 @@
       "gaze": "looking into the elevated camera lens without lifting her chin",
       "camera": "a close handheld portrait from above head height, angled downward about 30 degrees toward her face and shoulders",
       "framing": "vertical head-and-upper-torso portrait with the face prominent in the upper center; hands can enter at the lower edge, while legs and feet remain entirely outside the frame. Keep only a shallow strip of sofa and apartment visible behind her",
-      "lighting": "soft indoor daylight with warm neutral tones and natural facial detail"
+      "lighting": "soft indoor daylight with warm neutral tones and natural facial detail",
+      "label": "Chân dung ngồi sofa nhìn từ trên",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Góc cao & selfie",
+      "tags": [
+        "Góc cao & selfie",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 153,
@@ -2152,7 +3338,15 @@
       "camera": "a straight-on view from near seated eye level",
       "framing": "vertical composition with her face in the upper center and the full teddy bear head and outstretched paws filling the lower foreground",
       "lighting": "bright diffused daylight through the sheer curtains on the left, with soft shadows and a clean cream-and-blue palette",
-      "footwear": "bare feet, without socks or shoes"
+      "footwear": "bare feet, without socks or shoes",
+      "label": "Ngồi sau gấu bông khổng lồ trên thảm",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Hoa & đạo cụ",
+      "tags": [
+        "Hoa & đạo cụ",
+        "Phòng khách & sinh hoạt",
+        "Ren"
+      ]
     },
     {
       "slot": 154,
@@ -2166,7 +3360,14 @@
       "gaze": "directly into the lens",
       "camera": "a close, nearly straight-on casual phone portrait at seated eye level with a slight downward angle",
       "framing": "tight vertical crop from just above the head to the shorts, with both knees enlarged in the foreground and cut by the lower side edges; no feet visible. Face in the upper third, both V signs next to the cheeks, white T-shirt visible down the center and plain wall filling the background",
-      "lighting": "direct warm light from camera-right with a distinct soft-edged head shadow falling to the left on the off-white wall"
+      "lighting": "direct warm light from camera-right with a distinct soft-edged head shadow falling to the left on the off-white wall",
+      "label": "Giơ hai tay chữ V trước tường trắng",
+      "group": "Studio & chân dung",
+      "family": "Tay giơ & tạo dấu",
+      "tags": [
+        "Tay giơ & tạo dấu",
+        "Studio & chân dung"
+      ]
     },
     {
       "slot": 155,
@@ -2181,7 +3382,14 @@
       "camera": "a close handheld floor-mirror selfie with the raised knee and nearer foot prominent in the foreground, matching the original close seated outfit perspective. Open the upper field of view enough to include the whole head instead of cropping at the chest; retain the existing seated body and leg geometry, rather than changing to a distant upright full-body portrait. One coherent mirror reflection only. Phone flash off, without glare over the face. PHONE PLACEMENT: the phone is at the outside of the shoulder at upper-chest height, with its entire top edge below the chin, its lens aimed slightly upward toward the mirror. The face is ABOVE AND TO THE LEFT OF the phone in the reflection, separated by visible background. This is a low-held-phone mirror selfie, not the usual face-level-phone selfie. The reflected phone presents its opaque back and rear camera lenses to the mirror. Its display points away from the mirror toward the holder, so no lit display, camera app interface or image-within-an-image is visible.",
       "framing": "vertical mirror-selfie composition preserving the large raised knee at image right, the nearer foot at lower center and the horizontally folded leg ending in a sideways foot at lower right. Extend the original tight crop upward to include all of the head with a small margin above the hair and the full unobstructed face in the upper portion. Show the whole head near the upper edge. The entire phone and holding hand fit below chin level beside the outer shoulder at image right, with a visible background gap separating them from the head. Neither the phone nor the fingers overlap any part of the face. Keep the lower floor-mirror edge visible below the reflected feet, with empty floor only outside it; show no real toes, legs, hands or phone below or beside the mirror. Do not introduce a second person or a second reflection. The phone visible inside the mirror has a plain opaque back with camera lenses, not a screen showing the person. Only one human figure appears in the entire image, with no tiny duplicate person on a phone display.",
       "lighting": "soft warm ambient indoor light, phone flash disabled, no glare or flare over the face",
-      "footwear": "white ribbed crew socks and white chunky low-top lace-up sneakers with layered panels and thick textured soles"
+      "footwear": "white ribbed crew socks and white chunky low-top lace-up sneakers with layered panels and thick textured soles",
+      "label": "Selfie gương ngồi sàn với sneaker trắng",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Selfie gương",
+      "tags": [
+        "Selfie gương",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 156,
@@ -2196,7 +3404,14 @@
       "camera": "a near-frontal full-length mirror selfie with one coherent reflection and the phone partially covering one side of the face",
       "framing": "vertical crop including the full crouched pose, gray socks, mirror edges and unmade bed behind her",
       "lighting": "dim warm bedside light with muted evening tones",
-      "footwear": "light gray ankle socks, without shoes"
+      "footwear": "light gray ankle socks, without shoes",
+      "label": "Selfie gương ngồi thấp áo cardigan xanh",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Selfie gương",
+      "tags": [
+        "Selfie gương",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 157,
@@ -2211,7 +3426,14 @@
       "camera": "a low frontal view from near seated eye level",
       "framing": "vertical composition from head to legs, with the folded leg and bare foot visible in front and the extended leg reaching the lower-right edge",
       "lighting": "bright diffused daylight through the curtains with delicate floor reflections",
-      "footwear": "bare feet and uncovered ankles and calves, with no socks, shoes or leg warmers"
+      "footwear": "bare feet and uncovered ankles and calves, with no socks, shoes or leg warmers",
+      "label": "Ngồi sàn đồ thể thao xanh sage",
+      "group": "Studio & chân dung",
+      "family": "Ngồi gập chân lệch bên",
+      "tags": [
+        "Ngồi gập chân lệch bên",
+        "Studio & chân dung"
+      ]
     },
     {
       "slot": 158,
@@ -2226,7 +3448,15 @@
       "camera": "a slightly low frontal view across the pool edge, keeping the whole reclining figure in one natural perspective",
       "framing": "vertical full-body portrait with the reclining figure across the lower third, both hands and feet inside the frame, turquoise water and lush trees in the middle distance and generous open sky above",
       "lighting": "soft natural daylight with muted tropical colors, gentle shadows and subtle reflections from the pool",
-      "footwear": "bare feet, without socks or shoes"
+      "footwear": "bare feet, without socks or shoes",
+      "label": "Nằm nghiêng trên thành đá khô cạnh bể",
+      "group": "Bể bơi",
+      "family": "Nằm & ngả bên bể",
+      "tags": [
+        "Nằm & ngả bên bể",
+        "Bể bơi",
+        "Bikini"
+      ]
     },
     {
       "expression": "composed and neutral with lips softly closed",
@@ -2241,7 +3471,14 @@
       "outfit": "an opaque close-fitting white collared short-sleeve button-front blouse with a narrow gold-trimmed sleeve edge, tucked into a fitted high-waisted deep navy mini skirt ending at the upper thighs; a thin waist belt with a small gold buckle; no jacket, tie or stockings",
       "silhouette": "a neat fitted blouse and tailored navy skirt with a relaxed side-seated silhouette",
       "camera": "the viewpoint is the phone reflected in a tall mirror, slightly above seated eye level and tilted gently downward, with one coherent reflected subject; the face remains unobstructed to the left of the phone",
-      "framing": "portrait composition tightly containing the head near the top edge, pink phone beside the cheek at upper right, upright torso in the upper center, both bent knees in the lower-right foreground and both feet extending toward the left edge; a strip of ornate mirror frame runs down the right edge, blinds and gray curtains at upper left and a white radiator behind the subject"
+      "framing": "portrait composition tightly containing the head near the top edge, pink phone beside the cheek at upper right, upright torso in the upper center, both bent knees in the lower-right foreground and both feet extending toward the left edge; a strip of ornate mirror frame runs down the right edge, blinds and gray curtains at upper left and a white radiator behind the subject",
+      "label": "Selfie gương ngồi sàn sơ mi và váy navy",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Selfie gương",
+      "tags": [
+        "Selfie gương",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "expression": "calm and neutral with lips gently closed",
@@ -2256,7 +3493,14 @@
       "outfit": "a loose opaque light heather-gray long-sleeve crew-neck sweatshirt and matching soft gray joggers with elastic cuffs gathered above the ankles, plus small silver hoop earrings; no socks or shoes",
       "silhouette": "a single compact seated figure with two bent knees held close to the chest and exactly two raised lower legs ending in two feet; no crossed legs",
       "camera": "a moderate elevated three-quarter view from in front of the chair, with natural perspective and mild foreshortening; keep enough separation between the two shins to read their anatomy, without exaggerated foreground feet",
-      "framing": "vertical portrait containing one complete seated person, both knees, both continuous shins and exactly two bare feet fully within the frame; the higher foot is near upper-center-left, the lower foot is farther left, and the face is at mid-right; tan leather chair below and beige curtains behind; no mirrors or reflected limbs"
+      "framing": "vertical portrait containing one complete seated person, both knees, both continuous shins and exactly two bare feet fully within the frame; the higher foot is near upper-center-left, the lower foot is farther left, and the face is at mid-right; tan leather chair below and beige curtains behind; no mirrors or reflected limbs",
+      "label": "Ôm hai gối cuộn người trong ghế da",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Ôm gối & ôm chân",
+      "tags": [
+        "Ôm gối & ôm chân",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "expression": "a soft friendly smile",
@@ -2271,7 +3515,14 @@
       "outfit": "an opaque fitted black sleeveless cropped tank top and medium-blue relaxed straight-leg jeans with a plain light-colored inner waistband, without logos",
       "silhouette": "a fitted short tank above relaxed full-length denim, in a compact seated silhouette",
       "camera": "a low three-quarter rear view at seated shoulder height, face clearly visible over one shoulder",
-      "framing": "vertical full-body portrait showing the seated figure, naturally folded legs and bare feet on the floor, with sofa and window in the background"
+      "framing": "vertical full-body portrait showing the seated figure, naturally folded legs and bare feet on the floor, with sofa and window in the background",
+      "label": "Ngồi sàn ngoái qua vai áo đen quần jeans",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Ngồi ngoái vai",
+      "tags": [
+        "Ngồi ngoái vai",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "expression": "a gentle closed-mouth smile with a calm friendly expression",
@@ -2286,7 +3537,14 @@
       "outfit": "an opaque off-white close-fitting long-sleeve mock-neck crop top with a clean plain front, ending just above the waistband and showing a narrow strip of midriff; matching high-waisted off-white fitted trousers, slim through the hips and thighs with subtly flared straight hems ending above the bare feet; no cardigan, loose sweatshirt or wide lounge pants",
       "silhouette": "an asymmetric triangular seated silhouette: torso inclines left, one upright knee on the right, one folded knee low on the left, both feet close together on the right half of the seat; one visibly straight supporting arm at image left",
       "camera": "a close near-frontal portrait from slightly above the seated subject, looking gently downward at the seat cushion; normal perspective with both feet visible on the seat",
-      "framing": "tight vertical full-body SEATED portrait. The head sits near the upper edge with only a small margin above it. The seated body occupies roughly 80 percent of the image height; show both hands, both knees and both feet on the cushion. Crop the bottom just below the seat-cushion level, with little or no sofa front panel or floor. Show only a narrow area of plain wall above the head; no large empty upper half. The raised knee and its planted foot stay at image right; the horizontally folded knee stays at image left."
+      "framing": "tight vertical full-body SEATED portrait. The head sits near the upper edge with only a small margin above it. The seated body occupies roughly 80 percent of the image height; show both hands, both knees and both feet on the cushion. Crop the bottom just below the seat-cushion level, with little or no sofa front panel or floor. Show only a narrow area of plain wall above the head; no large empty upper half. The raised knee and its planted foot stay at image right; the horizontally folded knee stays at image left.",
+      "label": "Ngồi sofa một gối cao một chân gập",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Ngồi gập chân lệch bên",
+      "tags": [
+        "Ngồi gập chân lệch bên",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 163,
@@ -2301,7 +3559,14 @@
       "camera": "near-frontal full-length portrait at standing chest height, with natural perspective and the vertical door jamb visible beside the subject",
       "framing": "vertical full-body composition with the head near the upper fifth and both bare feet fully in frame near the lower edge; the white door jamb runs beside the figure on image right, bedroom on image left and a narrow bathroom view on image right",
       "lighting": "warm indoor hotel light mixed with soft ambient window light, gentle shadows and natural skin texture",
-      "footwear": "bare feet, no socks or shoes, both toes naturally placed on the stone floor"
+      "footwear": "bare feet, no socks or shoes, both toes naturally placed on the stone floor",
+      "label": "Tựa khung cửa phòng ngủ khách sạn",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 164,
@@ -2316,7 +3581,15 @@
       "camera": "full-body portrait from a normal standing waist-to-chest-height viewpoint, a side-on three-quarter angle and natural proportions without wide-angle distortion",
       "framing": "vertical full-body composition with the raised hand and hair fully inside the upper frame and both bare feet fully inside the lower frame; the standing figure occupies the center and roughly three quarters of the image height; sea horizon behind the waist, pale sand below and open blue sky above",
       "lighting": "clear strong seaside daylight with natural sunlit highlights and a crisp shadow falling across the sand toward image left",
-      "footwear": "two bare feet on the sand, no socks or shoes; one foot weight-bearing and the other lightly on its toes"
+      "footwear": "two bare feet on the sand, no socks or shoes; one foot weight-bearing and the other lightly on its toes",
+      "label": "Đứng nghiêng bikini olive trên biển",
+      "group": "Biển",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Biển",
+        "Bikini"
+      ]
     },
     {
       "slot": 165,
@@ -2331,7 +3604,15 @@
       "camera": "a close frontal three-quarter view at approximately seated eye level, showing the inside of the hanging chair with natural perspective and mild foreshortening",
       "framing": "vertical seated portrait with the rounded rattan chair arch filling the top and sides, face at upper-left-center, hands and bent knees at mid-right and both feet fully contained near the lower-right edge; include the cream cushions and a narrow glimpse of balcony greenery, no cropped feet or duplicate limbs",
       "lighting": "bright diffused balcony daylight, soft warm reflections from the rattan and gentle shadows on the cream cushions",
-      "footwear": "exactly two bare feet resting on the chair cushion, no socks or shoes"
+      "footwear": "exactly two bare feet resting on the chair cushion, no socks or shoes",
+      "label": "Ôm chân trong ghế mây treo",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Ôm gối & ôm chân",
+      "tags": [
+        "Ôm gối & ôm chân",
+        "Phòng khách & sinh hoạt",
+        "Đồ bơi"
+      ]
     },
     {
       "slot": 166,
@@ -2346,7 +3627,15 @@
       "camera": "a close front-side three-quarter seated portrait, camera slightly above the seated knees and looking gently downward; the nearer shoulder, outer thigh and knee lead the perspective, with the face turned back toward the lens; normal portrait perspective without wide-angle distortion",
       "framing": "vertical seated portrait containing the entire head and sunglasses, torso, both hands and both knees; the nearer knee fills the lower foreground, the white fringed blanket extends to the bottom corners, an unbranded closed paperback lies at lower right and one dark-screen phone lies flat on the blanket at lower left; the turquoise lagoon and green mountains remain visible behind the shoulders; no text, watermark or duplicate person",
       "lighting": "soft diffused daytime light under a bright overcast sky, gentle shadows on the sand and natural fabric texture",
-      "footwear": "bare feet folded back with the shins beneath and beside the hips, mostly hidden behind the thighs; do not place feet or crossed ankles in the foreground and do not add extra feet"
+      "footwear": "bare feet folded back with the shins beneath and beside the hips, mostly hidden behind the thighs; do not place feet or crossed ankles in the foreground and do not add extra feet",
+      "label": "Ngồi ngoái vai trên thảm bãi biển hồ",
+      "group": "Biển",
+      "family": "Ngồi ngoái vai",
+      "tags": [
+        "Ngồi ngoái vai",
+        "Biển",
+        "Đồ bơi"
+      ]
     },
     {
       "slot": 167,
@@ -2361,7 +3650,14 @@
       "camera": "a straight-on seated portrait from approximately seated chest height, normal portrait perspective without wide-angle distortion",
       "framing": "vertical composition containing the entire raised hand, duvet canopy, head, both outstretched arms and the complete cross-legged seat; cream duvet spans the frame behind the person, white mattress fills the lower foreground, plain wall above; one person only, no duplicate limbs or text",
       "lighting": "soft diffused window daylight from image left, gentle neutral shadows and natural cotton fabric texture",
-      "footwear": "bare feet resting naturally within the cross-legged seat, no socks or shoes; exactly two feet"
+      "footwear": "bare feet resting naturally within the cross-legged seat, no socks or shoes; exactly two feet",
+      "label": "Ngồi xếp bằng nâng chăn thành mái",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Tay giơ & tạo dấu",
+      "tags": [
+        "Tay giơ & tạo dấu",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 168,
@@ -2376,7 +3672,14 @@
       "camera": "slightly elevated front diagonal view looking from the foot of the bed toward the pillow",
       "framing": "vertical portrait showing the whole head, both arms and the asymmetric bent-leg arrangement, with the extended leg continuing naturally toward the bottom edge; the entire head from crown and forehead to chin fully inside the frame with breathing room above the hair; both eyes, nose and mouth unobstructed, face sharply focused and clearly readable; hair, arms and fabric must not cover the face; no cropped head, forehead or eyes",
       "lighting": "warm diagonal afternoon window light with soft deep shadows",
-      "footwear": "barefoot, feet follow the described leg arrangement; no added or detached feet"
+      "footwear": "barefoot, feet follow the described leg arrangement; no added or detached feet",
+      "label": "Nằm ngửa trên giường mở một gối",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Nằm nghỉ trên giường",
+      "tags": [
+        "Nằm nghỉ trên giường",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 169,
@@ -2391,7 +3694,14 @@
       "camera": "slightly elevated front three-quarter view, camera pulled back modestly for a medium-wide seated portrait, normal portrait perspective without wide-angle distortion",
       "framing": "vertical seated portrait from the entire head to below both knees, a little breathing room above the head and beside the shoulders; include the hands on the lap, both knees and more white bedding around the seated figure, with the diagonal legs continuing naturally toward the lower-left edge; preserve the wall-supported lean and visible face, no tight head-to-thigh crop",
       "lighting": "soft cool diffused window light",
-      "footwear": "barefoot, feet follow the described leg arrangement; no added or detached feet"
+      "footwear": "barefoot, feet follow the described leg arrangement; no added or detached feet",
+      "label": "Ngồi tựa tường sát mép giường",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Ngồi chân dung",
+      "tags": [
+        "Ngồi chân dung",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 170,
@@ -2406,7 +3716,14 @@
       "camera": "close frontal portrait from seated chest height with natural perspective",
       "framing": "vertical composition containing the entire head, torso, raised knee and hands, hanging leg continues toward the lower edge; no extra feet; the entire head from crown and forehead to chin fully inside the frame with breathing room above the hair; both eyes, nose and mouth unobstructed, face sharply focused and clearly readable; hair, arms and fabric must not cover the face; no cropped head, forehead or eyes",
       "lighting": "warm diffused sunlight with a soft diagonal band across the sleeve and knee",
-      "footwear": "barefoot, feet follow the described leg arrangement; no added or detached feet"
+      "footwear": "barefoot, feet follow the described leg arrangement; no added or detached feet",
+      "label": "Ngồi ôm một gối trên bục studio kem",
+      "group": "Studio & chân dung",
+      "family": "Ôm gối & ôm chân",
+      "tags": [
+        "Ôm gối & ôm chân",
+        "Studio & chân dung"
+      ]
     },
     {
       "slot": 171,
@@ -2421,7 +3738,14 @@
       "camera": "frontal seated portrait at eye level, camera pulled back modestly for a medium-wide view, normal portrait perspective without wide-angle distortion",
       "framing": "vertical seated portrait from the entire head to below both knees, with a little headroom and more sofa visible on both sides; include the flower beside the cheek, the entire raised hand, the arm resting along the backrest and both knees toward the lower foreground; preserve the relaxed seated pose and clearly readable face, no tight upper-thigh crop",
       "lighting": "soft natural daylight through sheer curtains",
-      "footwear": "barefoot, feet follow the described leg arrangement; no added or detached feet"
+      "footwear": "barefoot, feet follow the described leg arrangement; no added or detached feet",
+      "label": "Cầm hoa sứ trắng bên má trên sofa",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Hoa & đạo cụ",
+      "tags": [
+        "Hoa & đạo cụ",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 172,
@@ -2436,7 +3760,14 @@
       "lighting": "soft diffused daylight from the tall window at image left, warm neutral tones and gentle shadows",
       "footwear": "barefoot, exactly two naturally connected feet; no socks or shoes",
       "activity": "relaxing on the white bed with legs extended diagonally",
-      "pose": "hips resting on the mattress, both legs together extended diagonally toward the lower-left foreground with knees softly bent; torso leans gently back, image-right palm planted flat on the bedding behind the hip supporting the extended arm, image-left hand rests flat on the upper thigh; fingers relaxed and naturally together, no V sign or peace gesture"
+      "pose": "hips resting on the mattress, both legs together extended diagonally toward the lower-left foreground with knees softly bent; torso leans gently back, image-right palm planted flat on the bedding behind the hip supporting the extended arm, image-left hand rests flat on the upper thigh; fingers relaxed and naturally together, no V sign or peace gesture",
+      "label": "Ngả giường hai chân duỗi chéo",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Nằm nghỉ trên giường",
+      "tags": [
+        "Nằm nghỉ trên giường",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 173,
@@ -2451,7 +3782,14 @@
       "lighting": "soft diffused daylight from the tall window at image left, warm neutral tones and gentle shadows",
       "footwear": "barefoot, exactly two naturally connected feet; no socks or shoes",
       "activity": "sitting comfortably with both legs folded to one side",
-      "pose": "hips resting on the mattress, both knees bent with thighs angled toward image right and shins folded back on the bedding; torso upright with a slight lean toward image left, image-left palm planted on the bedding beside the hip, image-right hand resting naturally beside the farther knee; fingers relaxed without any V sign or peace gesture"
+      "pose": "hips resting on the mattress, both knees bent with thighs angled toward image right and shins folded back on the bedding; torso upright with a slight lean toward image left, image-left palm planted on the bedding beside the hip, image-right hand resting naturally beside the farther knee; fingers relaxed without any V sign or peace gesture",
+      "label": "Ngồi giường gập hai chân về một bên",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Ngồi gập chân lệch bên",
+      "tags": [
+        "Ngồi gập chân lệch bên",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 174,
@@ -2466,7 +3804,14 @@
       "lighting": "soft diffused daylight from the tall window at image left, warm neutral tones and gentle shadows",
       "footwear": "barefoot, exactly two naturally connected feet; no socks or shoes",
       "activity": "sitting low on folded legs with hands resting in front",
-      "pose": "hips lowered onto the heels in a relaxed low kneeling seat, both knees resting on the white bedding and separated comfortably, both shins folded behind with exactly two feet; torso leaning slightly forward, both palms resting flat on the bedding between the knees, fingers relaxed and pointing forward; no upright raised knee, V sign or peace gesture"
+      "pose": "hips lowered onto the heels in a relaxed low kneeling seat, both knees resting on the white bedding and separated comfortably, both shins folded behind with exactly two feet; torso leaning slightly forward, both palms resting flat on the bedding between the knees, fingers relaxed and pointing forward; no upright raised knee, V sign or peace gesture",
+      "label": "Ngồi thấp trên gót hai tay đặt trước",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Ngồi thấp & quỳ gối",
+      "tags": [
+        "Ngồi thấp & quỳ gối",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 175,
@@ -2481,7 +3826,14 @@
       "lighting": "soft diffused daylight from the tall window at image left, warm neutral tones and gentle shadows",
       "footwear": "barefoot, exactly two naturally connected feet; no socks or shoes",
       "activity": "resting in an asymmetric folded-leg seat on the bed",
-      "pose": "hips settled on the mattress, one thigh extends sideways toward image left with its shin folded inward in front, the other knee bends outward toward image right with its shin tucked beside the hip; torso upright with a gentle side lean, image-right palm planted flat on the bedding behind the hip, image-left hand relaxed on the sideways thigh; no V sign or peace gesture"
+      "pose": "hips settled on the mattress, one thigh extends sideways toward image left with its shin folded inward in front, the other knee bends outward toward image right with its shin tucked beside the hip; torso upright with a gentle side lean, image-right palm planted flat on the bedding behind the hip, image-left hand relaxed on the sideways thigh; no V sign or peace gesture",
+      "label": "Ngồi giường gập chân lệch hai bên",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Ngồi gập chân lệch bên",
+      "tags": [
+        "Ngồi gập chân lệch bên",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 176,
@@ -2496,7 +3848,15 @@
       "camera": "front three-quarter view at seated eye level with natural portrait perspective",
       "framing": "vertical portrait including the entire raised pillow, both hands, the full head, torso, both knees and socked feet; leave breathing room above the pillow",
       "lighting": "soft warm natural daylight from the window at image left, pale neutral colors and realistic linen texture",
-      "footwear": "plain white crew socks on exactly two feet, no shoes"
+      "footwear": "plain white crew socks on exactly two feet, no shoes",
+      "label": "Quỳ trên giường nâng gối qua đầu",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Tay giơ & tạo dấu",
+      "tags": [
+        "Tay giơ & tạo dấu",
+        "Phòng ngủ & nghỉ ngơi",
+        "Đồ ngủ"
+      ]
     },
     {
       "slot": 177,
@@ -2510,7 +3870,14 @@
       "gaze": "directly into the lens",
       "camera": "a close, nearly straight-on casual phone portrait at seated eye level with a slight downward angle",
       "framing": "tight vertical crop from just above the head to the shorts, with both knees enlarged in the foreground and cut by the lower side edges; no feet visible. Face in the upper third, both hands resting low on the thighs, white T-shirt visible down the center and plain wall filling the background",
-      "lighting": "direct warm light from camera-right with a distinct soft-edged head shadow falling to the left on the off-white wall"
+      "lighting": "direct warm light from camera-right with a distinct soft-edged head shadow falling to the left on the off-white wall",
+      "label": "Ngồi tựa tường hai gối mở tay đặt thấp",
+      "group": "Studio & chân dung",
+      "family": "Ngồi thấp & quỳ gối",
+      "tags": [
+        "Ngồi thấp & quỳ gối",
+        "Studio & chân dung"
+      ]
     },
     {
       "slot": 178,
@@ -2525,7 +3892,14 @@
       "camera": "high oblique overhead view from the left side of the bed, looking diagonally down across the mattress with natural perspective",
       "framing": "vertical environmental portrait including both raised hands, entire head and torso, shorts and upper legs; lower legs continue naturally beyond the bottom-right edge; show the open book, knit throw, pillows and phone around the subject",
       "lighting": "soft cool diffused window daylight from image left, muted gray and ivory tones with natural gentle shadows",
-      "footwear": "barefoot, feet outside the crop; no added feet or shoes"
+      "footwear": "barefoot, feet outside the crop; no added feet or shoes",
+      "label": "Nằm ngửa vươn tay qua đầu nhìn từ trên",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Vươn vai & giãn cơ",
+      "tags": [
+        "Vươn vai & giãn cơ",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 179,
@@ -2540,7 +3914,15 @@
       "camera": "near eye-level three-quarter portrait from the front-left, camera pulled back far enough to include the complete standing figure from head to feet; natural portrait perspective without a wide-angle lens or distortion",
       "framing": "vertical full-body environmental portrait containing the entire head, both folded arms, hips, both knees, ankles and both bare feet fully inside the frame; leave breathing room above the head, below the toes and on both sides; show more cream wall, cast shadow, dark wood floor and dim doorway; preserve the wall-supported stance and readable face, no cropped legs or feet; no text, QR code, logos or watermark",
       "lighting": "strong warm late-afternoon sunlight from image left, a clearly defined head and torso shadow falling onto the cream wall at image right",
-      "footwear": "barefoot, both anatomically connected feet fully visible on the dark wood floor; no socks or shoes"
+      "footwear": "barefoot, both anatomically connected feet fully visible on the dark wood floor; no socks or shoes",
+      "label": "Đứng tựa tường khoanh tay nắng vàng",
+      "group": "Studio & chân dung",
+      "family": "Chân dung ánh sáng & bóng đổ",
+      "tags": [
+        "Chân dung ánh sáng & bóng đổ",
+        "Studio & chân dung",
+        "Bikini"
+      ]
     },
     {
       "slot": 180,
@@ -2555,7 +3937,14 @@
       "camera": "frontal view from the foot of the bed at mattress height with natural perspective",
       "framing": "square environmental portrait including the entire raised foot, full head and torso, both legs and feet and carved footboard; the ornate mirror reflects the window and room without duplicating limbs; no lettering, logos or watermark",
       "lighting": "soft window daylight from image left balanced with the warm bedside lamp",
-      "footwear": "barefoot with exactly two naturally connected feet, no socks or shoes"
+      "footwear": "barefoot with exactly two naturally connected feet, no socks or shoes",
+      "label": "Ngả gối nâng một chân trên giường cổ điển",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Vươn vai & giãn cơ",
+      "tags": [
+        "Vươn vai & giãn cơ",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 181,
@@ -2570,7 +3959,15 @@
       "camera": "slightly elevated front three-quarter view looking gently down at the seated figure, normal portrait perspective",
       "framing": "vertical portrait showing the entire head, both hands, camisole and shorts, both knees and surrounding wooden floor; lower shins and feet tucked naturally out of view; no text, logos or watermark",
       "lighting": "warm direct late-afternoon window light forming diagonal rectangular bands and crisp window-frame shadows on the beige wall, satin and oak floor",
-      "footwear": "barefoot, feet tucked behind the folded legs outside the crop; no added feet or shoes"
+      "footwear": "barefoot, feet tucked behind the folded legs outside the crop; no added feet or shoes",
+      "label": "Ngồi gập chân trên sàn bóng nắng ô cửa",
+      "group": "Studio & chân dung",
+      "family": "Ngồi gập chân lệch bên",
+      "tags": [
+        "Ngồi gập chân lệch bên",
+        "Studio & chân dung",
+        "Satin"
+      ]
     },
     {
       "slot": 182,
@@ -2585,7 +3982,14 @@
       "camera": "near-frontal full-loveseat view at seated chest height, natural perspective without wide-angle distortion",
       "framing": "vertical environmental portrait including the complete loveseat, entire raised hands and fingers, full head and both socked feet; preserve generous pale wall negative space above and to image left; no cropped fingertips, logos, text or watermark",
       "lighting": "soft even diffused daylight with delicate neutral shadows and visible boucle texture",
-      "footwear": "plain white crew socks on exactly two feet, both visible on the loveseat; no shoes"
+      "footwear": "plain white crew socks on exactly two feet, both visible on the loveseat; no shoes",
+      "label": "Nằm ghế boucle vươn hai tay qua đầu",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Vươn vai & giãn cơ",
+      "tags": [
+        "Vươn vai & giãn cơ",
+        "Phòng khách & sinh hoạt"
+      ]
     },
     {
       "slot": 183,
@@ -2600,7 +4004,15 @@
       "camera": "close front three-quarter view at seated eye level, natural casual portrait perspective",
       "framing": "vertical environmental seated portrait containing the entire head, shoulders, both arms and hands, raised knee and its bare foot at the lower right; the other leg continues beyond the lower-left edge; show the mauve upholstery, black cat and wooden dresser without crowding the face; no lettering or watermark",
       "lighting": "soft muted indoor window daylight with warm natural room tones",
-      "footwear": "barefoot, raised leg foot naturally visible at lower right; no extra feet or shoes"
+      "footwear": "barefoot, raised leg foot naturally visible at lower right; no extra feet or shoes",
+      "label": "Ngồi ôm một gối trên sofa tím nhạt",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Ôm gối & ôm chân",
+      "tags": [
+        "Ôm gối & ôm chân",
+        "Phòng khách & sinh hoạt",
+        "Đồ ngủ"
+      ]
     },
     {
       "slot": 184,
@@ -2615,7 +4027,15 @@
       "camera": "slightly elevated near-frontal portrait, camera pulled back enough to retain the entire head and bent-leg arrangement; normal portrait perspective without wide-angle distortion",
       "framing": "vertical seated portrait with the entire head including the crown, hairline, forehead, both eyes, nose, mouth and chin fully inside the frame with clear headroom; face sharply focused, large enough to recognize, not hidden by hair, hands, fabric or shadow; show both hands, camisole, shorts, both knees and surrounding white bedding; extend the reference crop upward rather than cutting off the forehead or eyes, no cropped head, text, logos or watermark",
       "lighting": "soft diagonal window sunlight across the arms, satin and bedding, gentle ambient fill keeping both eyes and all facial features readable",
-      "footwear": "barefoot, exactly two naturally connected feet following the folded shins, no extra feet or shoes"
+      "footwear": "barefoot, exactly two naturally connected feet following the folded shins, no extra feet or shoes",
+      "label": "Ngồi giường gập gối hai tay đặt trước",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Ngồi thấp & quỳ gối",
+      "tags": [
+        "Ngồi thấp & quỳ gối",
+        "Phòng ngủ & nghỉ ngơi",
+        "Satin"
+      ]
     },
     {
       "slot": 185,
@@ -2630,7 +4050,14 @@
       "camera": "near-frontal view at standing chest height, camera pulled back for a full-length environmental portrait with natural perspective",
       "framing": "vertical full-length portrait containing the entire head including the crown, hairline, forehead, both eyes, nose, mouth and chin fully inside the frame with clear headroom; face sharply focused, large enough to recognize, not hidden by hair, hands, fabric or shadow; both hands below the chin, the complete draped sheet and both bare feet inside the frame, with breathing room above the head and below the toes; show the wooden blinds and white bed, no cropped forehead, eyes or feet, no text, logos or watermark",
       "lighting": "bright diffused daylight from image left through the window with soft front fill so the face is evenly readable, no blown highlights over the facial features",
-      "footwear": "barefoot, exactly two grounded feet fully visible on the mattress; no shoes"
+      "footwear": "barefoot, exactly two grounded feet fully visible on the mattress; no shoes",
+      "label": "Đứng trên giường giữ tấm chăn trắng",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Đứng chân dung",
+      "tags": [
+        "Đứng chân dung",
+        "Phòng ngủ & nghỉ ngơi"
+      ]
     },
     {
       "slot": 186,
@@ -2645,7 +4072,16 @@
       "outfit": "light-wash relaxed denim overalls with cuffs rolled above the ankles and one bib strap slipped off the shoulder, layered over an opaque ivory lace-trim camisole",
       "camera": "near-frontal full-body seated portrait at seated chest height, natural perspective",
       "framing": "vertical full-body portrait showing the complete chair, both bare feet and the red apple; include the entire head with breathing room above the crown, face sharply focused and unobstructed by hair, hands or objects; no cropped forehead, eyes, feet, text, logos, border or watermark",
-      "lighting": "warm natural window sunlight from image left, leafy window shadows across the wood floor and soft fill on the face"
+      "lighting": "warm natural window sunlight from image left, leafy window shadows across the wood floor and soft fill on the face",
+      "label": "Ngồi ghế mây cầm táo đỏ cạnh môi",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Đồ ăn & trái cây",
+      "tags": [
+        "Đồ ăn & trái cây",
+        "Phòng khách & sinh hoạt",
+        "Jeans",
+        "Ren"
+      ]
     },
     {
       "slot": 187,
@@ -2660,7 +4096,15 @@
       "outfit": "an opaque loose taupe long-sleeved lounge shirt and olive-green satin athletic-style shorts with ivory piping and a white drawstring",
       "camera": "front three-quarter environmental view at seated eye level, natural perspective",
       "framing": "vertical full-body seated portrait including the entire chaise, folded foot and diagonally extended bare foot, tall curtains and some herringbone floor; include the entire head with breathing room above the crown, face sharply focused and unobstructed by hair, hands or objects; no cropped forehead, eyes, feet, text, logos, border or watermark",
-      "lighting": "soft diffused daylight from image left with warm beige room tones"
+      "lighting": "soft diffused daylight from image left with warm beige room tones",
+      "label": "Ngồi lệch ghế chaise tay chạm tóc",
+      "group": "Phòng khách & sinh hoạt",
+      "family": "Ngồi trên ghế bành",
+      "tags": [
+        "Ngồi trên ghế bành",
+        "Phòng khách & sinh hoạt",
+        "Satin"
+      ]
     },
     {
       "slot": 188,
@@ -2675,7 +4119,15 @@
       "outfit": "an opaque fully lined ivory satin thin-strap short slip dress with a softly draped neckline and a delicate tiny pale blue floral print, hem resting naturally over the upper thighs",
       "camera": "near-frontal three-quarter view at seated eye level, camera pulled back to include all cushions and both feet",
       "framing": "vertical full-body portrait showing all three gingham cushions, both hands and both bare feet, entire head and surrounding pale floor; include the entire head with breathing room above the crown, face sharply focused and unobstructed by hair, hands or objects; no cropped forehead, eyes, feet, text, logos, border or watermark",
-      "lighting": "soft bright studio daylight with gentle neutral shadows and realistic satin and cotton textures"
+      "lighting": "soft bright studio daylight with gentle neutral shadows and realistic satin and cotton textures",
+      "label": "Ngồi gập chân trên chồng đệm caro",
+      "group": "Studio & chân dung",
+      "family": "Ngồi gập chân lệch bên",
+      "tags": [
+        "Ngồi gập chân lệch bên",
+        "Studio & chân dung",
+        "Satin"
+      ]
     },
     {
       "slot": 189,
@@ -2690,7 +4142,15 @@
       "outfit": "an opaque fully lined ivory satin thin-strap short slip dress with a softly draped neckline and a delicate tiny pale blue floral print, hem resting naturally over the upper thighs",
       "camera": "near-frontal full-body portrait at seated chest height, natural perspective",
       "framing": "vertical full-body composition showing the entire head, raised elbow, both hands and both feet with ample pink fabric around the plinth and floor; include the entire head with breathing room above the crown, face sharply focused and unobstructed by hair, hands or objects; no cropped forehead, eyes, feet, text, logos, border or watermark",
-      "lighting": "soft even warm studio light, gentle shadows preserving the face and folds in the pink fabric"
+      "lighting": "soft even warm studio light, gentle shadows preserving the face and folds in the pink fabric",
+      "label": "Ngồi bục phủ hồng tay sau gáy",
+      "group": "Studio & chân dung",
+      "family": "Ngồi chân dung",
+      "tags": [
+        "Ngồi chân dung",
+        "Studio & chân dung",
+        "Satin"
+      ]
     },
     {
       "slot": 190,
@@ -2705,7 +4165,15 @@
       "camera": "high oblique selfie angle from above and slightly toward image left, camera held farther away and slightly higher than the reference so the entire head and full face fit; natural perspective without fisheye distortion",
       "framing": "vertical portrait from above the crown to the knees with the full face in the upper third, both shoulders, camisole, shorts and resting forearm visible, raised arm may continue beyond the upper-left edge; the entire head from crown and forehead to chin fully inside the frame with breathing room above the hair; both eyes, nose and mouth unobstructed, face sharply focused and clearly readable; hair, arms and fabric must not cover the face; no cropped head, forehead or eyes; expand the original tight crop upward and outward rather than reproducing its cut-off eyes; no text, logos or watermark",
       "lighting": "soft warm diffused window light with gentle fill keeping both eyes and all facial features readable",
-      "footwear": "feet outside the crop, do not add detached feet or shoes"
+      "footwear": "feet outside the crop, do not add detached feet or shoes",
+      "label": "Selfie góc cao ngồi tựa gối trên giường",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Góc cao & selfie",
+      "tags": [
+        "Góc cao & selfie",
+        "Phòng ngủ & nghỉ ngơi",
+        "Ren"
+      ]
     }
   ],
   "retired_slots": {

@@ -7,7 +7,7 @@ import CopyConceptConfiguration from '@/components/CopyConceptConfiguration'
 import { ConceptMenu, OutfitSwitcher, useConceptChoices } from '@/components/ConceptMenu'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
 import { useImageSize } from '@/lib/imageSize'
-import { useEffect, useMemo, useState } from 'react'
+import { Fragment, useEffect, useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { assetUrl, request, useProviders, type Concept, type ConceptProposal, type ProjectDetail } from '@/api/client'
 import { apiUrl } from '@/lib/backend'
@@ -180,10 +180,11 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const ready = project.rights_confirmed && Boolean(workflow.data?.approved_master_id)
   const list = proposals.data ?? []
   const displayNumbers = conceptDisplayNumbers(list)
+  const [groupMode, setGroupMode] = useState<'family' | 'scene'>('family')
   const displayNumber = (slot: number) => displayNumbers.get(slot) ?? slot
   const normalizeSearch = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase()
   const searchTerms = normalizeSearch(conceptSearch).trim().split(/\s+/).filter(Boolean)
-  const visibleList = list.filter(p => searchTerms.every(term => normalizeSearch([p.title, fieldOf(p.slot, 'title', p.title), ...Object.values(p.brief), ...Object.values(edits[p.slot] ?? {}), groupConcepts([p])[0]?.name, 'id:' + p.slot, String(displayNumber(p.slot))].join(' ')).includes(term)) && (emojiFilter === 'all' || (emojiFilter === 'bookmarked' ? bookmarked(p) : emojiFilter === 'unmarked' ? !emojiOf(p) : emojiOf(p) === emojiFilter)) && matchesProgress(progress.get(bookmarkKey(p)), progressFilter))
+  const visibleList = list.filter(p => searchTerms.every(term => normalizeSearch([p.title, p.label, p.family, p.catalog_code, ...(p.tags ?? []), fieldOf(p.slot, 'title', p.title), ...Object.values(p.brief), ...Object.values(edits[p.slot] ?? {}), groupConcepts([p])[0]?.name, 'id:' + p.slot, String(displayNumber(p.slot))].join(' ')).includes(term)) && (emojiFilter === 'all' || (emojiFilter === 'bookmarked' ? bookmarked(p) : emojiFilter === 'unmarked' ? !emojiOf(p) : emojiOf(p) === emojiFilter)) && matchesProgress(progress.get(bookmarkKey(p)), progressFilter))
   const chosen = picked === null ? list : list.filter(p => picked.includes(p.slot))
   const estimate = useQuery({ queryKey: ['estimate', project.id, project.provider, project.model, size, chosen.length], enabled: ready && chosen.length > 0,
     queryFn: () => request<{ total_usd: number | null; note: string }>(`${base}/generation-estimate?purpose=concept&count=${chosen.length}${size ? `&size=${encodeURIComponent(size)}` : ''}`), refetchInterval: 3000 })
@@ -252,7 +253,8 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         {c.job.output_asset_ids[0] ? <><ImagePreview assetId={c.job.output_asset_ids[0]} title={`Concept ${c.slot} · ${c.mood}`} /><DownloadLinks assetId={c.job.output_asset_ids[0]} /></> : active(c.job) ? <JobPlaceholder job={c.job} /> : <div className="flex aspect-[3/4] items-center justify-center rounded-lg bg-muted text-sm">Chưa có ảnh kết quả</div>}
           </div>
           <div className="min-w-0 space-y-3">
-        <h3 className="font-semibold">{c.slot}. {c.mood}</h3>
+        <h3 className="font-semibold">{c.label || `${c.slot}. ${c.mood}`}</h3>
+        {c.catalog_code && <p className="text-xs text-muted-foreground">{c.catalog_code} · Số {c.display_number ?? c.slot} · {c.family}</p>}
         <p className="break-words text-xs text-muted-foreground">{c.job.provider} · {c.job.model}{c.job.settings.size ? ` · ${c.job.settings.size}` : ''}</p>
         <p className="text-xs text-muted-foreground">Bản {c.revision}</p>
         <CompactDescription key={c.id} text={c.camera} />
@@ -319,11 +321,14 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       </div>
       <div className="flex items-center gap-2">
         <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">Tìm concept
-          <input type="search" aria-label="Tìm concept" placeholder="Tên, từ khóa, 1114 hoặc ID…" value={conceptSearch} onChange={e => setConceptSearch(e.target.value)} className="min-w-0 flex-1 rounded-md border bg-background px-3 py-2" />
+          <input type="search" aria-label="Tìm concept" placeholder="Nhãn, tư thế, từ khóa hoặc mã C171…" value={conceptSearch} onChange={e => setConceptSearch(e.target.value)} className="min-w-0 flex-1 rounded-md border bg-background px-3 py-2" />
         </label>
         {conceptSearch && <Button size="sm" variant="outline" onClick={() => setConceptSearch('')}>Xóa tìm kiếm</Button>}
       </div>
       <div className="flex flex-wrap items-center gap-3">
+        <label className="text-sm">Gom nhóm theo <select aria-label="Gom nhóm concept" className="ml-2 rounded border p-2" value={groupMode} onChange={e => setGroupMode(e.target.value as 'family' | 'scene')}>
+          <option value="family">Tư thế / hoạt động tương tự</option><option value="scene">Bối cảnh</option>
+        </select></label>
         <label className="text-sm">Lọc concept <select aria-label="Lọc concept theo emoji" className="ml-2 rounded border p-2" value={emojiFilter} onChange={e => setEmojiFilter(e.target.value)}>
           <option value="all">Tất cả ({list.length})</option>
           <option value="bookmarked">🔖 Bookmark ({list.filter(bookmarked).length})</option>
@@ -334,11 +339,11 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
           <option value="all">Tất cả</option><option value="created">Đã có ảnh</option><option value="uncreated">Chưa tạo</option><option value="active">Đang tạo</option><option value="failed">Lỗi, chưa có ảnh</option>
         </select></label>
         <span className="text-xs text-muted-foreground">{list.filter(p => progress.get(bookmarkKey(p))?.imageIds.length).length}/{list.length} concept đã có ảnh trong dự án này.</span>
-        <span className="text-xs text-muted-foreground">Hiện {visibleList.length}/{list.length} · Đánh dấu được lưu trong trình duyệt này; concept mặc định dùng chung giữa các dự án.</span>
+        <span className="text-xs text-muted-foreground">Hiện {visibleList.length}/{list.length} · Mã C giữ cố định khi đổi thứ tự nhóm; bookmark dùng chung giữa các dự án.</span>
         {(conceptSearch.trim() || emojiFilter !== 'all' || progressFilter !== 'all') && <Button size="sm" variant="outline" disabled={!visibleList.length} onClick={() => { setPicked(visibleList.map(p => p.slot)); setConfirmed(false) }}>Chỉ chọn các concept đang hiện</Button>}
       </div>
       {!visibleList.length && <p className="text-sm text-muted-foreground">Không có concept khớp bộ lọc.</p>}
-      {groupConcepts(visibleList).map(group => {
+      {groupConcepts(visibleList, groupMode).map(group => {
         const selectedCount = group.items.filter(p => picked === null || picked.includes(p.slot)).length
         return <section key={group.name} className="space-y-3 rounded-lg border p-3" aria-label={group.name}>
           <div className="flex flex-wrap items-center gap-3">
@@ -352,7 +357,9 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
             }}>{selectedCount === group.items.length ? 'Bỏ chọn nhóm' : 'Chọn nhóm'}</Button>
           </div>
           <ul className="grid gap-3 grid-cols-2 md:grid-cols-3">
-        {group.items.map(p => <li key={p.id} className={`min-w-0 rounded-xl border p-3 text-sm ${picked !== null && !picked.includes(p.slot) ? 'opacity-60' : ''}`}>
+        {group.items.map((p, index) => <Fragment key={p.id}>
+        {groupMode === 'scene' && p.family && p.family !== group.items[index - 1]?.family && <li className="col-span-full border-b pb-1 pt-2 text-xs font-semibold text-muted-foreground">{p.family} · {group.items.filter(item => item.family === p.family).length} biến thể</li>}
+        <li className={`min-w-0 rounded-xl border p-3 text-sm ${picked !== null && !picked.includes(p.slot) ? 'opacity-60' : ''}`}>
           <label className="flex items-center gap-2 text-xs">
             <input type="checkbox" aria-label={`Chọn concept ${displayNumber(p.slot)}`}
               checked={picked === null || picked.includes(p.slot)}
@@ -381,11 +388,14 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
             </select>
           </label>
           <button type="button" className="mt-2 w-full space-y-2 text-left" onClick={() => setDetailSlot(p.slot)} aria-label={`Xem chi tiết concept ${displayNumber(p.slot)}`}>
+            {p.label && <span className="block font-semibold">{p.label}</span>}
+            {p.catalog_code && <span className="block text-xs text-muted-foreground">{p.catalog_code} · Số {displayNumber(p.slot)}</span>}
             <span className="block font-semibold">{emojiOf(p) && `${emojiOf(p)} `}{displayNumber(p.slot)}. {fieldOf(p.slot, 'title', p.title)}</span>
             <span className="block line-clamp-2 text-xs text-muted-foreground">{fieldOf(p.slot, 'setting', p.brief.setting)}</span>
             <span className="block text-xs underline">Xem / sửa chi tiết{edits[p.slot] ? ' · đã sửa' : ''}</span>
           </button>
-        </li>)}
+          {!!p.tags?.length && <div className="mt-2 flex flex-wrap gap-1" aria-label="Nhãn concept">{p.tags.map(tag => <span key={tag} className="rounded-full bg-muted px-2 py-0.5 text-[11px]">{tag}</span>)}</div>}
+        </li></Fragment>)}
           </ul>
         </section>
       })}
