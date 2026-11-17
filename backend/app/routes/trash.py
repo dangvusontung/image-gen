@@ -25,7 +25,7 @@ def protect_outputs(db, assets):
     ids = {a.id for a in assets}
     if not ids:
         return
-    for job in db.query(GenerationJob):
+    for job in db.query(GenerationJob).filter(GenerationJob.purged.is_(False)):
         if ids.intersection(job.reference_asset_ids or []):
             fail("Ảnh đang được dùng làm tham chiếu. Giữ trong Thùng rác để không mất dữ liệu liên quan.")
     for project in db.query(Project):
@@ -110,6 +110,7 @@ def purge(kind: str, item_id: str, db: Session = Depends(get_db)):
         # Preserve run identity, domain links, and cost totals; remove it from trash permanently.
         job.purged = True
         job.prompt = ""
+        job.reference_asset_ids = []
         job.error_message = None
     db.commit()
     for path in paths:

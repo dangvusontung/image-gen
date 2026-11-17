@@ -50,8 +50,10 @@ def list_projects(db: Session = Depends(get_db)):
         by_project.setdefault(job.project_id, []).append(job)
     thumbnails = {}
     for master in db.query(MasterVersion).filter(MasterVersion.id.in_([p.approved_master_id for p in projects if p.approved_master_id])):
-        if master.job.output_asset_ids:
-            thumbnails[master.project_id] = master.job.output_asset_ids[0]
+        if master.job.output_asset_ids and not master.job.dismissed:
+            asset = db.get(Asset, master.job.output_asset_ids[0])
+            if asset is not None and not asset.trashed:
+                thumbnails[master.project_id] = asset.id
     return [
         ProjectSummary(
             id=p.id,

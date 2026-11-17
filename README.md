@@ -264,6 +264,11 @@ data/                  DB SQLite + ảnh (gitignored)
 | POST | `/api/providers/{p}/test` | Kiểm tra kết nối |
 | GET | `/api/spend` | Chi tiêu 24h / giới hạn |
 | GET | `/api/projects/{id}/jobs` | Lịch sử job (lọc `status`, `purpose`) |
+| DELETE | `/api/jobs/{id}` | Chuyển run đã kết thúc vào Thùng rác; giữ dữ liệu và chi phí |
+| GET | `/api/trash` | Run và ảnh trong Thùng rác |
+| POST | `/api/trash/assets/{id}` | Chuyển riêng ảnh đã tạo vào Thùng rác |
+| POST | `/api/trash/{kind}/{id}/restore` | Khôi phục (`kind`: `job` hoặc `asset`) |
+| DELETE | `/api/trash/{kind}/{id}` | Xoá vĩnh viễn; chặn ảnh đang dùng làm tham chiếu hoặc đã duyệt |
 | GET | `/api/jobs/{id}` | Trạng thái job |
 | POST | `/api/jobs/{id}/cancel`, `/api/jobs/{id}/retry` | Huỷ / thử lại (tạo job mới) |
 | GET | `/health` | Health check |

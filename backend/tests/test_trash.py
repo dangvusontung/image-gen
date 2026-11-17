@@ -77,3 +77,14 @@ def test_active_job_cannot_be_trashed(client, project):
         job_id = job.id
     assert client.delete(f'/api/jobs/{job_id}').status_code == 409
     assert client.get('/api/trash').json() == []
+
+
+def test_approved_master_cannot_be_purged(client, project, reference_ids):
+    job_id = client.post(f'/api/projects/{project}/master/generate', json={"variants": 1}).json()['job_ids'][0]
+    asset_id = wait_for_job(client, job_id)['output_asset_ids'][0]
+    master_id = client.get(f'/api/projects/{project}/workflow').json()['masters'][0]['id']
+    assert client.post(f'/api/projects/{project}/master/{master_id}/approve').status_code == 200
+    client.delete(f'/api/jobs/{job_id}')
+    assert client.delete(f'/api/trash/job/{job_id}').status_code == 409
+    assert client.get(f'/api/assets/{asset_id}/content').status_code == 200
+    assert client.post(f'/api/trash/job/{job_id}/restore').status_code == 200
