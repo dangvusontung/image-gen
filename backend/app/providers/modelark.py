@@ -82,13 +82,26 @@ _PRICE_NOTE = (
 
 # Documented total-pixel ceilings; the request is scaled down to fit rather than rejected.
 MAX_PIXELS = {
+    "dola-seedream-5-5-261028": 4_620_000,
     "seedream-5-0-pro-260628": 4_190_000,
     "seedream-5-0-flash-260915": 4_620_000,
 }
-# Only the 5.0 family documents PNG output; the rest return JPEG.
-_PNG_MODELS = {"seedream-5-0-pro-260628", "seedream-5-0-flash-260915", "seedream-5-0-260128"}
+# The 5.x family supports PNG output; older models return JPEG.
+_PNG_MODELS = {"dola-seedream-5-5-261028", "seedream-5-0-pro-260628", "seedream-5-0-flash-260915", "seedream-5-0-260128"}
 
 MODELS = (
+    ModelInfo(
+        id="dola-seedream-5-5-261028",
+        display_name="Seedream 5.5",
+        max_reference_images=10,
+        aspect_ratios=_RATIOS,
+        default_aspect_ratio="3:4",
+        sizes=("1K", "1.5K", "2K"),
+        default_size="2K",
+        price_note=_PRICE_NOTE,
+        status="ga",
+        notes="Chỉnh sửa nhiều lượt nhất quán hơn. Tối đa 10 ảnh tham chiếu, xuất PNG.",
+    ),
     ModelInfo(
         id="seedream-4-5-251128",
         display_name="Seedream 4.5",
@@ -152,6 +165,7 @@ _PNG_MODELS.add("dola-seedream-5-0-pro-260628")
 
 #: Control-plane "Name" -> the static record whose capabilities that family uses.
 FAMILIES = {
+    "dola-seedream-5-5": "dola-seedream-5-5-261028",
     "seedream-4-5": "seedream-4-5-251128",
     "seedream-5-0-pro": "seedream-5-0-pro-260628",
     "dola-seedream-5-0-pro": "dola-seedream-5-0-pro-260628",
@@ -372,6 +386,8 @@ class ModelArkProvider(ImageProvider):
         }
         if model.id in _PNG_MODELS:
             payload["output_format"] = "png"
+        if model.id == "dola-seedream-5-5-261028":
+            payload["background"] = "opaque"
         if request.references:
             # Data URIs keep the reference bytes in-band; no public hosting required.
             payload["image"] = [

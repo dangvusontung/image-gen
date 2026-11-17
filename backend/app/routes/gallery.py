@@ -25,7 +25,8 @@ def list_gallery(
              .join(GenerationJob, Asset.job_id == GenerationJob.id)
              .join(Project, Asset.project_id == Project.id)
              .filter(Asset.kind == "generated", GenerationJob.status == JobStatus.SUCCEEDED,
-                     GenerationJob.project_id == Asset.project_id))
+                     GenerationJob.project_id == Asset.project_id,
+                     GenerationJob.dismissed.is_(False), Asset.trashed.is_(False)))
     if project_id:
         query = query.filter(Asset.project_id == project_id)
     else:

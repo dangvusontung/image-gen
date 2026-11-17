@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Skeleton } from '@/components/ui/skeleton'
+import PhoneConnectionQR from '@/components/PhoneConnectionQR'
 
 const dateFmt = new Intl.DateTimeFormat('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })
 
@@ -32,6 +33,7 @@ export default function Dashboard({
           <p className="mt-1 text-muted-foreground">Biến ảnh của một người thành nhân vật 3D phong cách hoá, nhất quán.</p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <PhoneConnectionQR />
           <Button variant="outline" size="lg" onClick={() => { window.location.hash = '/gallery' }}><ImageIcon /> Gallery tổng</Button>
           <Button variant="outline" size="lg" onClick={onOpenSettings}>
             <SettingsIcon /> Nhà cung cấp & model

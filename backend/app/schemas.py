@@ -1,7 +1,7 @@
 from datetime import datetime
 from typing import Any, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 WorkflowMode = Literal["manual", "hybrid", "hybrid_gemini"]
 
@@ -157,6 +157,20 @@ class ConnectionTestResult(BaseModel):
 class JobOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
+    @model_validator(mode="before")
+    @classmethod
+    def hide_trashed_outputs(cls, value):
+        from app.models import Asset, GenerationJob
+        from sqlalchemy.orm import object_session
+        if isinstance(value, GenerationJob):
+            db = object_session(value)
+            if db is not None:
+                data = {name: getattr(value, name) for name in JobOut.model_fields}
+                hidden = {a.id for a in db.query(Asset).filter(Asset.id.in_(value.output_asset_ids), Asset.trashed.is_(True))}
+                data["output_asset_ids"] = [] if value.dismissed else [i for i in value.output_asset_ids if i not in hidden]
+                return data
+        return value
+
     id: str
     project_id: str
     purpose: str
@@ -196,6 +210,7 @@ class HealthResponse(BaseModel):
 
 
 class ConceptProposalOut(BaseModel):
+    bookmark_key: str = ""
     id: str
     run: int
     slot: int
@@ -206,6 +221,7 @@ class ConceptProposalOut(BaseModel):
 
 
 class ConceptOut(BaseModel):
+    bookmark_key: str = ""
     id: str
     run: int
     slot: int

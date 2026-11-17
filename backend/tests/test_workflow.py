@@ -134,7 +134,8 @@ def test_flux_projects_render_the_master_from_the_flux_prompt(client, project, r
         assert wait_for_job(client, plain)["status"] == "succeeded"
         plain_job = client.get(f"/api/jobs/{plain}").json()
         assert plain_job["meta"]["template_name"] == "master"
-        assert "IDENTITY — HIGHEST PRIORITY" in plain_job["prompt"]
+        from app.prompts import default_body
+        assert plain_job["prompt"].startswith(default_body("master"))
     finally:
         if original is not None:
             app.state.registry._providers["bfl"] = original

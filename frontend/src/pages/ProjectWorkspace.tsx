@@ -22,15 +22,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 /** Which tab a finished or running job belongs to. */
 const STEP_OF_PURPOSE: Record<string, string> = {
-  master: 'master', turnaround: 'turnaround', concept: 'concepts', enhance: 'enhance',
+  master: 'master', turnaround: 'concepts', concept: 'concepts', enhance: 'enhance',
 }
 
 const STEPS = [
   { value: 'references', label: '1. Ảnh tham chiếu' },
   { value: 'master', label: '2. Nhân vật gốc' },
-  { value: 'turnaround', label: '3. Turnaround (tùy chọn)' },
-  { value: 'concepts', label: '4. Concept' },
-  { value: 'enhance', label: '5. Nâng cấp' },
+  { value: 'concepts', label: '3. Concept' },
+  { value: 'enhance', label: '4. Nâng cấp' },
   { value: 'gallery', label: 'Gallery' },
   { value: 'history', label: 'Lịch sử' },
 ]
@@ -92,15 +91,15 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
               <ReferencesStep project={project} />
               <Button className="mt-5" disabled={!project.rights_confirmed || !project.assets.length} onClick={() => pickStep('master')}>Tiếp tục → Nhân vật gốc</Button>
             </TabsContent>
-            {(['master', 'turnaround'] as const).map(step => <TabsContent key={step} value={step} className="mt-4 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
+            {(['master'] as const).map(step => <TabsContent key={step} value={step} className="mt-4 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
               <div className="min-w-0 space-y-5"><PromptEditor projectId={project.id} name={generationPromptName(project, step)} />
-              <CharacterStep onSkip={step === 'turnaround' ? () => pickStep('concepts') : undefined} onApproved={() => pickStep(step === 'master' ? 'turnaround' : 'concepts')} key={`${project.preset_id}/${JSON.stringify(project.preset_steps)}/${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, step === 'turnaround' ? 'turnaround' : 'master')} step={step} /></div>
-              <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step={step} onBack={() => pickStep(step === 'master' ? 'references' : 'master')} /></aside>
+              <CharacterStep onApproved={() => pickStep('concepts')} key={`${project.preset_id}/${JSON.stringify(project.preset_steps)}/${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'master')} step={step} /></div>
+              <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step={step} onBack={() => pickStep('references')} /></aside>
             </TabsContent>)}
             <TabsContent value="concepts" className="mt-4 grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_20rem]">
               <div className="min-w-0 space-y-5">
               <ConceptsStep key={`${project.preset_id}/${JSON.stringify(project.preset_steps)}/${project.workflow_mode}/${project.provider}/${project.model}`} project={generationProject(project, 'concept')} onEnhance={id => { setSelectedConceptId(id); pickStep('enhance') }} /></div>
-              <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step="concepts" onBack={() => pickStep('turnaround')} /></aside>
+              <aside className="min-w-0 xl:sticky xl:top-4"><StepSources project={project} step="concepts" onBack={() => pickStep('master')} /></aside>
             </TabsContent>
             <TabsContent value="enhance" className="mt-4 space-y-5">
               <PromptEditor projectId={project.id} name="enhance" />
@@ -110,7 +109,7 @@ export default function ProjectWorkspace({ projectId, onBack }: { projectId: str
             <TabsContent value="history" className="mt-4"><HistoryStep projectId={projectId} /></TabsContent>
           </Tabs>
           <GenerationMonitor projectId={projectId} projectName={project.name} />
-          <PinnedModelSwitcher project={project} purpose={step === 'concepts' ? 'concept' : step === 'enhance' ? 'enhance' : step === 'turnaround' ? 'turnaround' : 'master'} />
+          <PinnedModelSwitcher project={project} purpose={step === 'concepts' ? 'concept' : step === 'enhance' ? 'enhance' : 'master'} />
           <ProjectSwitcher projectId={projectId} onOpen={(id) => { window.location.hash = `/projects/${id}` }} />
         </>
       )}

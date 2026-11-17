@@ -1,3 +1,4 @@
+import { conceptProgress, matchesProgress, progressLabel } from '@/lib/conceptProgress'
 import { CONCEPT_EMOJIS, CONCEPT_EMOJI_STORAGE, conceptMarkKey, readEmojiMarks } from '@/lib/conceptEmoji'
 import { conceptDisplayNumbers, groupConcepts } from '@/lib/conceptGroups'
 import EditConceptPrompt from '@/components/EditConceptPrompt'
@@ -6,14 +7,23 @@ import CopyConceptConfiguration from '@/components/CopyConceptConfiguration'
 import { ConceptMenu, OutfitSwitcher, useConceptChoices } from '@/components/ConceptMenu'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
 import { useImageSize } from '@/lib/imageSize'
-import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { request, useProviders, type Concept, type ConceptProposal, type ProjectDetail } from '@/api/client'
+import { useEffect, useMemo, useState } from 'react'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { assetUrl, request, useProviders, type Concept, type ConceptProposal, type ProjectDetail } from '@/api/client'
 import { apiUrl } from '@/lib/backend'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { active, costLabel, DownloadLinks, ImagePreview, JobDetails, JobPlaceholder, PromptEditor, useGenerationAction } from '@/components/GenerationUI'
+
+function CompactDescription({ text }: { text: string }) {
+  const [expanded, setExpanded] = useState(false)
+  if (!text) return null
+  return <div className="min-w-0 text-xs text-muted-foreground">
+    <p className={expanded ? 'break-words whitespace-pre-wrap' : 'line-clamp-2 break-words'}>{text}</p>
+    <button type="button" className="mt-1 underline underline-offset-2" aria-expanded={expanded} onClick={() => setExpanded(!expanded)}>{expanded ? 'Thu gọn' : 'Xem thêm'}</button>
+  </div>
+}
 
 const BRIEF_FIELDS = ['setting', 'activity', 'pose', 'outfit', 'footwear', 'silhouette', 'expression', 'gaze', 'camera', 'framing', 'lighting']
 
@@ -77,15 +87,34 @@ function FixAndRetry({ concept, projectId, size, choices, disabled }: {
 }
 
 export default function ConceptsStep({ project, onEnhance }: { project: ProjectDetail; onEnhance: (id: string) => void }) {
-  const [bookmarks, setBookmarks] = useState<Record<string, boolean>>(() => {
-    try { return JSON.parse(localStorage.getItem('concept-bookmarks:v1') || '{}') || {} } catch { return {} }
+  const queryClient = useQueryClient()
+  const bookmarks = useQuery({ queryKey: ['concept-bookmarks'], queryFn: () => request<{ keys: string[] }>('/concept-bookmarks'), refetchInterval: 3000 })
+  const bookmarkKey = (p: ConceptProposal) => p.bookmark_key || conceptMarkKey(project.id, p)
+  const bookmarked = (p: ConceptProposal) => bookmarks.data?.keys.includes(bookmarkKey(p)) ?? false
+  const bookmarkAction = useMutation({
+    mutationFn: ({ key, value }: { key: string; value: boolean }) => request('/concept-bookmarks/' + encodeURIComponent(key), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bookmarked: value }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['concept-bookmarks'] }),
   })
-  const bookmarked = (p: ConceptProposal) => bookmarks[conceptMarkKey(project.id, p)] === true
-  const toggleBookmark = (p: ConceptProposal) => {
-    const next = { ...bookmarks, [conceptMarkKey(project.id, p)]: !bookmarked(p) }
-    setBookmarks(next)
-    try { localStorage.setItem('concept-bookmarks:v1', JSON.stringify(next)) } catch { /* Storage may be unavailable. */ }
-  }
+  const toggleBookmark = (p: ConceptProposal) => { if (!bookmarkAction.isPending) bookmarkAction.mutate({ key: bookmarkKey(p), value: !bookmarked(p) }) }
+  useEffect(() => {
+    const marker = 'concept-bookmarks:be-migrated:' + apiUrl('/concept-bookmarks')
+    let active = true
+    const migrate = async () => {
+      try {
+        if (localStorage.getItem(marker)) return
+        const saved = JSON.parse(localStorage.getItem('concept-bookmarks:v1') || '{}')
+        for (const [key, value] of Object.entries(saved)) {
+          if (value === true && /^(default:\d+|project:[a-f0-9-]{36}:run:\d+:slot:\d+)$/.test(key)) {
+            await request('/concept-bookmarks/' + encodeURIComponent(key), { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ bookmarked: true }) })
+          }
+        }
+        localStorage.setItem(marker, '1')
+        if (active) await queryClient.invalidateQueries({ queryKey: ['concept-bookmarks'] })
+      } catch { /* Keep local bookmarks so the next mount can retry the import. */ }
+    }
+    void migrate()
+    return () => { active = false }
+  }, [queryClient])
   const [emojiMarks, setEmojiMarks] = useState(readEmojiMarks)
   const [emojiFilter, setEmojiFilter] = useState('all')
   const emojiOf = (proposal: ConceptProposal) => emojiMarks[conceptMarkKey(project.id, proposal)] ?? ''
@@ -97,6 +126,9 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     setEmojiMarks(next)
     try { localStorage.setItem(CONCEPT_EMOJI_STORAGE, JSON.stringify(next)) } catch { /* Browser storage may be unavailable. */ }
   }
+  const [conceptSearch, setConceptSearch] = useState('')
+  const [progressFilter, setProgressFilter] = useState('all')
+  const [historyKey, setHistoryKey] = useState<string | null>(null)
   const [selectedRun, setSelectedRun] = useState<number | null>(null)
   const [rerunSelection, setRerunSelection] = useState<{ run: number; slots: number[] } | null>(null)
   const [rerunConfirmed, setRerunConfirmed] = useState(false)
@@ -124,6 +156,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const [choices, setChoices] = useConceptChoices(project.id)
   const base = `/projects/${project.id}`
   const concepts = useQuery({ queryKey: ['concepts', project.id], queryFn: () => request<Concept[]>(`${base}/concepts`), refetchInterval: 1500 })
+  const progress = useMemo(() => conceptProgress(concepts.data ?? []), [concepts.data])
   const proposals = useQuery({ queryKey: ['concept-proposals', project.id], queryFn: () => request<ConceptProposal[]>(`${base}/concept-proposals`), refetchInterval: 3000 })
   const workflow = useQuery({ queryKey: ['workflow', project.id], queryFn: () => request<{ approved_master_id: string | null }>(`${base}/workflow`), refetchInterval: 1500 })
   const providers = useProviders()
@@ -148,7 +181,9 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const list = proposals.data ?? []
   const displayNumbers = conceptDisplayNumbers(list)
   const displayNumber = (slot: number) => displayNumbers.get(slot) ?? slot
-  const visibleList = list.filter(p => emojiFilter === 'all' || (emojiFilter === 'bookmarked' ? bookmarked(p) : emojiFilter === 'unmarked' ? !emojiOf(p) : emojiOf(p) === emojiFilter))
+  const normalizeSearch = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase()
+  const searchTerms = normalizeSearch(conceptSearch).trim().split(/\s+/).filter(Boolean)
+  const visibleList = list.filter(p => searchTerms.every(term => normalizeSearch([p.title, fieldOf(p.slot, 'title', p.title), ...Object.values(p.brief), ...Object.values(edits[p.slot] ?? {}), groupConcepts([p])[0]?.name, 'id:' + p.slot, String(displayNumber(p.slot))].join(' ')).includes(term)) && (emojiFilter === 'all' || (emojiFilter === 'bookmarked' ? bookmarked(p) : emojiFilter === 'unmarked' ? !emojiOf(p) : emojiOf(p) === emojiFilter)) && matchesProgress(progress.get(bookmarkKey(p)), progressFilter))
   const chosen = picked === null ? list : list.filter(p => picked.includes(p.slot))
   const estimate = useQuery({ queryKey: ['estimate', project.id, project.provider, project.model, size, chosen.length], enabled: ready && chosen.length > 0,
     queryFn: () => request<{ total_usd: number | null; note: string }>(`${base}/generation-estimate?purpose=concept&count=${chosen.length}${size ? `&size=${encodeURIComponent(size)}` : ''}`), refetchInterval: 3000 })
@@ -182,6 +217,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   </>
 
   return <section className="space-y-5">
+    {(bookmarks.error || bookmarkAction.error) && <ErrorAlert title="Không lưu được bookmark" error={bookmarkAction.error || bookmarks.error} />}
     <h2 className="text-xl font-semibold">Concept</h2>
     {concepts.isPending && <Skeleton className="h-64" />}
     {!!runs.length && <div className="flex flex-wrap items-center gap-4">
@@ -209,7 +245,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       {paid && !!rerunSlots.length && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={rerunConfirmed} onChange={e => setRerunConfirmed(e.target.checked)} /> Xác nhận gửi {rerunSlots.length} ảnh tới nhà cung cấp có phí ({costLabel(unitPrice == null ? null : unitPrice * rerunSlots.length)})</label>}
     </div>}
     {!!runs.length && <div className={`grid gap-4 ${compact ? 'grid-cols-2 md:grid-cols-3 lg:grid-cols-5' : 'grid-cols-1'}`}>
-      {cards.map(c => c ? <article key={c.id} className="space-y-3 rounded-xl border p-4" aria-label={`Concept ${c.slot}`}>
+      {cards.map(c => c ? <article key={c.id} className="min-w-0 self-start space-y-3 rounded-xl border p-4" aria-label={`Concept ${c.slot}`}>
         <label className="flex items-center gap-2 text-xs"><input type="checkbox" aria-label={`Chọn tạo lại ô ${c.slot}`} checked={rerunSlots.includes(c.slot)} onChange={e => pickForRerun(e.target.checked ? [...rerunSlots, c.slot] : rerunSlots.filter(slot => slot !== c.slot))} /> Chọn tạo lại</label>
         <div className={compact ? 'space-y-3' : 'grid gap-4 sm:grid-cols-[10rem_minmax(0,1fr)]'}>
           <div className="space-y-2">
@@ -218,7 +254,8 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
           <div className="min-w-0 space-y-3">
         <h3 className="font-semibold">{c.slot}. {c.mood}</h3>
         <p className="break-words text-xs text-muted-foreground">{c.job.provider} · {c.job.model}{c.job.settings.size ? ` · ${c.job.settings.size}` : ''}</p>
-        <p className="text-sm text-muted-foreground">{c.camera} · Bản {c.revision}</p>
+        <p className="text-xs text-muted-foreground">Bản {c.revision}</p>
+        <CompactDescription key={c.id} text={c.camera} />
         {c.stale && <p className="text-sm text-amber-700">Dựa trên nhân vật gốc cũ</p>}
 
         {!compact && <>
@@ -260,6 +297,17 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
       setConfirmed(false)
     }} />
     <OutfitSwitcher choices={choices} onChange={next => { setChoices(next); setConfirmed(false); setCustomConfirmed(false); setRerunConfirmed(false) }} />
+    <Dialog open={historyKey !== null} onOpenChange={open => { if (!open) setHistoryKey(null) }}>
+      <DialogContent className="max-h-[90vh] overflow-auto sm:max-w-3xl">
+        <DialogTitle>Kết quả concept trong {project.name}</DialogTitle>
+        <DialogDescription>Các đợt và phiên bản đã tạo trong dự án này.</DialogDescription>
+        <div className="grid gap-4 sm:grid-cols-2">{(historyKey ? progress.get(historyKey)?.rows ?? [] : []).map(c => <div key={c.id} className="space-y-2 rounded-lg border p-3">
+          <p className="text-sm">Đợt {c.run} · v{c.revision} · {c.job.status}</p>
+          {c.job.output_asset_ids.map(id => <ImagePreview key={id} assetId={id} title={c.mood} />)}
+          {c.job.error_message && <p className="text-sm text-destructive">{c.job.error_message}</p>}
+        </div>)}</div>
+      </DialogContent>
+    </Dialog>
     {list.length > 0 && <details className="space-y-4 rounded-xl border p-4">
       <summary className="cursor-pointer font-semibold">{list.length} concept · Mở/đóng danh sách</summary>
       <div className="flex flex-wrap items-center gap-3">
@@ -269,6 +317,12 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         <Button size="sm" variant="outline" onClick={() => { setPicked([]); setConfirmed(false) }} disabled={chosen.length === 0}>Bỏ chọn tất cả</Button>
         <span className="text-sm text-muted-foreground">Đang chọn {chosen.length}/{list.length}</span>
       </div>
+      <div className="flex items-center gap-2">
+        <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">Tìm concept
+          <input type="search" aria-label="Tìm concept" placeholder="Tên, từ khóa, 1114 hoặc ID…" value={conceptSearch} onChange={e => setConceptSearch(e.target.value)} className="min-w-0 flex-1 rounded-md border bg-background px-3 py-2" />
+        </label>
+        {conceptSearch && <Button size="sm" variant="outline" onClick={() => setConceptSearch('')}>Xóa tìm kiếm</Button>}
+      </div>
       <div className="flex flex-wrap items-center gap-3">
         <label className="text-sm">Lọc concept <select aria-label="Lọc concept theo emoji" className="ml-2 rounded border p-2" value={emojiFilter} onChange={e => setEmojiFilter(e.target.value)}>
           <option value="all">Tất cả ({list.length})</option>
@@ -276,10 +330,14 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
           <option value="unmarked">Chưa đánh dấu ({list.filter(p => !emojiOf(p)).length})</option>
           {CONCEPT_EMOJIS.map(emoji => <option key={emoji} value={emoji}>{emoji} ({list.filter(p => emojiOf(p) === emoji).length})</option>)}
         </select></label>
+        <label className="text-sm">Trong dự án này <select aria-label="Lọc trạng thái tạo concept" className="ml-2 rounded border p-2" value={progressFilter} onChange={e => setProgressFilter(e.target.value)}>
+          <option value="all">Tất cả</option><option value="created">Đã có ảnh</option><option value="uncreated">Chưa tạo</option><option value="active">Đang tạo</option><option value="failed">Lỗi, chưa có ảnh</option>
+        </select></label>
+        <span className="text-xs text-muted-foreground">{list.filter(p => progress.get(bookmarkKey(p))?.imageIds.length).length}/{list.length} concept đã có ảnh trong dự án này.</span>
         <span className="text-xs text-muted-foreground">Hiện {visibleList.length}/{list.length} · Đánh dấu được lưu trong trình duyệt này; concept mặc định dùng chung giữa các dự án.</span>
-        {emojiFilter !== 'all' && <Button size="sm" variant="outline" disabled={!visibleList.length} onClick={() => { setPicked(visibleList.map(p => p.slot)); setConfirmed(false) }}>Chỉ chọn các concept đang hiện</Button>}
+        {(conceptSearch.trim() || emojiFilter !== 'all' || progressFilter !== 'all') && <Button size="sm" variant="outline" disabled={!visibleList.length} onClick={() => { setPicked(visibleList.map(p => p.slot)); setConfirmed(false) }}>Chỉ chọn các concept đang hiện</Button>}
       </div>
-      {!visibleList.length && <p className="text-sm text-muted-foreground">Không có concept khớp emoji này.</p>}
+      {!visibleList.length && <p className="text-sm text-muted-foreground">Không có concept khớp bộ lọc.</p>}
       {groupConcepts(visibleList).map(group => {
         const selectedCount = group.items.filter(p => picked === null || picked.includes(p.slot)).length
         return <section key={group.name} className="space-y-3 rounded-lg border p-3" aria-label={group.name}>
@@ -305,7 +363,17 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
                 setConfirmed(false)
               }} />Chọn
           </label>
-          <button type="button" className="mt-2 rounded border px-2 py-1 text-xs" aria-label={`Bookmark concept ${displayNumber(p.slot)}`} aria-pressed={bookmarked(p)} onClick={() => toggleBookmark(p)}>{bookmarked(p) ? '🔖 Đã lưu' : '🔖 Bookmark'}</button>
+          <div className="mt-2 flex flex-wrap items-center gap-2" data-concept-progress={p.slot}>
+            <span className={progress.get(bookmarkKey(p))?.imageIds.length ? 'text-emerald-700 text-xs font-medium' : 'text-xs text-muted-foreground'}>{concepts.isPending ? 'Đang tải trạng thái…' : progressLabel(progress.get(bookmarkKey(p)))}</span>
+            {!!progress.get(bookmarkKey(p))?.rows.length && <Button size="sm" variant="outline" onClick={() => setHistoryKey(bookmarkKey(p))}>Xem kết quả</Button>}
+          </div>
+          {!!progress.get(bookmarkKey(p))?.imageIds.length && <div className="mt-2 flex gap-1.5" aria-label="Ảnh đã tạo trong dự án này">
+            {progress.get(bookmarkKey(p))!.imageIds.slice(0, 3).map((id, index) => <button key={id} type="button" className="relative min-w-0 flex-1 overflow-hidden rounded-md border" onClick={() => setHistoryKey(bookmarkKey(p))} aria-label={`Mở kết quả concept ${displayNumber(p.slot)}, ảnh ${index + 1}`}>
+              <img src={assetUrl(id)} alt={`Ảnh đã tạo · ${p.title}`} loading="lazy" className="h-24 w-full bg-muted object-cover" />
+              {index === 2 && progress.get(bookmarkKey(p))!.imageIds.length > 3 && <span className="absolute inset-0 flex items-center justify-center bg-black/50 font-semibold text-white">+{progress.get(bookmarkKey(p))!.imageIds.length - 3}</span>}
+            </button>)}
+          </div>}
+          <button type="button" className="mt-2 rounded border px-2 py-1 text-xs" aria-label={`Bookmark concept ${displayNumber(p.slot)}`} aria-pressed={bookmarked(p)} disabled={bookmarkAction.isPending || !bookmarks.data} onClick={() => toggleBookmark(p)}>{bookmarked(p) ? '🔖 Đã lưu' : '🔖 Bookmark'}</button>
           <label className="mt-2 flex items-center gap-2 text-xs">Đánh dấu
             <select aria-label={`Emoji concept ${displayNumber(p.slot)}`} className="rounded border p-1 text-base" value={emojiOf(p)} onChange={e => markEmoji(p, e.target.value)}>
               <option value="">—</option>

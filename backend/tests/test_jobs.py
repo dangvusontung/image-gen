@@ -217,7 +217,8 @@ def test_remove_failed_generation_hides_versions_and_preserves_accounting(client
     response = client.post(f"{base}/master/generate", json={"variants": 1})
     job_id = response.json()["job_ids"][0]
     assert wait_for_job(client, job_id)["status"] == "succeeded"
-    assert client.delete(f"/api/jobs/{job_id}").status_code == 409
+    assert client.delete(f"/api/jobs/{job_id}").status_code == 200
+    assert client.post(f"/api/trash/job/{job_id}/restore").status_code == 200
     with SessionLocal() as db:
         job = db.get(GenerationJob, job_id)
         job.status = "failed"

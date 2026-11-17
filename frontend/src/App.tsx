@@ -1,4 +1,5 @@
 import Gallery from '@/pages/Gallery'
+import Trash from '@/components/Trash'
 import Dashboard from '@/pages/Dashboard'
 import ProjectWorkspace from '@/pages/ProjectWorkspace'
 import ProviderSettings from '@/pages/ProviderSettings'
@@ -17,6 +18,7 @@ export default function App() {
       {route.page === 'project' && <ProjectWorkspace key={route.projectId} projectId={route.projectId} onBack={home} />}
       {route.page === 'gallery' && <Gallery onBack={home} />}
       {route.page === 'settings' && <ProviderSettings onBack={home} />}
+      <Trash />
       <GlobalHistory onOpenProject={(id) => navigate(`/projects/${id}`)} />
       {route.page === 'dashboard' && (
         <Dashboard onOpenProject={(id) => navigate(`/projects/${id}`)} onOpenSettings={() => navigate('/settings')} />

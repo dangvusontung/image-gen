@@ -5,7 +5,7 @@ import { groupConcepts } from './conceptGroups'
 const proposal = (slot: number, run = 0) => ({ id: `${run}-${slot}`, slot, run }) as ConceptProposal
 
 it('groups every catalog slot exactly once without a fallback', () => {
-  const defaults = Array.from({ length: 158 }, (_, i) => proposal(i + 1))
+  const defaults = Array.from({ length: 190 }, (_, i) => proposal(i + 1))
   const groups = groupConcepts(defaults)
   expect(groups).toHaveLength(13)
   expect(groups.flatMap(g => g.items).map(p => p.slot).sort((a, b) => a - b)).toEqual(defaults.map(p => p.slot))

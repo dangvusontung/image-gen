@@ -1,3 +1,4 @@
+import { TrashImageButton } from '@/components/Trash'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery } from '@tanstack/react-query'
@@ -126,6 +127,7 @@ export default function ImageGallery({ projectId }: { projectId?: string }) {
               <p className="text-xs text-muted-foreground">{new Date(detail.created_at).toLocaleString('vi-VN')}</p>
               <p className="break-words text-sm">{detail.provider} · {detail.model}</p>
               <DownloadLinks assetId={detail.id} />
+              <TrashImageButton assetId={detail.id} onTrashed={() => { setSelected(ids => ids.filter(id => id !== detail.id)); setDetail(null) }} />
               <h3 className="font-medium">Prompt</h3>
               <p className="whitespace-pre-wrap break-words text-sm">{detail.prompt}</p>
               {navigationError != null && <ErrorAlert title="Không chuyển được ảnh" error={navigationError} />}

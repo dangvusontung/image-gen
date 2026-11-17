@@ -66,14 +66,9 @@ it('remembers the white strapless dress without changing scene, lighting or glas
 })
 
 
-it('offers all four tank and pleated-mini looks and remembers the chosen style', async () => {
-  const view = render(<Harness />)
-  for (const label of ['Tank trắng + mini xếp ly xám', 'Tank đen + mini xếp ly kem', 'Tank xanh pastel + mini xếp ly trắng', 'Tank đỏ rượu + mini xếp ly taupe']) {
-    expect(screen.getByRole('option', { name: label })).toBeInTheDocument()
-  }
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('bikini')
-  await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'tank_pleated_classic')
-  view.unmount()
+it('hides pleated outfits and clears their old saved selection', () => {
+  localStorage.setItem('concept-choices:outfit-test', JSON.stringify({ outfit: 'tank_pleated_classic' }))
   render(<Harness />)
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('tank_pleated_classic')
+  expect(screen.queryByRole('option', { name: /mini xếp ly/ })).not.toBeInTheDocument()
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
 })

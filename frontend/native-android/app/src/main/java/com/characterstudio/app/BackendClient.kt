@@ -14,6 +14,54 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
 class BackendClient {
+    suspend fun getPrompt(origin: String, projectId: String, name: String): JSONObject = withContext(Dispatchers.IO) {
+        requestJson("${normalize(origin)}/api/prompts/${Uri.encode(name)}?project_id=${Uri.encode(projectId)}")
+    }
+
+    suspend fun savePrompt(origin: String, projectId: String, name: String, body: String?): JSONObject = withContext(Dispatchers.IO) {
+        requestJson("${normalize(origin)}/api/prompts/${Uri.encode(name)}?project_id=${Uri.encode(projectId)}", "PUT", JSONObject().put("body", body ?: JSONObject.NULL))
+    }
+
+    suspend fun copyPrompts(origin: String, projectId: String, sourceProjectId: String, includeConfiguration: Boolean = false, names: List<String>? = null) = withContext(Dispatchers.IO) {
+        val payload = JSONObject().put("source_project_id", sourceProjectId).put("include_configuration", includeConfiguration)
+        if (names != null) payload.put("prompt_names", JSONArray(names))
+        request("${normalize(origin)}/api/projects/$projectId/prompts/copy", "POST", payload.toString())
+        Unit
+    }
+    suspend fun listBookmarks(origin: String): Set<String> = withContext(Dispatchers.IO) {
+        jsonStringList(requestJson("${normalize(origin)}/api/concept-bookmarks"), "keys").toSet()
+    }
+
+    suspend fun setBookmark(origin: String, key: String, bookmarked: Boolean) = withContext(Dispatchers.IO) {
+        requestJson("${normalize(origin)}/api/concept-bookmarks/${Uri.encode(key)}", "PUT", JSONObject().put("bookmarked", bookmarked))
+        Unit
+    }
+    suspend fun conceptOptions(origin: String, id: String): JSONObject = withContext(Dispatchers.IO) {
+        requestJson("${normalize(origin)}/api/projects/$id/concept-options")
+    }
+    suspend fun listPresets(origin: String): List<StepPreset> = withContext(Dispatchers.IO) {
+        val rows = JSONArray(request("${normalize(origin)}/api/presets"))
+        (0 until rows.length()).map { i ->
+            val row = rows.getJSONObject(i)
+            val steps = row.optJSONObject("steps") ?: JSONObject()
+            StepPreset(row.getString("id"), row.getString("name"), steps.keys().asSequence().associateWith { key ->
+                val target = steps.getJSONObject(key)
+                GenerationTarget(target.getString("provider"), target.getString("model"), target.optString("size").takeUnless { it == "null" }.orEmpty())
+            })
+        }
+    }
+    suspend fun suggestConcepts(origin: String, id: String) = withContext(Dispatchers.IO) {
+        request("${normalize(origin)}/api/projects/$id/concept-proposals", "POST")
+        Unit
+    }
+    suspend fun projectArray(origin: String, id: String, path: String): List<JSONObject> = withContext(Dispatchers.IO) {
+        val rows = JSONArray(request("${normalize(origin)}/api/projects/$id/$path"))
+        buildList { for (i in 0 until rows.length()) add(rows.getJSONObject(i)) }
+    }
+
+    suspend fun projectAction(origin: String, id: String, path: String, payload: JSONObject = JSONObject()): JSONObject = withContext(Dispatchers.IO) {
+        requestJson("${normalize(origin)}/api/projects/$id/$path", "POST", payload)
+    }
     private val http = OkHttpClient.Builder()
         .connectTimeout(8, TimeUnit.SECONDS)
         .readTimeout(8, TimeUnit.SECONDS)
@@ -51,14 +99,16 @@ class BackendClient {
         requestJson("${normalize(origin)}/api/projects/$id", "PATCH", JSONObject().put("rights_confirmed", rightsConfirmed))
     }
 
-    suspend fun updateProjectSettings(origin: String, id: String, name: String, description: String, provider: String, model: String) = withContext(Dispatchers.IO) {
+    suspend fun updateProjectSettings(origin: String, id: String, name: String, description: String, provider: String, model: String, presetId: String?, workflowMode: String) = withContext(Dispatchers.IO) {
         requestJson("${normalize(origin)}/api/projects/$id", "PATCH", JSONObject()
-            .put("name", name.trim()).put("description", description.trim()).put("provider", provider.trim()).put("model", model.trim()))
+            .put("name", name.trim()).put("description", description.trim()).put("provider", provider.trim()).put("model", model.trim())
+            .put("preset_id", presetId ?: JSONObject.NULL).put("workflow_mode", workflowMode))
     }
 
     suspend fun listProviders(origin: String): List<ProviderSummary> = withContext(Dispatchers.IO) {
         val body = JSONArray(request("${normalize(origin)}/api/providers"))
         buildList { for (index in 0 until body.length()) add(body.getJSONObject(index).toProviderSummary()) }
+            .filter { it.name != "mock" }
     }
 
     suspend fun getProject(origin: String, id: String): ProjectDetail = withContext(Dispatchers.IO) {
@@ -144,6 +194,20 @@ class BackendClient {
         request("${normalize(origin)}/api/jobs/$jobId/retry", "POST")
     }
 
+    suspend fun listTrash(origin: String): List<JSONObject> = withContext(Dispatchers.IO) {
+        val rows = JSONArray(request("${normalize(origin)}/api/trash"))
+        (0 until rows.length()).map { rows.getJSONObject(it) }
+    }
+
+    suspend fun trashAsset(origin: String, assetId: String) = withContext(Dispatchers.IO) {
+        request("${normalize(origin)}/api/trash/assets/$assetId", "POST")
+    }
+
+    suspend fun trashAction(origin: String, kind: String, id: String, restore: Boolean) = withContext(Dispatchers.IO) {
+        val suffix = if (restore) "/restore" else ""
+        request("${normalize(origin)}/api/trash/$kind/$id$suffix", if (restore) "POST" else "DELETE")
+    }
+
     suspend fun dismissJob(origin: String, jobId: String) = withContext(Dispatchers.IO) {
         request("${normalize(origin)}/api/jobs/$jobId", "DELETE")
     }
@@ -176,8 +240,13 @@ class BackendClient {
             ?: if (method != "GET" && method != "HEAD") ByteArray(0).toRequestBody("application/json".toMediaType()) else null
         val response = http.newCall(Request.Builder().url(url).method(method, requestBody).build()).execute()
         response.use {
-            if (!it.isSuccessful) error("Server returned HTTP ${it.code}")
-            return it.body?.string().orEmpty()
+            val content = it.body?.string().orEmpty()
+            if (!it.isSuccessful) {
+                val message = runCatching { JSONObject(content).optJSONObject("error")?.optString("message")
+                    ?: JSONObject(content).optString("detail") }.getOrNull()
+                error(message?.takeIf { value -> value.isNotBlank() } ?: "Server returned HTTP ${it.code}")
+            }
+            return content
         }
     }
 
@@ -218,7 +287,21 @@ data class ProjectDetail(
     val assets: List<AssetSummary>,
     val provider: String = "",
     val model: String = "",
+    val presetId: String? = null,
+    val workflowMode: String = "manual",
 )
+
+data class GenerationTarget(val provider: String, val model: String, val size: String = "")
+data class StepPreset(val id: String, val name: String, val steps: Map<String, GenerationTarget>)
+
+fun ProjectDetail.generationTarget(purpose: String, presets: List<StepPreset>): GenerationTarget {
+    presets.find { it.id == presetId }?.steps?.get(purpose)?.let { return it }
+    if (workflowMode == "hybrid" || workflowMode == "hybrid_gemini") {
+        if (purpose == "enhance" && workflowMode == "hybrid") return GenerationTarget("bfl", "flux-2-pro", "1MP")
+        return GenerationTarget("gemini", "gemini-nano-banana-2.1", "1K")
+    }
+    return GenerationTarget(provider, model)
+}
 
 data class AssetSummary(val id: String, val filename: String, val kind: String, val selected: Boolean)
 data class JobSummary(val id: String, val purpose: String, val status: String, val error: String?, val outputAssetIds: List<String>)
@@ -249,6 +332,8 @@ private fun JSONObject.toProjectDetail() = ProjectDetail(
         }
     } ?: emptyList(),
     provider = optString("provider"), model = optString("model"),
+    presetId = optString("preset_id").takeIf { it.isNotBlank() && it != "null" },
+    workflowMode = optString("workflow_mode", "manual"),
 )
 
 private fun JSONObject.toAssetSummary() = AssetSummary(

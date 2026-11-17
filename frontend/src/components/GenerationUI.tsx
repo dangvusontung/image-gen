@@ -1,3 +1,4 @@
+import { TrashImageButton } from '@/components/Trash'
 import CopyPromptButton from '@/components/CopyPromptButton'
 import { useEffect, useState } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon, Clock3Icon, LoaderCircleIcon, MaximizeIcon, ZoomInIcon, ZoomOutIcon } from 'lucide-react'
@@ -39,7 +40,7 @@ export function useGenerationAction(projectId: string) {
     mutationFn: ({ path, data, method = 'POST' }: { path: string; data?: unknown; method?: string }) =>
       request(path, { method, headers: { 'Content-Type': 'application/json' }, body: data === undefined ? undefined : JSON.stringify(data) }),
     onSuccess: () => {
-      for (const key of [['workflow', projectId], ['concepts', projectId], ['enhancements', projectId], ['jobs', projectId], ['projects'], ['spend'], ['global-jobs'], ['enhance-plan', projectId]]) {
+      for (const key of [['workflow', projectId], ['concepts', projectId], ['enhancements', projectId], ['jobs', projectId], ['projects'], ['spend'], ['global-jobs'], ['enhance-plan', projectId], ['trash'], ['gallery']]) {
         qc.invalidateQueries({ queryKey: key })
       }
     },
@@ -131,6 +132,7 @@ export function ImagePreview({ assetId, title = 'Ảnh nhân vật', compareAsse
           {canPage && <Button variant="outline" size="icon" aria-label="Ảnh sau" className="shrink-0 self-center" onClick={() => step(1)}><ChevronRightIcon /></Button>}
         </div>
         <DownloadLinks assetId={canPage ? current.assetId : assetId} />
+        <TrashImageButton assetId={canPage ? current.assetId : assetId} onTrashed={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   </>
@@ -184,9 +186,10 @@ export function JobDetails({ job, projectId }: { job: GenerationJob; projectId: 
           {retryTarget ? 'Thử lại với model khác' : 'Thử lại job'}
         </Button>
         <Button size="sm" variant="destructive" disabled={action.isPending}
-          onClick={() => action.mutate({ path: `/jobs/${job.id}`, method: 'DELETE' })}>Xoá lượt tạo lỗi</Button>
+          onClick={() => action.mutate({ path: `/jobs/${job.id}`, method: 'DELETE' })}>Chuyển run vào Thùng rác</Button>
       </>}
     </div>
+    {job.status === 'succeeded' && <RemoveFailedGeneration job={job} />}
     {action.error && <ErrorAlert error={action.error} title="Không thực hiện được" />}
     <details className="text-xs"><summary>Prompt và tham chiếu đã sử dụng</summary>
       <p className="mt-2 whitespace-pre-wrap break-words">{job.prompt}</p>
@@ -236,10 +239,10 @@ export function PromptEditor({ projectId, name }: { projectId: string; name: str
 
 export function RemoveFailedGeneration({ job }: { job: GenerationJob }) {
   const action = useGenerationAction(job.project_id)
-  if (!['failed', 'cancelled'].includes(job.status)) return null
+  if (active(job)) return null
   return <div className="mt-2">
     <Button size="sm" variant="destructive" disabled={action.isPending}
-      onClick={() => action.mutate({ path: `/jobs/${job.id}`, method: 'DELETE' })}>Xoá lượt tạo lỗi</Button>
+      onClick={() => action.mutate({ path: `/jobs/${job.id}`, method: 'DELETE' })}>Chuyển run vào Thùng rác</Button>
     {action.error && <ErrorAlert error={action.error} title="Không xoá được lượt tạo" />}
   </div>
 }

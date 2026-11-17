@@ -197,7 +197,6 @@ export default function StepSources({ project, step, onBack }: { project: Projec
               onChange={e => { const checked = e.target.checked; setUseTurnaround(checked); setConceptLead.mutate({ step: 'concept', lead: checked ? null : 'none' }, { onError: () => setUseTurnaround(!checked) }) }} />
             Dùng turnaround
           </label>
-          <Button variant="outline" size="sm" onClick={onBack}>Xem turnaround</Button>
           {setConceptLead.error && <ErrorAlert error={setConceptLead.error} title="Không đổi được lựa chọn turnaround" />}
         </div>}
         <LeadPicker project={project} step={leadStep} options={leadOptions[step]} />

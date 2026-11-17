@@ -77,7 +77,7 @@ def test_denim_mix_rotates_bottoms_and_lighting_overrides_the_proposal():
         assert "summer daylight" in brief["lighting"]
     assert "denim shorts" in outfits[0]
     assert "denim skirt" in outfits[1]
-    assert "pleated skirt" in outfits[2]
+    assert outfits[2] == outfits[0]
 
 
 def test_glamour_style_changes_direction_without_changing_identity():
@@ -179,7 +179,10 @@ def test_tank_pleated_concepts_and_outfit_override_generate(client, studio):
     assert [p['slot'] for p in defaults[117:121]] == [118, 119, 120, 121]
     assert [p['brief']['outfit'] for p in defaults[117:121]] == [v[1] for v in TANK_PLEATED_OUTFITS.values()]
     menu = dict(client.get(f'{base}/concept-options').json()['outfit'])
-    assert all(key in menu for key in TANK_PLEATED_OUTFITS)
+    assert all(key not in menu for key in TANK_PLEATED_OUTFITS)
+    assert "pleated_skirt" not in menu and "tennis_skirt" not in menu
+    visible = client.get(f"{base}/concept-proposals").json()
+    assert {118, 119, 120, 121, 156}.isdisjoint(p["slot"] for p in visible)
     for slot, outfit in [(118, 'auto'), (121, 'auto'), (1, 'tank_pleated_sport')]:
         response = client.post(f'{base}/concepts/generate', json={'slots': [slot], 'choices': {'outfit': outfit}, 'confirmed': True})
         assert response.status_code == 201, response.text

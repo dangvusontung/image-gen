@@ -44,7 +44,7 @@ def list_projects(db: Session = Depends(get_db)):
         db.query(Project).filter(~Project.id.in_(db.query(StickerPack.project_id)))
         .options(selectinload(Project.source_assets)).order_by(Project.updated_at.desc()).all()
     )
-    jobs = db.query(GenerationJob).order_by(GenerationJob.updated_at.desc()).all()
+    jobs = db.query(GenerationJob).filter(GenerationJob.dismissed.is_(False)).order_by(GenerationJob.updated_at.desc()).all()
     by_project = {}
     for job in jobs:
         by_project.setdefault(job.project_id, []).append(job)

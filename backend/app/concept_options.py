@@ -45,11 +45,11 @@ MENU = {
     "footwear": [("auto", "Giày riêng của từng concept"), *[(key, label) for key, (label, _) in FOOTWEAR.items()], ("custom", "Giày tùy chỉnh")],
     "style": [("auto", "Theo từng concept (không ghi đè)"), ("cute", "Dễ thương · nhẹ nhàng, ấm áp"), ("glamour", "Glamour · táo bạo, cuốn hút")],
     "outfit": [("auto", "Trang phục riêng của từng concept"), ("black_strapless_mini", "Váy mini đen cúp ngực"),
-               *[(key, label) for key, (label, _) in TANK_PLEATED_OUTFITS.items()], ("white_strapless_mini", "Váy mini satin trắng cúp ngực"), ("black_white_lounge", "Crop tank + short đen viền trắng"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
+               ("white_strapless_mini", "Váy mini satin trắng cúp ngực"), ("black_white_lounge", "Crop tank + short đen viền trắng"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
                ("shirt_shorts", "Sơ mi + quần short"), ("bodysuit_trousers", "Bodysuit + quần dài"),
                ("offshoulder_skirt", "Áo trễ vai + chân váy"), ("denim_mix", "Phối quần short jeans và chân váy"),
                ("denim_shorts", "Quần short jeans"), ("cargo_shorts", "Quần short cargo"), ("denim_skirt", "Chân váy jeans"),
-               ("pleated_skirt", "Chân váy xếp ly"), ("tennis_skirt", "Chân váy tennis"), ("straight_jeans", "Quần jeans ống đứng"),
+               ("straight_jeans", "Quần jeans ống đứng"),
                ("wide_trousers", "Quần ống rộng"), ("sundress", "Váy mùa hè"), ("midi_dress", "Váy midi"),
                ("knit_dress", "Váy len"), ("pyjamas", "Đồ ngủ"), ("overalls", "Yếm denim"), ("linen_set", "Set linen"),
                ("blazer_skirt", "Blazer và chân váy"), ("tracksuit", "Đồ thể thao"), ("custom", "Tùy chỉnh")],
@@ -199,7 +199,7 @@ def apply_choices(brief, choices, slot, prior):
         result["pose"] = "a natural anatomically coherent pose suited to the chosen activity"
     outfit = choices.outfit
     if outfit == "denim_mix":
-        outfit = ("denim_shorts", "denim_skirt", "pleated_skirt")[(slot - 1) % 3]
+        outfit = ("denim_shorts", "denim_skirt")[(slot - 1) % 2]
     tops = {"fitted_tank": "a fitted ribbed tank top", "cropped_tee": "a fitted cropped cotton tee",
             "auto": "a soft pastel cotton tee", "tee": "a soft pastel cotton tee",
             "knit": "a lightweight fine-knit top", "blouse": "a soft cotton blouse with rounded buttons",

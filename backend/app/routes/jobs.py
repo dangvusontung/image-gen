@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.jobs.service import JobRequestError, request_cancel, retry_job
-from app.models import GenerationJob, Project, StickerPack
+from app.models import GenerationJob, JobStatus, Project, StickerPack
 from app.providers.registry import ProviderRegistry, get_registry
 from app.routes.projects import get_project_or_404
 from app.schemas import JobHistoryOut, JobOut
@@ -22,7 +22,7 @@ def notify_runner(request: Request) -> None:
 
 def _job_or_404(db: Session, job_id: str) -> GenerationJob:
     job = db.get(GenerationJob, job_id)
-    if job is None:
+    if job is None or job.purged:
         raise HTTPException(404, detail={"code": "job_not_found", "message": "Không tìm thấy job"})
     return job
 
@@ -106,10 +106,10 @@ def retry(job_id: str, request: Request, data: RetryRequest | None = None, db: S
 
 
 @router.delete("/api/jobs/{job_id}")
-def remove_failed_job(job_id: str, db: Session = Depends(get_db)):
+def trash_job(job_id: str, db: Session = Depends(get_db)):
     job = _job_or_404(db, job_id)
-    if job.status not in ("failed", "cancelled"):
-        raise HTTPException(409, detail={"code": "job_not_removable", "message": "Chỉ có thể xoá lượt tạo lỗi hoặc đã huỷ."})
+    if job.status not in JobStatus.FINAL:
+        raise HTTPException(409, detail={"code": "job_not_removable", "message": "Hãy huỷ hoặc chờ lượt tạo hoàn tất trước khi chuyển vào Thùng rác."})
     job.dismissed = True
     db.commit()
     return {"removed": True}

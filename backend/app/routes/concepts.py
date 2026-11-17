@@ -178,7 +178,14 @@ def turn_refs(turn, camera="", lead=None):
 
 
 def concept_out(concept, project):
+    catalog = next((row for row in get_catalog().concepts if row.slot == concept.slot), None)
+    title = re.sub(r"^\[1111\]\s*", "", concept.mood)
+    catalog_title = re.sub(r"^\[1111\]\s*", "", catalog.title) if catalog else None
+    bookmark_key = concept.job.meta.get("bookmark_key") or (
+        f"default:{concept.slot}" if catalog and title == catalog_title
+        else f"project:{project.id}:run:{concept.run}:slot:{concept.slot}")
     return ConceptOut(
+        bookmark_key=bookmark_key,
         id=concept.id, run=concept.run, slot=concept.slot, revision=concept.revision,
         mood=concept.mood, camera=concept.camera, brief=concept.brief, master_version_id=concept.master_version_id,
         turnaround_version_id=concept.turnaround_version_id, stale=concept.master_version_id != project.approved_master_id,
@@ -284,7 +291,7 @@ def parse_proposals(text: str) -> list[dict]:
 
 
 def proposal_out(row):
-    return ConceptProposalOut(id=row.id, run=row.run, slot=row.slot, title=row.title, brief=row.brief,
+    return ConceptProposalOut(bookmark_key=f"project:{row.project_id}:run:{row.run}:slot:{row.slot}", id=row.id, run=row.run, slot=row.slot, title=row.title, brief=row.brief,
                               master_version_id=row.master_version_id, created_at=row.created_at)
 
 
@@ -295,7 +302,7 @@ def list_proposals(project_id: str, include_retired: bool = False, db: Session =
     latest = db.query(func.max(ConceptProposal.run)).filter_by(project_id=project.id).scalar()
     if latest is None:
         return [
-            ConceptProposalOut(id=f"default-{index}", run=0, slot=index, title=concept["title"],
+            ConceptProposalOut(bookmark_key=f"default:{index}", id=f"default-{index}", run=0, slot=index, title=concept["title"],
                                brief={k: v for k, v in concept.items() if k != "title"},
                                master_version_id=project.approved_master_id or "",
                                created_at=project.created_at)
@@ -408,6 +415,14 @@ def generate_concepts(project_id: str, data: GenerateRequest, request: Request, 
         brief.update({k: v.strip() for k, v in data.briefs.get(slot, {}).items()})
         concept, job = new_concept(db, registry, project, run, slot, title,
                                    brief.get("camera", ""), 1, data.size, data.choices, brief=brief)
+        if data.source_run is not None:
+            source_key = (f"default:{slot}" if data.use_catalog_briefs and slot in current
+                          else concept_out(saved[slot], project).bookmark_key)
+        elif latest is None:
+            source_key = f"default:{slot}"
+        else:
+            source_key = f"project:{project.id}:run:{latest}:slot:{slot}"
+        job.meta = {**job.meta, "bookmark_key": source_key}
         concepts.append(concept)
         jobs.append(job)
     finish(db, request, jobs, data.confirmed)
@@ -445,6 +460,7 @@ def regenerate(project_id: str, concept_id: str, data: RegenerateRequest, reques
             prompt = old.job.prompt
     concept, job = new_concept(db, registry, project, old.run, old.slot, (data.title or title).strip(), camera,
                                revision, data.size, choices, brief=brief, prompt_override=prompt)
+    job.meta = {**job.meta, "bookmark_key": concept_out(old, project).bookmark_key}
     finish(db, request, [job], True)
     return GenerationResult(id=concept.id, job_ids=[job.id], concept_ids=[concept.id])
 

@@ -24,7 +24,7 @@ export default function ModelPicker({ project, onChange }: { project: ProjectDet
     <h3>Generation model</h3>
     <label className="ss-field">Choose a model
       <select aria-label="Generation model" value={selected} disabled={saving || providers.isPending} onChange={event => void select(event.target.value)}>
-        {!available && <option value={selected}>{project.provider} · {project.model}</option>}
+        {!available && <option value={selected} disabled>Choose a generation model</option>}
         {providers.data?.filter(provider => provider.selectable).map(provider => <optgroup key={provider.name} label={`${provider.display_name}${!provider.enabled ? ' · API key required' : ''}`}>
           {provider.models.map(model => {
             const compatible = model.aspect_ratios.includes('1:1') && model.max_reference_images > 0

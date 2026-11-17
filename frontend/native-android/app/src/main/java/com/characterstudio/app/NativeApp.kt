@@ -3,6 +3,10 @@ package com.characterstudio.app
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,6 +30,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -37,6 +42,7 @@ import android.app.DownloadManager
 import android.net.Uri
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
+import androidx.activity.compose.BackHandler
 
 @Composable
 fun NativeApp() {
@@ -45,7 +51,14 @@ fun NativeApp() {
     var origin by remember { mutableStateOf(prefs.origin) }
     var screen by remember { mutableStateOf(if (origin == null) "connect" else "dashboard") }
     var selectedProject by remember { mutableStateOf<String?>(null) }
+    var projectInitialStep by remember { mutableIntStateOf(0) }
 
+    BackHandler(enabled = screen == "project" || screen == "gallery" || screen == "trash") {
+        screen = "dashboard"
+    }
+
+    androidx.compose.material3.MaterialTheme {
+    androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
     when (screen) {
         "connect" -> ConnectionScreen { connected ->
             prefs.origin = connected
@@ -55,15 +68,21 @@ fun NativeApp() {
         "project" -> ProjectScreen(
             origin = origin!!,
             projectId = selectedProject!!,
+            initialStep = projectInitialStep,
             onBack = { screen = "dashboard" },
         )
+        "trash" -> TrashScreen(origin = origin!!, onBack = { screen = "dashboard" })
         "gallery" -> GalleryScreen(origin = origin!!, onBack = { screen = "dashboard" })
         else -> DashboardScreen(
             origin = origin!!,
-            onOpen = { selectedProject = it; screen = "project" },
+            onOpen = { selectedProject = it; projectInitialStep = 0; screen = "project" },
+            onProjectGallery = { selectedProject = it; projectInitialStep = 3; screen = "project" },
             onGallery = { screen = "gallery" },
+            onTrash = { screen = "trash" },
             onDisconnect = { prefs.origin = null; origin = null; screen = "connect" },
         )
+    }
+    }
     }
 }
 
@@ -75,7 +94,7 @@ private class AppPrefs(context: android.content.Context) {
 }
 
 @Composable
-private fun DashboardScreen(origin: String, onOpen: (String) -> Unit, onGallery: () -> Unit, onDisconnect: () -> Unit) {
+private fun DashboardScreen(origin: String, onOpen: (String) -> Unit, onProjectGallery: (String) -> Unit, onGallery: () -> Unit, onTrash: () -> Unit, onDisconnect: () -> Unit) {
     val client = remember { BackendClient() }
     val scope = rememberCoroutineScope()
     var projects by remember { mutableStateOf<List<ProjectSummary>>(emptyList()) }
@@ -95,10 +114,12 @@ private fun DashboardScreen(origin: String, onOpen: (String) -> Unit, onGallery:
     LaunchedEffect(origin) { refresh() }
 
     Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Column { Text("Projects", style = MaterialTheme.typography.headlineMedium); Text(origin, style = MaterialTheme.typography.bodySmall) }
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text("Projects", style = MaterialTheme.typography.headlineMedium)
+            Text(origin, style = MaterialTheme.typography.bodySmall)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 TextButton(onClick = onGallery) { Text("Gallery") }
+                TextButton(onClick = onTrash) { Text("Trash") }
                 TextButton(onClick = onDisconnect) { Text("Disconnect") }
                 Button(onClick = { showCreate = true }) { Text("New") }
             }
@@ -113,12 +134,13 @@ private fun DashboardScreen(origin: String, onOpen: (String) -> Unit, onGallery:
                         Text(project.name, style = MaterialTheme.typography.titleLarge)
                         Text(project.description ?: "No description", style = MaterialTheme.typography.bodyMedium)
                         Text("${project.assetCount} assets · ${project.completedJobs} completed jobs · ${project.activeJobs} active", style = MaterialTheme.typography.bodySmall)
+                        OutlinedButton(onClick = { onProjectGallery(project.id) }) { Text("Project photos") }
                     }
                 }
             }
         }
     }
-    if (showCreate) CreateProjectDialog(client, origin, { project -> showCreate = false; projects = projects + project }, { showCreate = false })
+    if (showCreate) CreateProjectDialog(client, origin, { project -> showCreate = false; projects = projects + project; onOpen(project.id) }, { showCreate = false })
 }
 
 @Composable
@@ -127,6 +149,7 @@ private fun GalleryScreen(origin: String, onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var items by remember { mutableStateOf<List<GalleryItem>>(emptyList()) }
+    var preview by remember { mutableStateOf<String?>(null) }
     var error by remember { mutableStateOf<String?>(null) }
     LaunchedEffect(origin) { runCatching { client.listGallery(origin) }.onSuccess { items = it }.onFailure { error = it.message } }
     Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -137,20 +160,24 @@ private fun GalleryScreen(origin: String, onBack: () -> Unit) {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             items(items, key = { it.id }) { item ->
                 Card(Modifier.fillMaxWidth()) {
-                    Row(Modifier.padding(10.dp), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        AsyncImage(model = "$origin/api/assets/${item.id}/content", contentDescription = item.filename, modifier = Modifier.size(76.dp))
-                        Column(Modifier.weight(1f)) { Text(item.filename); Text("${item.projectName} · ${item.purpose}", style = MaterialTheme.typography.bodySmall) }
+                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        ResultImage(origin, item.id) { preview = item.id }
+                        Column { Text(item.filename); Text("${item.projectName} · ${item.purpose}", style = MaterialTheme.typography.bodySmall) }
                         TextButton(onClick = {
                             val req = DownloadManager.Request(Uri.parse("$origin/api/assets/${item.id}/download?format=original"))
                                 .setTitle(item.filename).setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
                                 .setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, item.filename)
                             context.getSystemService(DownloadManager::class.java)?.enqueue(req)
                         }) { Text("Save") }
+                        TextButton(onClick = { scope.launch {
+                            runCatching { client.trashAsset(origin, item.id) }.onSuccess { items = items.filterNot { it.id == item.id }; error = null }.onFailure { error = it.message }
+                        } }) { Text("Move image to Trash") }
                     }
                 }
             }
         }
     }
+    preview?.let { ImageViewer(origin, it) { preview = null } }
 }
 
 @Composable
@@ -158,201 +185,46 @@ private fun CreateProjectDialog(client: BackendClient, origin: String, onCreated
     val scope = rememberCoroutineScope()
     var name by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
+    var sources by remember { mutableStateOf(emptyList<ProjectSummary>()) }
+    var sourceId by remember { mutableStateOf("") }
+    var includeConfiguration by remember { mutableStateOf(true) }
+    var createdProject by remember { mutableStateOf<ProjectSummary?>(null) }
+    LaunchedEffect(origin) { runCatching { client.listProjects(origin) }.onSuccess { sources = it } }
     var error by remember { mutableStateOf<String?>(null) }
     var saving by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("New project") },
-        text = { Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
-            OutlinedTextField(description, { description = it }, label = { Text("Description") })
+        text = { Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true, enabled = !saving && createdProject == null)
+            OutlinedTextField(description, { description = it }, label = { Text("Description") }, enabled = !saving && createdProject == null)
+            ServerChoice("Starting prompts", sourceId, listOf("") + sources.map { it.id }, enabled = !saving,
+                labels = mapOf("" to "Use backend defaults") + sources.associate { it.id to ("Copy from "+it.name) }) { sourceId = it }
+            if (sourceId.isNotBlank()) Row {
+                Checkbox(includeConfiguration, onCheckedChange = { includeConfiguration = it }, enabled = !saving)
+                Text("Also copy provider, model and per-step configuration", Modifier.padding(top = 12.dp))
+            }
+            Text("Photos and generated images are not copied.", style = MaterialTheme.typography.bodySmall)
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         } },
         confirmButton = { TextButton(enabled = name.isNotBlank() && !saving, onClick = {
             saving = true
-            scope.launch { runCatching { client.createProject(origin, name.trim(), description.trim()) }
-                .onSuccess(onCreated).onFailure { error = it.message; saving = false } }
+            scope.launch {
+                try {
+                    val created = createdProject ?: client.createProject(origin, name.trim(), description.trim()).also { createdProject = it }
+                    if (sourceId.isNotBlank()) client.copyPrompts(origin, created.id, sourceId, includeConfiguration)
+                    onCreated(created)
+                } catch (e: Exception) { error = (if (createdProject != null) "Project created; prompt setup failed. Retry to finish without creating another project. " else "")+e.message; saving = false }
+            }
         }) { Text(if (saving) "Creating…" else "Create") } },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } },
     )
 }
 
 @Composable
-private fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit) {
-    val context = LocalContext.current
-    val client = remember { BackendClient() }
-    val scope = rememberCoroutineScope()
-    var project by remember { mutableStateOf<ProjectDetail?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var uploading by remember { mutableStateOf(false) }
-    var generating by remember { mutableStateOf(false) }
-    var jobMessage by remember { mutableStateOf<String?>(null) }
-    var jobs by remember { mutableStateOf<List<JobSummary>>(emptyList()) }
-    var workflow by remember { mutableStateOf<org.json.JSONObject?>(null) }
-    var concepts by remember { mutableStateOf<List<ConceptSummary>>(emptyList()) }
-    var showSettings by remember { mutableStateOf(false) }
-    var providers by remember { mutableStateOf<List<ProviderSummary>>(emptyList()) }
-    var rightsConfirmed by remember { mutableStateOf(false) }
-    val reload = suspend {
-        runCatching { client.getProject(origin, projectId) }.onSuccess { project = it; rightsConfirmed = it.rightsConfirmed }.onFailure { error = it.message }
-    }
-    val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris ->
-        if (uris.isEmpty()) return@rememberLauncherForActivityResult
-        uploading = true
-        scope.launch {
-            runCatching { client.uploadAssets(origin, projectId, uris, context.contentResolver); reload() }
-                .onFailure { error = it.message }
-            uploading = false
-        }
-    }
-    LaunchedEffect(projectId) {
-        reload()
-        runCatching { client.workflow(origin, projectId) }.onSuccess { workflow = it }
-        runCatching { client.listProviders(origin) }.onSuccess { providers = it }
-        while (true) {
-            runCatching { client.listJobs(origin, projectId) }.onSuccess { jobs = it }
-            runCatching { client.workflow(origin, projectId) }.onSuccess { workflow = it }
-            runCatching { client.listConcepts(origin, projectId) }.onSuccess { concepts = it }
-            reload()
-            kotlinx.coroutines.delay(3000)
-        }
-    }
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        TextButton(onClick = onBack) { Text("← Projects") }
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        project?.let { detail ->
-            Text(detail.name, style = MaterialTheme.typography.headlineMedium)
-            Text(detail.description ?: "No description")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedButton(onClick = { showSettings = true }) { Text("Project settings") }
-            }
-            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                Checkbox(checked = rightsConfirmed, onCheckedChange = { checked ->
-                    rightsConfirmed = checked
-                    scope.launch { runCatching { client.updateProject(origin, projectId, checked) }.onFailure { error = it.message } }
-                })
-                Text("I have permission to use these images")
-            }
-            HorizontalDivider()
-            Text("Assets (${detail.assets.size})", style = MaterialTheme.typography.titleLarge)
-            if (detail.assets.isEmpty()) Text("No assets yet. Upload flow is next.")
-            detail.assets.forEach { asset ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    Checkbox(checked = asset.selected, onCheckedChange = { selected ->
-                        scope.launch { runCatching { client.updateAsset(origin, asset.id, selected) }.onSuccess { reload() }.onFailure { error = it.message } }
-                    })
-                    AsyncImage(
-                        model = "$origin/api/assets/${asset.id}/content",
-                        contentDescription = asset.filename,
-                        modifier = Modifier.size(64.dp),
-                    )
-                    Column(Modifier.weight(1f)) {
-                        Text(asset.filename)
-                        Text(asset.kind, style = MaterialTheme.typography.bodySmall)
-                    }
-                    TextButton(onClick = {
-                        val request = DownloadManager.Request(Uri.parse("$origin/api/assets/${asset.id}/download?format=original"))
-                            .setTitle(asset.filename)
-                            .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                            .setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, asset.filename)
-                        (context.getSystemService(DownloadManager::class.java))?.enqueue(request)
-                    }) { Text("Save") }
-                    TextButton(onClick = {
-                        scope.launch { runCatching { client.deleteAsset(origin, asset.id) }.onSuccess { reload() }.onFailure { error = it.message } }
-                    }) { Text("Delete") }
-                }
-            }
-            Button(enabled = !uploading, onClick = { picker.launch("image/*") }) { Text(if (uploading) "Uploading…" else "Upload photos") }
-            val selectedCount = detail.assets.count { it.selected }
-            val approvedMaster = workflow?.optString("approved_master_id").orEmpty().isNotBlank()
-            Button(enabled = selectedCount > 0 && rightsConfirmed && !generating, onClick = {
-                generating = true
-                scope.launch {
-                    runCatching { client.generateMaster(origin, projectId) }
-                        .onSuccess { ids -> jobMessage = "Master generation queued: ${ids.joinToString()}" }
-                        .onFailure { error = it.message }
-                    generating = false
-                }
-            }) { Text(if (generating) "Queueing…" else "Generate master") }
-            Button(enabled = approvedMaster && !generating, onClick = {
-                generating = true
-                scope.launch {
-                    runCatching { client.generateTurnaround(origin, projectId) }
-                        .onSuccess { ids -> jobMessage = "Turnaround queued: ${ids.size} angles" }
-                        .onFailure { error = it.message }
-                    generating = false
-                }
-            }) { Text("Generate turnaround") }
-            Button(enabled = approvedMaster && !generating, onClick = {
-                generating = true
-                scope.launch {
-                    runCatching { client.generateConcepts(origin, projectId) }
-                        .onSuccess { ids -> jobMessage = "Concept generation queued: ${ids.size} jobs" }
-                        .onFailure { error = it.message }
-                    generating = false
-                }
-            }) { Text("Generate concepts") }
-            jobMessage?.let { Text(it, color = MaterialTheme.colorScheme.secondary) }
-            workflow?.let { state ->
-                val masters = state.optJSONArray("masters")?.length() ?: 0
-                val turnarounds = state.optJSONArray("turnarounds")?.length() ?: 0
-                Text("Workflow: $masters master versions · $turnarounds turnaround versions · ${if (approvedMaster) "master approved" else "master not approved"}", style = MaterialTheme.typography.bodySmall)
-                val masterRows = state.optJSONArray("masters")
-                if (!approvedMaster && masterRows != null) {
-                    for (index in 0 until masterRows.length()) {
-                        val row = masterRows.getJSONObject(index)
-                        val job = row.optJSONObject("job")
-                        if (job?.optString("status") == "succeeded") {
-                            val versionId = row.optString("id")
-                            Button(onClick = { scope.launch { runCatching { client.approveMaster(origin, projectId, versionId) }.onSuccess { reload() }.onFailure { error = it.message } } }) { Text("Approve master ${row.optInt("round")}/${row.optInt("variant")}") }
-                        }
-                    }
-                }
-                val turnRows = state.optJSONArray("turnarounds")
-                if (turnRows != null) {
-                    for (index in 0 until turnRows.length()) {
-                        val row = turnRows.getJSONObject(index)
-                        val turnId = row.optString("id")
-                        val stale = row.optBoolean("stale")
-                        val approvedTurn = state.optString("approved_turnaround_id") == turnId
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Turnaround #${row.optInt("number")} ${if (stale) "(stale)" else ""}${if (approvedTurn) " · approved" else ""}", modifier = Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
-                            if (!stale && !approvedTurn) TextButton(onClick = { scope.launch { runCatching { client.approveTurnaround(origin, projectId, turnId) }.onSuccess { workflow = client.workflow(origin, projectId) }.onFailure { error = it.message } } }) { Text("Approve") }
-                            TextButton(onClick = { scope.launch { runCatching { client.deleteTurnaround(origin, projectId, turnId) }.onSuccess { workflow = client.workflow(origin, projectId) }.onFailure { error = it.message } } }) { Text("Delete") }
-                        }
-                    }
-                }
-            }
-            Text("Jobs", style = MaterialTheme.typography.titleLarge)
-            jobs.take(8).forEach { job ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("${job.purpose}: ${job.status}${job.error?.let { " — $it" } ?: ""}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                    if (job.status == "queued" || job.status == "submitting" || job.status == "running") TextButton(onClick = { scope.launch { runCatching { client.cancelJob(origin, job.id) }.onFailure { error = it.message } } }) { Text("Cancel") }
-                    if (job.status == "failed" || job.status == "cancelled") {
-                        TextButton(onClick = { scope.launch { runCatching { client.retryJob(origin, job.id) }.onFailure { error = it.message } } }) { Text("Retry") }
-                        TextButton(onClick = { scope.launch { runCatching { client.dismissJob(origin, job.id) }.onFailure { error = it.message } } }) { Text("Dismiss") }
-                    }
-                }
-            }
-            Text("Concepts (${concepts.size})", style = MaterialTheme.typography.titleLarge)
-            concepts.take(6).forEach { concept ->
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("${concept.status}: ${concept.brief.take(90)}", style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
-                    if (concept.status == "succeeded") TextButton(onClick = { scope.launch { runCatching { client.enhance(origin, projectId, concept.id) }.onFailure { error = it.message } } }) { Text("Enhance") }
-                }
-            }
-        } ?: CircularProgressIndicator()
-    }
-    if (showSettings) ProjectSettingsDialog(
-        detail = project, providers = providers, client = client, origin = origin, projectId = projectId,
-        onSaved = { showSettings = false; scope.launch { reload() } }, onDismiss = { showSettings = false },
-    )
-}
-
-@Composable
-private fun ProjectSettingsDialog(
+internal fun ProjectSettingsDialog(
     detail: ProjectDetail?, providers: List<ProviderSummary>, client: BackendClient, origin: String, projectId: String,
-    onSaved: () -> Unit, onDismiss: () -> Unit,
+    onSaved: () -> Unit, onDismiss: () -> Unit, presets: List<StepPreset> = emptyList(), onPrompts: () -> Unit = {},
 ) {
     if (detail == null) return
     val scope = rememberCoroutineScope()
@@ -360,17 +232,46 @@ private fun ProjectSettingsDialog(
     var description by remember(detail.id) { mutableStateOf(detail.description.orEmpty()) }
     var provider by remember(detail.id) { mutableStateOf(detail.provider) }
     var model by remember(detail.id) { mutableStateOf(detail.model) }
+    var presetId by remember(detail.id) { mutableStateOf(detail.presetId) }
+    var workflowMode by remember(detail.id) { mutableStateOf(detail.workflowMode) }
     var error by remember { mutableStateOf<String?>(null) }
+    var saving by remember { mutableStateOf(false) }
     AlertDialog(onDismissRequest = onDismiss, title = { Text("Project settings") }, text = {
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             OutlinedTextField(name, { name = it }, label = { Text("Name") }, singleLine = true)
             OutlinedTextField(description, { description = it }, label = { Text("Description") })
-            OutlinedTextField(provider, { provider = it }, label = { Text("Provider") }, singleLine = true)
-            OutlinedTextField(model, { model = it }, label = { Text("Model") }, singleLine = true)
-            Text("Available: ${providers.filter { it.selectable }.joinToString { it.name }}", style = MaterialTheme.typography.bodySmall)
+            OutlinedButton(onClick = onPrompts, enabled = !saving, modifier = Modifier.fillMaxWidth()) { Text("View, edit or copy prompts") }
+            ServerChoice("Per-step configuration", presetId.orEmpty(), listOf("") + presets.map { it.id }, enabled = !saving,
+                labels = mapOf("" to "None · use project settings") + presets.associate { it.id to it.name }) { presetId = it.takeIf { id -> id.isNotBlank() } }
+            presets.find { it.id == presetId }?.let { preset ->
+                preset.steps.forEach { (step, target) -> Text(step+": "+target.provider+" / "+target.model+(if (target.size.isNotBlank()) " · "+target.size else ""), style = MaterialTheme.typography.bodySmall) }
+            }
+            ServerChoice("Generation workflow", workflowMode, listOf("manual", "hybrid", "hybrid_gemini"), enabled = !saving,
+                labels = mapOf("manual" to "Manual · one provider for all steps", "hybrid" to "Gemini 1K → FLUX.2 Pro", "hybrid_gemini" to "Gemini 1K for every step")) { workflowMode = it }
+            Text("Per-step configurations take priority. Unconfigured steps use the workflow below.", style = MaterialTheme.typography.bodySmall)
+            ServerChoice("Provider", provider, providers.filter { it.selectable }.map { it.name }, enabled = !saving) { selected ->
+                provider = selected
+                model = providers.find { it.name == selected }?.models?.firstOrNull().orEmpty()
+            }
+            ServerChoice("Model", model, providers.find { it.name == provider }?.models.orEmpty(), enabled = !saving) { model = it }
             error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
         }
     }, confirmButton = { TextButton(onClick = {
-        scope.launch { runCatching { client.updateProjectSettings(origin, projectId, name, description, provider, model) }.onSuccess { onSaved() }.onFailure { error = it.message } }
-    }, enabled = name.isNotBlank() && provider.isNotBlank() && model.isNotBlank()) { Text("Save") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+        saving = true
+        scope.launch { runCatching { client.updateProjectSettings(origin, projectId, name, description, provider, model, presetId, workflowMode) }.onSuccess { onSaved() }.onFailure { error = it.message }; saving = false }
+    }, enabled = !saving && name.isNotBlank() && provider.isNotBlank() && model.isNotBlank()) { Text("Save") } }, dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } })
+}
+
+@Composable
+internal fun ServerChoice(label: String, value: String, options: List<String>, enabled: Boolean, labels: Map<String, String> = emptyMap(), onSelect: (String) -> Unit) {
+    var expanded by remember { mutableStateOf(false) }
+    Column {
+        Text(label, style = MaterialTheme.typography.labelMedium)
+        androidx.compose.foundation.layout.Box {
+            OutlinedButton(onClick = { expanded = true }, enabled = enabled && options.isNotEmpty(), modifier = Modifier.fillMaxWidth()) { Text(labels[value] ?: value.ifBlank { "Loading…" }, maxLines = 2) }
+            androidx.compose.material3.DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                options.forEach { option -> androidx.compose.material3.DropdownMenuItem(text = { Text(labels[option] ?: option) }, onClick = { expanded = false; onSelect(option) }) }
+            }
+        }
+    }
 }

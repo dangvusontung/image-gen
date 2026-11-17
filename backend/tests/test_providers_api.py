@@ -31,7 +31,7 @@ def test_lists_all_providers_with_status(client):
     ark = client.get("/api/providers/modelark/models").json()
     assert {m["id"] for m in ark} == {"seedream-4-5-251128", "seedream-5-0-pro-260628",
                                       "seedream-5-0-flash-260915", "seedream-4-0-250828",
-                                      "dola-seedream-5-0-pro-260628"}
+                                      "dola-seedream-5-0-pro-260628", "dola-seedream-5-5-261028"}
     # No published per-image price ships with the adapter; ARK_PRICE_PER_IMAGE_USD supplies it.
     assert all(m["price_per_image_usd"] is None for m in ark)
     assert client.get("/api/providers/nope/models").status_code == 404

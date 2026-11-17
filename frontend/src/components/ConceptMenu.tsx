@@ -25,6 +25,7 @@ export function useConceptChoices(projectId: string) {
         if (saved.outfit === 'auto') saved.outfit = CONCEPT_DEFAULTS.outfit
         if (saved.footwear === 'auto') saved.footwear = CONCEPT_DEFAULTS.footwear
       }
+      if (['tank_pleated_classic', 'tank_pleated_minimal', 'tank_pleated_sport', 'tank_pleated_vintage', 'pleated_skirt', 'tennis_skirt'].includes(saved.outfit)) saved.outfit = 'auto'
       return { ...CONCEPT_DEFAULTS, ...saved }
     } catch { return CONCEPT_DEFAULTS }
   })
@@ -72,7 +73,7 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
 
 
 export function OutfitSwitcher({ choices, onChange }: { choices: ConceptChoices; onChange: (next: ConceptChoices) => void }) {
-  const outfits = [['black_strapless_mini', 'Váy mini đen cúp ngực'], ['auto', 'Trang phục riêng của từng concept'], ['tank_pleated_classic', 'Tank trắng + mini xếp ly xám'], ['tank_pleated_minimal', 'Tank đen + mini xếp ly kem'], ['tank_pleated_sport', 'Tank xanh pastel + mini xếp ly trắng'], ['tank_pleated_vintage', 'Tank đỏ rượu + mini xếp ly taupe'], ['white_strapless_mini', 'Váy mini satin trắng cúp ngực'], ['black_white_lounge', 'Crop tank + short đen viền trắng'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
+  const outfits = [['black_strapless_mini', 'Váy mini đen cúp ngực'], ['auto', 'Trang phục riêng của từng concept'], ['white_strapless_mini', 'Váy mini satin trắng cúp ngực'], ['black_white_lounge', 'Crop tank + short đen viền trắng'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
   return <div className="flex flex-wrap items-end gap-4 rounded-xl border p-4">
     <label className="grid gap-2 text-sm font-medium">Trang phục
       <select aria-label="Đổi trang phục concept" className="rounded border bg-background p-2" value={choices.outfit} onChange={e => onChange({ ...choices, outfit: e.target.value, top: 'auto' })}>

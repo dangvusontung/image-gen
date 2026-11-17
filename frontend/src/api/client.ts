@@ -169,11 +169,13 @@ export interface GenerationJob {
 }
 
 export interface ConceptProposal {
+  bookmark_key?: string
   id: string; run: number; slot: number; title: string
   brief: Record<string, string>; master_version_id: string; created_at: string
 }
 
 export interface Concept {
+  bookmark_key?: string
   id: string; run: number; slot: number; revision: number
   mood: string; camera: string; brief: Record<string, string>; stale: boolean
   master_version_id: string; turnaround_version_id: string | null; job: GenerationJob
@@ -222,7 +224,7 @@ export const api = {
     request<Preset>(preset.id ? `/presets/${preset.id}` : '/presets',
       json(preset.id ? 'PUT' : 'POST', { name: preset.name, steps: preset.steps })),
   deletePreset: (id: string) => request<void>(`/presets/${id}`, { method: 'DELETE' }),
-  listProviders: () => request<ProviderInfo[]>('/providers'),
+  listProviders: async () => (await request<ProviderInfo[]>('/providers')).filter(provider => provider.name !== 'mock'),
   testProvider: (name: string) => request<ConnectionTestResult>(`/providers/${name}/test`, { method: 'POST' }),
   fetchProviderModels: (name: string) => request<CatalogueResult>(`/providers/${name}/models/fetch`, { method: 'POST' }),
   resetProviderModels: (name: string) => request<CatalogueResult>(`/providers/${name}/models/fetch`, { method: 'DELETE' }),

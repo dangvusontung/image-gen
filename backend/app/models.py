@@ -9,6 +9,13 @@ from app.database import Base, UTCDateTime
 SOURCE_KINDS = ("reference", "side_profile", "template")
 
 
+class ConceptBookmark(Base):
+    __tablename__ = "concept_bookmarks"
+
+    key = Column(String(200), primary_key=True)
+    created_at = Column(UTCDateTime(), nullable=False)
+
+
 def _now() -> datetime:
     return datetime.now(timezone.utc)
 
@@ -70,6 +77,7 @@ class Asset(Base):
     project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)
     # "reference" | "side_profile" (user uploads) | "generated" (job output)
     kind = Column(String(32), nullable=False, default="reference")
+    trashed = Column(Boolean, nullable=False, default=False, server_default="0")
     job_id = Column(String(36), ForeignKey("generation_jobs.id", ondelete="SET NULL"), nullable=True, index=True)
     filename = Column(String(255), nullable=False)
     file_path = Column(String(512), nullable=False)
@@ -101,6 +109,7 @@ class GenerationJob(Base):
     __tablename__ = "generation_jobs"
 
     dismissed = Column(Boolean, nullable=False, default=False, server_default="0")
+    purged = Column(Boolean, nullable=False, default=False, server_default="0")
 
     id = Column(String(36), primary_key=True, default=_uuid)
     project_id = Column(String(36), ForeignKey("projects.id", ondelete="CASCADE"), nullable=False, index=True)

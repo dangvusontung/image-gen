@@ -1,17 +1,13 @@
-Use ALL uploaded reference photos of the SAME PERSON to create ONE definitive stylized 3D master character.
+Turn the person in the reference photos into ONE recognizable **semi-realistic 3D CGI character**.
 
-IDENTITY — HIGHEST PRIORITY: Study all references together and preserve the person's recognizable facial identity, including face shape, eyes, eyebrows, nose, lips, cheeks, jawline, chin, hairstyle, skin tone and apparent age. Preserve the person's natural body morphology wherever visible. Do not replace their features with generic cartoon or beauty-model proportions. Ignore temporary differences caused by camera angle, makeup, lighting, expression and lens distortion.
+Preserve the original face shape, facial features, age, hairstyle, skin tone, and natural body proportions.
 
-VISUAL STYLE: Create a polished semi-realistic 3D animated character with clean sculpted facial surfaces, naturally stylized hair, smooth materials, dimensional eyes and soft cinematic lighting. The character should clearly look like a 3D animation render, while remaining recognizable as the person in the references. Do not exaggerate the head, eyes, legs, waist or other body proportions.
+Use a **high-end semi-realistic CGI aesthetic**, blending realistic human anatomy with subtle 3D stylization. Natural-sized eyes, lifelike facial geometry, realistic skin texture with a soft matte finish, subtle subsurface scattering, and detailed natural hair.
 
-FULL-BODY MASTER: Create a complete head-to-toe standing portrait on a clean warm-white studio background. Use a natural relaxed standing pose, with arms and legs visible and not heavily overlapping. Preserve realistic anatomical relationships and the person's individual silhouette. If the reference photos do not clearly show the full body, infer a plausible, neutral body design without claiming exact anatomical accuracy.
+Avoid plastic-looking skin, exaggerated cartoon features, doll-like appearance, excessive smoothing, or beauty enhancements.
 
-OUTFIT: Choose a simple contemporary outfit that keeps the overall character silhouette readable. Prefer clean casual styling such as a fitted T-shirt with shorts, a casual skirt, or another comfortable everyday outfit. Avoid automatically choosing long trousers, oversized coats, or clothing that obscures the entire silhouette. Keep the outfit appropriate to the character and suitable for a reusable master reference: opaque clothing, an unobstructed face, and a design that stays practical to reproduce from every turnaround angle. Preserve distinctive identifying accessories where appropriate.
+Full body from head to toe, standing naturally, barefoot, plain white studio background, soft diffused lighting.
 
-CAMERA & RENDERING: Use a neutral eye-level camera, natural perspective and balanced full-body framing. Avoid wide-angle distortion, artificial leg elongation, oversized heads and cropped feet. Premium stylized 3D animation rendering with soft global illumination, sculpted hair, clean materials and subtle shadows. Keep the face clearly readable and the skin tone accurate.
+The character should appear in her 20s, consistent with the reference photos.
 
-OUTPUT: ONE canonical full-body master character, head to feet, centered with breathing room, portrait 3:4. No collage, additional characters, duplicate limbs, text or logos.
-
-PRIORITY: 1. Recognizable facial identity. 2. Individual body morphology. 3. Consistent stylized 3D appearance. 4. Clear full-body silhouette. 5. Natural anatomy and proportions.
-
-Keep the PERSON. Change the MEDIUM.
+**Exactly one character in the output.**
