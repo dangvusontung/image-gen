@@ -29,6 +29,16 @@
       "id": "kitchen-breakfast",
       "name": "Bữa sáng trong bếp",
       "description": "Chân dung đời thường với món ăn sáng, ánh sáng cửa sổ và bối cảnh bếp sáng màu."
+    },
+    {
+      "id": "beach",
+      "name": "Beach · Biển",
+      "description": "Các concept bãi biển: cát, mép sóng, bờ vịnh, ô cói và hàng dừa."
+    },
+    {
+      "id": "bedroom-mirror",
+      "name": "Bedroom mirror · Gương phòng ngủ",
+      "description": "Selfie trước gương với giường, rèm và ánh sáng phòng ngủ."
     }
   ],
   "concepts": [
@@ -1108,7 +1118,8 @@
         "Đi bộ & chuyển động",
         "Biển",
         "Bikini"
-      ]
+      ],
+      "collection_id": "beach"
     },
     {
       "slot": 50,
@@ -1130,7 +1141,8 @@
         "Ngồi gập chân lệch bên",
         "Biển",
         "Bikini"
-      ]
+      ],
+      "collection_id": "beach"
     },
     {
       "slot": 51,
@@ -1152,7 +1164,8 @@
         "Picnic & nghỉ ngoài trời",
         "Biển",
         "Bikini"
-      ]
+      ],
+      "collection_id": "beach"
     },
     {
       "slot": 52,
@@ -1174,7 +1187,8 @@
         "Picnic & nghỉ ngoài trời",
         "Biển",
         "Bikini"
-      ]
+      ],
+      "collection_id": "beach"
     },
     {
       "slot": 53,
@@ -2052,7 +2066,8 @@
         "Đi bộ & chuyển động",
         "Việt Nam",
         "Bikini"
-      ]
+      ],
+      "collection_id": "beach"
     },
     {
       "slot": 93,
@@ -2855,7 +2870,8 @@
         "Đọc sách & viết",
         "Biển",
         "Bikini"
-      ]
+      ],
+      "collection_id": "beach"
     },
     {
       "slot": 130,
@@ -3621,7 +3637,8 @@
         "Đứng chân dung",
         "Biển",
         "Bikini"
-      ]
+      ],
+      "collection_id": "beach"
     },
     {
       "slot": 165,
@@ -3667,7 +3684,8 @@
         "Ngồi ngoái vai",
         "Biển",
         "Đồ bơi"
-      ]
+      ],
+      "collection_id": "beach"
     },
     {
       "slot": 167,
@@ -4675,6 +4693,59 @@
       "camera": "close handheld eye-level frontal three-quarter portrait with a natural phone-camera perspective, keeping the face and pastry in focus",
       "framing": "tight vertical head-and-shoulders composition, retaining the crown, both eyes, croissant and the hand holding it, with a small amount of recognizable kitchen background",
       "lighting": "soft natural window light across the face and pastry, gentle warm highlights, neutral indoor fill and realistic detail in the flaky croissant crust"
+    },
+    {
+      "slot": 209,
+      "title": "White satin bedroom mirror kneel",
+      "label": "Quỳ trên giường selfie gương · váy satin trắng",
+      "group": "Phòng ngủ & nghỉ ngơi",
+      "family": "Selfie trước gương",
+      "collection_id": "bedroom-mirror",
+      "tags": [
+        "Phòng ngủ",
+        "Mirror selfie",
+        "Quỳ trên giường",
+        "Váy satin trắng",
+        "Găng tay lông vũ",
+        "Chân trần"
+      ],
+      "setting": "a softly lit bedroom with an unmade beige duvet and pillows, floor-length taupe curtains and a wide dark-framed window with closed horizontal blinds; a subtle pink-red accent lamp glows at the far left",
+      "activity": "taking a mirror selfie while kneeling on the bed and looking back toward the mirror",
+      "pose": "kneeling upright on both knees on the soft duvet, shins resting behind the body and both bare feet visible with relaxed toes; torso turned sideways, shoulders gently rotated back toward the mirror; one white-gloved hand holds a phone vertically near shoulder height while the free arm rests naturally near the waist; anatomically natural knees and ankles",
+      "outfit": "an opaque ivory-white satin strapless mini dress with a fitted bodice and a short ruffled hem, fully lined coverage, long white satin opera gloves with soft white feather cuffs, barefoot, no bag",
+      "silhouette": "a fitted strapless satin mini dress with a small ruffled skirt hem and long feather-trimmed gloves",
+      "expression": "a calm softly poised expression with relaxed lips",
+      "gaze": "looking over one shoulder into the mirror, eyes visible beside the phone",
+      "camera": "vertical mirror selfie from a rear three-quarter side angle at upper-body height, showing the face in profile and the full kneeling pose",
+      "framing": "a vertical composition from the crown to both bare feet, retaining the bed, duvet and window as recognizable context; no cropped toes or phone",
+      "lighting": "soft warm bedroom ambient light mixed with muted window light and a restrained pink-red accent glow at the left, soft satin highlights and natural skin tones"
+    },
+    {
+      "slot": 210,
+      "title": "Floral bikini under beach palms",
+      "label": "Đứng dưới hàng dừa · bikini hoa và mũ cói",
+      "group": "Biển",
+      "family": "Đứng & tạo dáng",
+      "collection_id": "beach",
+      "tags": [
+        "Biển",
+        "Beach",
+        "Hàng dừa",
+        "Bikini hoa",
+        "Mũ cói",
+        "Dép trắng",
+        "Nắng nhiệt đới"
+      ],
+      "setting": "a sunny tropical sandy beach lined with tall coconut palms, turquoise-blue sea and a clear distant horizon; a small patch of short green grass meets the sand in the foreground, palm-frond shadows fall across the beach, no other people or watermarks",
+      "activity": "pausing under the coconut palms while lightly holding the brim of a straw sun hat",
+      "pose": "standing naturally on the grass at the edge of the sand, weight resting on one leg and the other knee softly relaxed; one hand lifts to the hat brim while the other carries a small woven straw basket with a fluffy pink fabric detail; shoulders relaxed, feet planted naturally and both legs fully readable",
+      "outfit": "an opaque fully lined pastel floral-print two-piece bikini with a triangle halter top and matching side-tie bottoms, a pale woven straw sun hat with a small flower detail, small earrings and a fine necklace, white chunky platform flip-flops, carrying a small woven basket with a pink fabric detail; no logos or lettering",
+      "silhouette": "a floral two-piece bikini, a small straw sun hat and white platform flip-flops",
+      "expression": "a relaxed gentle smile",
+      "gaze": "looking directly toward the camera beneath the hat brim",
+      "camera": "eye-level frontal full-length fashion snapshot with a natural phone-camera perspective, palm trunks framing the subject and the sea horizon visible behind",
+      "framing": "vertical full-length composition showing the complete hat, both hands, basket, legs and both white flip-flops, with generous visible palm canopy and beach context",
+      "lighting": "bright tropical daylight filtered by palm fronds, soft dappled shade on the figure with warm sand bounce and blue-sky fill"
     }
   ],
   "retired_slots": {

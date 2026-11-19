@@ -41,7 +41,8 @@ internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initi
     val provider = providers.find { it.name == target.provider }
     val modelSizes = provider?.sizes?.get(target.model).orEmpty()
     val editingOutfit = draft.path.endsWith("/outfit")
-    val editableStyling = draft.purpose == "concept" && payload.optString("prompt_mode") != "saved" && !payload.has("prompt")
+    val cloningConcept = draft.path == "concepts/clone"
+    val editableStyling = !cloningConcept && draft.purpose == "concept" && payload.optString("prompt_mode") != "saved" && !payload.has("prompt")
     fun updateTarget(value: GenerationTarget) { targets = targets + (draft.purpose to value); validation = null; saved = false }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().heightIn(max = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp.dp * 0.9f)) {
@@ -60,8 +61,15 @@ internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initi
             else Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (masterId != null) AsyncImage("$origin/api/assets/$masterId/content", "Approved master", Modifier.size(72.dp), contentScale = ContentScale.Fit)
                 Column {
-                    Text("Approved master", style = MaterialTheme.typography.titleSmall)
+                    Text(if (cloningConcept) "Selected Master" else "Approved master", style = MaterialTheme.typography.titleSmall)
                     TextButton(onClick = onEditMaster) { Text("Change master") }
+                }
+            }
+            if (cloningConcept) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                AsyncImage("$origin/api/assets/${payload.optString("reference_asset_id")}/content", "Concept reference", Modifier.size(112.dp), contentScale = ContentScale.Fit)
+                Column {
+                    Text("Reference: pose, composition, scene & lighting", style = MaterialTheme.typography.bodySmall)
+                    Row { Checkbox(payload.optBoolean("keep_master_outfit"), onCheckedChange = { payload = JSONObject(payload.toString()).put("keep_master_outfit", it) }); Text("Keep Master outfit", Modifier.padding(top = 12.dp)) }
                 }
             }
             if (draft.concepts.isNotEmpty()) {
@@ -76,7 +84,7 @@ internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initi
             if (editableStyling) {
                 Text(stylingSummary(styling, menu), style = MaterialTheme.typography.bodyMedium)
                 TextButton(onClick = { showStyling = true }) { Text("Edit styling") }
-            } else if (draft.purpose == "concept") Text("Uses the saved or explicitly edited prompt.", style = MaterialTheme.typography.bodySmall)
+            } else if (draft.purpose == "concept" && !cloningConcept) Text("Uses the saved or explicitly edited prompt.", style = MaterialTheme.typography.bodySmall)
             Text("${target.provider} / ${target.model} · ${target.size.ifBlank { "Provider default size" }}", style = MaterialTheme.typography.bodyMedium)
             TextButton(onClick = { showTarget = !showTarget }) { Text(if (showTarget) "Hide model settings" else "Change model & size") }
             if (showTarget) {

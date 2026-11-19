@@ -439,6 +439,84 @@ async def propose_concepts(project_id: str, db: Session = Depends(get_db), regis
     return [proposal_out(r) for r in rows]
 
 
+class CloneConceptRequest(BaseModel):
+    reference_asset_id: str = Field(min_length=1, max_length=36)
+    master_version_id: str | None = Field(default=None, min_length=1, max_length=36)
+    keep_master_outfit: bool = False
+    confirmed: bool = False
+    size: str | None = None
+
+
+def new_cloned_concept(db, registry, project, master_id, reference_id, keep_outfit, run, slot,
+                       revision=1, size=None, prompt_override=None, title="Clone từ ảnh", brief=None):
+    if not master_id:
+        fail("master_required", "Chọn Master để clone concept", 400)
+    master = owned(db, MasterVersion, project.id, master_id)
+    master_asset_id = output(db, master)
+    if master.job.dismissed or db.get(Asset, master_asset_id).trashed:
+        fail("master_not_ready", "Master nguồn đã được đưa vào Trash", 400)
+    reference = db.query(Asset).filter_by(id=reference_id, project_id=project.id, trashed=False).first()
+    if reference is None:
+        fail("clone_reference_invalid", "Chọn ảnh refer của dự án này", 400)
+    if reference.id == master_asset_id:
+        fail("clone_reference_invalid", "Ảnh refer phải khác ảnh Master", 422)
+    wardrobe = ("Keep the exact clothing, accessories, socks and footwear of reference image 1 (MASTER). Ignore clothing in image 2."
+                if keep_outfit else "Copy the clothing, accessories, socks and footwear from reference image 2 (CONCEPT REFERENCE).")
+    prompt = ("Create a new concept image using exactly these two references. Reference image 1 is the MASTER: "
+              "preserve its person's identity, face, age, hairstyle, natural body proportions and rendering style. "
+              "Reference image 2 is the CONCEPT REFERENCE: recreate its pose, gesture, composition, camera angle, "
+              "framing, expression, setting, props, atmosphere and lighting with the MASTER character. "
+              "Do not copy the second person's identity, face, hairstyle or body shape. " + wardrobe +
+              " Keep clothing opaque. Return a single coherent image, no collage, watermark, logos or added text.")
+    default_brief = {"pose": "Theo ảnh refer", "setting": "Theo ảnh refer", "camera": "Theo ảnh refer",
+                     "outfit": "Giữ outfit Master" if keep_outfit else "Theo ảnh refer"}
+    brief = brief or default_brief
+    if brief != default_brief:
+        prompt += "\nUser concept adjustments override the reference scene details, while preserving MASTER identity: " + json.dumps(brief, ensure_ascii=False)
+    if prompt_override is not None:
+        if not prompt_override.strip():
+            fail("empty_prompt", "Prompt không được để trống", 400)
+        prompt = prompt_override.strip()
+    meta = {"image_clone": True, "clone_reference_asset_id": reference.id, "clone_keep_master_outfit": keep_outfit,
+            "master_version_id": master.id, "turnaround_version_id": None, "slot": slot, "run": run,
+            "revision": revision, "mood": title, "camera": brief.get("camera", "Theo ảnh refer"), "brief": brief,
+            "reference_labels": ["MASTER, identity and rendering style" + (" and outfit" if keep_outfit else ""),
+                                 "CONCEPT REFERENCE, pose, composition and scene" + (" and outfit" if not keep_outfit else "")],
+            "bookmark_key": f"project:{project.id}:run:{run}:slot:{slot}"}
+    if prompt_override is not None:
+        meta["prompt_edited"] = True
+    provider_name, model_id, _ = generation_target(project, "concept")
+    try:
+        provider = registry.get(provider_name)
+        model = provider.get_model(model_id or provider.default_model().id)
+    except ProviderError as exc:
+        fail(exc.code, exc.message, 400)
+    target_ratio = (reference.width or 3) / (reference.height or 4)
+    ratio = min(model.aspect_ratios, key=lambda value: abs((float(value.split(":")[0]) / float(value.split(":")[1])) - target_ratio))
+    meta["clone_reference_aspect_ratio"] = ratio
+    job = queue(db, registry, project, purpose="concept", prompt=prompt, reference_asset_ids=[master_asset_id, reference.id],
+                aspect_ratio=ratio, size=size, meta=meta)
+    db.flush()
+    concept = Concept(project_id=project.id, run=run, slot=slot, revision=revision, mood=title,
+                      camera=brief.get("camera", "Theo ảnh refer"), brief=brief, master_version_id=master.id,
+                      turnaround_version_id=None, job_id=job.id)
+    db.add(concept)
+    db.flush()
+    return concept, job
+
+
+@router.post("/concepts/clone", response_model=GenerationResult, status_code=201)
+def clone_concept(project_id: str, data: CloneConceptRequest, request: Request,
+                  db: Session = Depends(get_db), registry=Depends(get_registry)):
+    project = get_project_or_404(db, project_id)
+    run = (db.query(func.max(Concept.run)).filter_by(project_id=project_id).scalar() or 0) + 1
+    slot = max(row.slot for row in get_catalog().concepts) + 1
+    concept, job = new_cloned_concept(db, registry, project, data.master_version_id or project.approved_master_id,
+                                      data.reference_asset_id, data.keep_master_outfit, run, slot, size=data.size)
+    finish(db, request, [job], data.confirmed)
+    return GenerationResult(job_ids=[job.id], concept_ids=[concept.id])
+
+
 @router.post("/concepts/generate", response_model=GenerationResult, status_code=201)
 def generate_concepts(project_id: str, data: GenerateRequest, request: Request, db: Session = Depends(get_db), registry=Depends(get_registry)):
     """Render the chosen proposals. Each proposal keeps its slot, so reruns stay comparable."""
@@ -510,8 +588,14 @@ def generate_concepts(project_id: str, data: GenerateRequest, request: Request, 
         choices = data.choices
         if choices is None and data.source_run is not None and saved[slot].job.meta.get("master_outfit"):
             choices = ConceptChoices(outfit="master")
-        concept, job = new_concept(db, registry, project, run, slot, title,
-                                   brief.get("camera", ""), 1, data.size, choices, brief=brief)
+        if data.source_run is not None and saved[slot].job.meta.get("image_clone"):
+            source = saved[slot]
+            concept, job = new_cloned_concept(db, registry, project, project.approved_master_id or source.master_version_id,
+                source.job.meta["clone_reference_asset_id"], source.job.meta.get("clone_keep_master_outfit", False),
+                run, slot, size=data.size, title=title, brief=brief)
+        else:
+            concept, job = new_concept(db, registry, project, run, slot, title,
+                                       brief.get("camera", ""), 1, data.size, choices, brief=brief)
         if data.source_run is not None:
             source_key = (f"default:{slot}" if data.use_catalog_briefs and slot in current
                           else concept_out(saved[slot], project).bookmark_key)
@@ -531,6 +615,25 @@ def regenerate(project_id: str, concept_id: str, data: RegenerateRequest, reques
     project = get_project_or_404(db, project_id)
     old = owned(db, Concept, project_id, concept_id)
     revision = (db.query(func.max(Concept.revision)).filter_by(project_id=project_id, run=old.run, slot=old.slot).scalar() or 0) + 1
+    if old.job.meta.get("image_clone"):
+        if data.prompt_mode == "saved" and any(value is not None for value in (data.choices, data.brief, data.title, data.prompt)):
+            fail("conflicting_prompt_mode", "Prompt cũ không dùng chung với chỉnh sửa", 400)
+        prompt = old.job.prompt if data.prompt_mode == "saved" else data.prompt
+        if prompt is None and data.prompt_mode is None and old.job.meta.get("prompt_edited"):
+            prompt = old.job.prompt
+        brief = dict(old.brief)
+        if data.brief:
+            unknown = sorted(set(data.brief) - set(PROPOSAL_FIELDS))
+            if unknown:
+                fail("unknown_brief_field", f"Trường không hợp lệ: {', '.join(unknown)}", 400)
+            brief.update(data.brief)
+        master_id = old.master_version_id if data.prompt_mode == "saved" else project.approved_master_id or old.master_version_id
+        concept, job = new_cloned_concept(db, registry, project, master_id, old.job.meta["clone_reference_asset_id"],
+            old.job.meta.get("clone_keep_master_outfit", False), old.run, old.slot, revision, data.size,
+            prompt_override=prompt, title=data.title or old.mood, brief=brief)
+        job.meta = {**job.meta, "bookmark_key": old.job.meta.get("bookmark_key", job.meta["bookmark_key"])}
+        finish(db, request, [job], True)
+        return GenerationResult(id=concept.id, job_ids=[job.id], concept_ids=[concept.id])
     brief = _saved_brief(old)
     title = old.mood
     if data.prompt_mode == "current" and _has_catalog_refresh(old):

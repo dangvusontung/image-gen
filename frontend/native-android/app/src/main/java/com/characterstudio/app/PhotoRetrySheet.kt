@@ -31,7 +31,7 @@ internal fun photoRetryPlan(photo: GalleryItem, source: JSONObject, mode: String
     val path = if (photo.purpose == "concept") {
         when (mode) {
             "saved" -> payload.put("prompt_mode", "saved")
-            "current" -> { choicesError(choices)?.let { error(it) }; payload.put("prompt_mode", "current").put("choices", choices) }
+            "current" -> { payload.put("prompt_mode", "current"); if (source.optJSONObject("job")?.optJSONObject("meta")?.optBoolean("image_clone") != true) { choicesError(choices)?.let { error(it) }; payload.put("choices", choices) } }
             "edit" -> { require(edited.isNotBlank() && edited.length <= 50000); payload.put("prompt", edited.trim()) }
         }
         "concepts/${source.getString("id")}/regenerate"

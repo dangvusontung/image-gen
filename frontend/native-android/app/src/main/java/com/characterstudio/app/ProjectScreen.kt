@@ -116,6 +116,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     var busy by remember { mutableStateOf(false) }; var settings by remember { mutableStateOf(false) }
     val setupStore = remember(origin) { GenerationSetupStore(context.applicationContext, origin) }
     var showSetups by remember { mutableStateOf(false) }
+    var showCloneConcept by remember { mutableStateOf(false) }
     var generationDraft by remember { mutableStateOf<GenerationDraft?>(null) }
     var showProjectPrompts by remember { mutableStateOf(false) }
     val visitPrefs = remember { context.getSharedPreferences("project-visits", android.content.Context.MODE_PRIVATE) }
@@ -464,6 +465,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                 2 -> {
                     if (showCreateConcepts) {
                     if (!approved) item { Text("Approve a master in step 2 first.") }
+                    item { OutlinedButton(enabled = !busy && workflow.rows("masters").any { it.optJSONObject("job")?.optString("status") == "succeeded" }, onClick = { showCloneConcept = true }) { Text("Clone concept from photo") } }
                     item {
                         TextButton(onClick = { showAdvancedCreate = !showAdvancedCreate }) { Text(if (showAdvancedCreate) "Less options ▴" else "More creation options ▾") }
                         if (showAdvancedCreate) {
@@ -609,13 +611,18 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             showSetups = false; notice = "Applied ${setup.name}"
         } }, onDismiss = { showSetups = false },
     )
+    if (showCloneConcept && project != null) CloneConceptSheet(origin, project!!, workflow.rows("masters"), workflow.realId("approved_master_id"), client,
+        onUploaded = { refresh() }, onDismiss = { showCloneConcept = false }, onReview = { payload ->
+            showCloneConcept = false
+            generationDraft = GenerationDraft("concepts/clone", payload, "concept", emptyList())
+        })
     generationDraft?.let { draft ->
         val currentProject = project
         if (currentProject != null) {
             val initialTargets = generationTargets(currentProject, presets, providers)
-            val masterImage = workflow.rows("masters").find { it.optString("id") == (if (draft.path.endsWith("/outfit")) draft.path.split("/").getOrNull(1) else workflow.realId("approved_master_id")) }?.optJSONObject("job")?.outputs()?.firstOrNull()
+            val masterImage = workflow.rows("masters").find { it.optString("id") == (if (draft.path.endsWith("/outfit")) draft.path.split("/").getOrNull(1) else if (draft.path == "concepts/clone") draft.payload.optString("master_version_id") else workflow.realId("approved_master_id")) }?.optJSONObject("job")?.outputs()?.firstOrNull()
             GenerationReviewSheet(origin, draft, initialTargets, choices, stylingMenu, providers, masterImage, currentProject.assets.count { it.selected }, setupStore, referencePhotos = currentProject.assets,
-                onEditMaster = { generationDraft = null; navigateTo(1) },
+                onEditMaster = { generationDraft = null; if (draft.path == "concepts/clone") showCloneConcept = true else navigateTo(1) },
                 onEditConcepts = { generationDraft = null; showCreateConcepts = true },
                 onDismiss = { generationDraft = null },
                 onConfirm = { reviewed, targets, styling ->
@@ -629,7 +636,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                         }
                         if (reviewed.payload.optBoolean("custom")) customCount = reviewed.payload.optInt("count", customCount)
                         val queued = client.projectAction(origin, projectId, reviewed.path, JSONObject(reviewed.payload.toString()).put("confirmed", true))
-                        if (reviewed.path == "concepts/generate") {
+                        if (reviewed.path in listOf("concepts/generate", "concepts/clone")) {
                             val created = queued.optJSONArray("concept_ids")
                             val firstId = created?.optString(0).orEmpty()
                             concepts = client.projectArray(origin, projectId, "concepts")

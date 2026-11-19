@@ -258,7 +258,19 @@ const GROUPS = [
   }
 ]
 
-export function groupConcepts(concepts: ConceptProposal[], mode: 'scene' | 'family' = 'scene') {
+export function groupConcepts(concepts: ConceptProposal[], mode: 'scene' | 'family' | 'collection' = 'scene'): { name: string; items: ConceptProposal[] }[] {
+  if (mode === 'collection') {
+    const sets = new Map<string, { name: string; items: ConceptProposal[] }>()
+    for (const concept of concepts.filter(row => row.collection_id)) {
+      const id = concept.collection_id!
+      const group = sets.get(id) ?? { name: concept.collection_name || id, items: [] }
+      group.items.push(concept)
+      sets.set(id, group)
+    }
+    return [...sets.values()].sort((a, b) => a.name.localeCompare(b.name, 'vi'))
+      .map(group => ({ ...group, items: group.items.sort((a, b) => (a.display_number ?? a.slot) - (b.display_number ?? b.slot)) }))
+      .concat(groupConcepts(concepts.filter(row => !row.collection_id), 'scene'))
+  }
   if (mode === 'family') {
     const families = new Map<string, ConceptProposal[]>()
     for (const concept of concepts) {

@@ -54,3 +54,17 @@ it('uses backend taxonomy to group similar poses across scenes without losing va
   expect(groupConcepts(concepts).find(group => group.name === 'Bếp & bên cửa sổ')?.items[0].slot).toBe(54)
   expect(conceptDisplayNumbers(concepts.filter(row => row.slot === 170)).get(170)).toBe(131)
 })
+
+
+it('keeps beach concepts in one collection across different scenes and poses', () => {
+  const rows = [
+    { ...proposal(164), group: 'Biển', family: 'Đứng', collection_id: 'beach', collection_name: 'Beach · Biển', display_number: 30 },
+    { ...proposal(92), group: 'Việt Nam', family: 'Đi bộ', collection_id: 'beach', collection_name: 'Beach · Biển', display_number: 20 },
+    { ...proposal(210), group: 'Biển', family: 'Đứng', collection_id: 'beach', collection_name: 'Beach · Biển', display_number: 35 },
+    { ...proposal(1), group: 'Phòng khách & sinh hoạt', display_number: 1 },
+  ]
+  const groups = groupConcepts(rows, 'collection')
+  expect(groups.find(group => group.name === 'Beach · Biển')?.items.map(row => row.slot)).toEqual([92, 164, 210])
+  expect(groups.flatMap(group => group.items)).toHaveLength(4)
+  expect(groups.some(group => group.name === 'Phòng khách & sinh hoạt')).toBe(true)
+})

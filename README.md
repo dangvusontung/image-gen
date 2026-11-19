@@ -299,3 +299,6 @@ venv/bin/alembic upgrade head
 ```
 
 Giới hạn chi tiêu ứng dụng mặc định tắt: `SPEND_LIMIT_USD_PER_DAY=0` nghĩa là không giới hạn. Chi phí vẫn được theo dõi. Đặt một số USD dương để bật giới hạn 24h nếu muốn.
+
+
+Clone concept từ ảnh có ở màn Concepts trên web và mobile. Chọn một Master đã tạo thành công và một ảnh refer có sẵn hoặc paste/upload (web), picker (mobile). Mỗi lần tạo có lựa chọn giữ outfit Master hoặc lấy outfit refer. BE nhận `POST /api/projects/{project_id}/concepts/clone` với `master_version_id` (mặc định Master đã duyệt), `reference_asset_id`, `keep_master_outfit`, `confirmed` và `size` tùy chọn. Chỉ hai ảnh được gửi: Master giữ nhận diện/phong cách, refer giữ pose/bố cục/bối cảnh/ánh sáng. Kết quả lưu vào batch concept mới; retry giữ refer và lựa chọn outfit. Không cần migration DB mới.

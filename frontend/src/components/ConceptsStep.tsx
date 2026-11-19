@@ -1,3 +1,4 @@
+import CloneConcept from './CloneConcept'
 import { isArchivedConcept, matchesConceptArchive, type ConceptArchiveFilter } from '@/lib/conceptArchive'
 import { conceptProgress, matchesProgress, progressLabel } from '@/lib/conceptProgress'
 import { CONCEPT_EMOJIS, CONCEPT_EMOJI_STORAGE, conceptMarkKey, readEmojiMarks } from '@/lib/conceptEmoji'
@@ -132,6 +133,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const [conceptSearch, setConceptSearch] = useState('')
   const [progressFilter, setProgressFilter] = useState('all')
   const [historyKey, setHistoryKey] = useState<string | null>(null)
+  const [pendingCloneId, setPendingCloneId] = useState<string | null>(null)
   const [selectedRun, setSelectedRun] = useState<number | null>(null)
   const [rerunSelection, setRerunSelection] = useState<{ run: number; slots: number[] } | null>(null)
   const [rerunConfirmed, setRerunConfirmed] = useState(false)
@@ -159,6 +161,10 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const [choices, setChoices] = useConceptChoices(project.id)
   const base = `/projects/${project.id}`
   const concepts = useQuery({ queryKey: ['concepts', project.id], queryFn: () => request<Concept[]>(`${base}/concepts`), refetchInterval: 1500 })
+  useEffect(() => {
+    const clone = concepts.data?.find(row => row.id === pendingCloneId)
+    if (clone) { setSelectedRun(clone.run); setPendingCloneId(null) }
+  }, [concepts.data, pendingCloneId])
   const progress = useMemo(() => conceptProgress(concepts.data ?? []), [concepts.data])
   const proposals = useQuery({ queryKey: ['concept-proposals', project.id, archiveFilter], queryFn: () => request<ConceptProposal[]>(`${base}/concept-proposals${archiveFilter === 'active' ? '' : `?status=${archiveFilter}`}`), refetchInterval: 3000 })
   const workflow = useQuery({ queryKey: ['workflow', project.id], queryFn: () => request<{ approved_master_id: string | null }>(`${base}/workflow`), refetchInterval: 1500 })
@@ -183,11 +189,11 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const ready = project.rights_confirmed && Boolean(workflow.data?.approved_master_id)
   const list = (proposals.data ?? []).filter(row => matchesConceptArchive(row, archiveFilter))
   const displayNumbers = conceptDisplayNumbers(list)
-  const [groupMode, setGroupMode] = useState<'family' | 'scene'>('family')
+  const [groupMode, setGroupMode] = useState<'family' | 'scene' | 'collection'>('collection')
   const displayNumber = (slot: number) => displayNumbers.get(slot) ?? slot
   const normalizeSearch = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase()
   const searchTerms = normalizeSearch(conceptSearch).trim().split(/\s+/).filter(Boolean)
-  const visibleList = list.filter(p => searchTerms.every(term => normalizeSearch([p.title, p.label, p.family, p.catalog_code, ...(p.tags ?? []), fieldOf(p.slot, 'title', p.title), ...Object.values(p.brief), ...Object.values(edits[p.slot] ?? {}), groupConcepts([p])[0]?.name, 'id:' + p.slot, String(displayNumber(p.slot))].join(' ')).includes(term)) && (emojiFilter === 'all' || (emojiFilter === 'bookmarked' ? bookmarked(p) : emojiFilter === 'unmarked' ? !emojiOf(p) : emojiOf(p) === emojiFilter)) && matchesProgress(progress.get(bookmarkKey(p)), progressFilter))
+  const visibleList = list.filter(p => searchTerms.every(term => normalizeSearch([p.title, p.label, p.family, p.collection_name, p.catalog_code, ...(p.tags ?? []), fieldOf(p.slot, 'title', p.title), ...Object.values(p.brief), ...Object.values(edits[p.slot] ?? {}), groupConcepts([p])[0]?.name, 'id:' + p.slot, String(displayNumber(p.slot))].join(' ')).includes(term)) && (emojiFilter === 'all' || (emojiFilter === 'bookmarked' ? bookmarked(p) : emojiFilter === 'unmarked' ? !emojiOf(p) : emojiOf(p) === emojiFilter)) && matchesProgress(progress.get(bookmarkKey(p)), progressFilter))
   const chosen = picked === null ? list : list.filter(p => picked.includes(p.slot))
   const estimate = useQuery({ queryKey: ['estimate', project.id, project.provider, project.model, size, chosen.length], enabled: ready && chosen.length > 0,
     queryFn: () => request<{ total_usd: number | null; note: string }>(`${base}/generation-estimate?purpose=concept&count=${chosen.length}${size ? `&size=${encodeURIComponent(size)}` : ''}`), refetchInterval: 3000 })
@@ -208,7 +214,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
 
   const rerunImage = (concept: Concept, promptMode: 'saved' | 'current') => action.mutate({
     path: `${base}/concepts/${concept.id}/regenerate`,
-    data: { size: size || null, prompt_mode: promptMode, ...(promptMode === 'current' ? { choices } : {}) },
+    data: { size: size || null, prompt_mode: promptMode, ...(promptMode === 'current' && !concept.job.meta?.image_clone ? { choices } : {}) },
   })
 
   const promptRerunButtons = (concept: Concept) => <>
@@ -223,6 +229,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   return <section className="space-y-5">
     {(bookmarks.error || bookmarkAction.error) && <ErrorAlert title="Không lưu được bookmark" error={bookmarkAction.error || bookmarks.error} />}
     <h2 className="text-xl font-semibold">Concept</h2>
+    <CloneConcept project={project} onQueued={setPendingCloneId} />
     {concepts.isPending && <Skeleton className="h-64" />}
     {!!runs.length && <div className="flex flex-wrap items-center gap-4">
       <label>Đợt ảnh <select className="ml-2 rounded border p-2" aria-label="Đợt concept" value={run} onChange={e => { setSelectedRun(Number(e.target.value)); setRerunSelection(null); setRerunConfirmed(false) }}>
@@ -339,8 +346,8 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         {conceptSearch && <Button size="sm" variant="outline" onClick={() => setConceptSearch('')}>Xóa tìm kiếm</Button>}
       </div>
       <div className="flex flex-wrap items-center gap-3">
-        <label className="text-sm">Gom nhóm theo <select aria-label="Gom nhóm concept" className="ml-2 rounded border p-2" value={groupMode} onChange={e => setGroupMode(e.target.value as 'family' | 'scene')}>
-          <option value="family">Tư thế / hoạt động tương tự</option><option value="scene">Bối cảnh</option>
+        <label className="text-sm">Gom nhóm theo <select aria-label="Gom nhóm concept" className="ml-2 rounded border p-2" value={groupMode} onChange={e => setGroupMode(e.target.value as 'family' | 'scene' | 'collection')}>
+          <option value="collection">Bộ concept</option><option value="family">Tư thế / hoạt động tương tự</option><option value="scene">Bối cảnh</option>
         </select></label>
         <label className="text-sm">Lọc concept <select aria-label="Lọc concept theo emoji" className="ml-2 rounded border p-2" value={emojiFilter} onChange={e => setEmojiFilter(e.target.value)}>
           <option value="all">Tất cả ({list.length})</option>

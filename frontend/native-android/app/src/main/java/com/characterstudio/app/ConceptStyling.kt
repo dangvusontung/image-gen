@@ -28,7 +28,7 @@ internal fun styledConceptPayload(path: String, payload: JSONObject, choices: JS
     val result = JSONObject(payload.toString())
     // Saved prompts are immutable and cannot be combined with styling overrides.
     // An explicitly edited full prompt is also sent as-is, matching the web editor.
-    if (path.startsWith("concepts/") && result.optString("prompt_mode") != "saved" && !result.has("prompt")) {
+    if (path.startsWith("concepts/") && path != "concepts/clone" && result.optString("prompt_mode") != "saved" && !result.has("prompt")) {
         result.put("choices", JSONObject(choices.toString()))
     }
     return result
