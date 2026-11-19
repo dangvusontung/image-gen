@@ -281,7 +281,7 @@ def _apply_outfit(result, choices, slot):
     full_outfits.update({key: body for key, (_, body) in TANK_PLEATED_OUTFITS.items()})
     color = ("coral pink", "powder blue", "sage green", "burgundy", "lavender", "champagne beige", "deep teal", "terracotta")[(slot - 1) % 8]
     full_outfits.update({
-        "bikini": (result["outfit"] if "bikini" in result["outfit"].lower() else f"an opaque {color} two-piece bikini, barefoot"),
+        "bikini": f"an opaque {color} two-piece bikini, barefoot",
         "satin_dress": f"an opaque {color} satin midi slip dress with thin straps and a softly draped neckline, barefoot",
         "satin_pyjamas": f"an opaque {color} satin camisole and matching fully lined pajama shorts, barefoot",
         "shirt_shorts": f"an opaque {color} relaxed button-up shirt over a white camisole and cream tailored shorts, barefoot",

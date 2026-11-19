@@ -102,7 +102,8 @@ def test_new_outfit_switch_preserves_scene_and_varies_colors():
         for field in ['setting', 'activity', 'pose', 'gaze', 'camera']:
             assert first[field] == proposal_brief()[field]
     original = proposal_brief(outfit='an opaque teal bikini, barefoot')
-    assert apply_choices(original, ConceptChoices(outfit='bikini'), 1, [])['outfit'] == original['outfit']
+    assert apply_choices(original, ConceptChoices(outfit='bikini'), 1, [])['outfit'] == 'an opaque coral pink two-piece bikini, barefoot'
+    assert apply_choices(original, ConceptChoices(outfit='auto'), 1, [])['outfit'] == original['outfit']
 
 
 def test_outfit_switch_is_applied_to_generated_concept_prompt(client, studio):
@@ -298,3 +299,17 @@ def test_butter_sweatshirt_outfit_keeps_socks_and_does_not_change_pose():
     assert "no shoes" in result["outfit"]
     assert result["pose"] == original["pose"]
     assert result["setting"] == original["setting"]
+
+
+def test_bikini_selection_overrides_the_bamboo_poolside_outfit(client, studio):
+    base, _, _ = studio
+    result = client.post(f'{base}/concepts/generate', json={'slots': [195], 'choices': {'outfit': 'bikini'}, 'confirmed': True})
+    assert result.status_code == 201, result.text
+    job = wait_for_job(client, result.json()['job_ids'][0])
+    assert job['meta']['brief']['outfit'] == 'an opaque sage green two-piece bikini, barefoot'
+    assert 'black ribbed' not in job['prompt']
+    assert 'side-tie bikini briefs' not in job['prompt']
+    assert 'bamboo' in job['prompt']
+    original = client.post(f'{base}/concepts/generate', json={'slots': [195], 'choices': {'outfit': 'auto'}, 'confirmed': True})
+    original_job = wait_for_job(client, original.json()['job_ids'][0])
+    assert 'black ribbed' in original_job['meta']['brief']['outfit']
