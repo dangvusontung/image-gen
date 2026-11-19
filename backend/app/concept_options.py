@@ -23,7 +23,7 @@ class ConceptChoices(BaseModel):
     outfit: Literal["auto", "master", "denim_mix", "denim_shorts", "denim_skirt", "pleated_skirt", "tennis_skirt",
                     "wide_trousers", "straight_jeans", "cargo_shorts", "sundress", "midi_dress", "knit_dress",
                     "tank_pleated_classic", "tank_pleated_minimal", "tank_pleated_sport", "tank_pleated_vintage",
-                    "black_strapless_mini", "white_strapless_mini", "black_white_lounge", "bikini", "satin_dress", "satin_pyjamas", "shirt_shorts", "bodysuit_trousers", "offshoulder_skirt",
+                    "butter_sweatshirt_shorts", "black_strapless_mini", "white_strapless_mini", "black_white_lounge", "bikini", "satin_dress", "satin_pyjamas", "shirt_shorts", "bodysuit_trousers", "offshoulder_skirt",
                     "pyjamas", "overalls", "linen_set", "blazer_skirt", "tracksuit", "custom"] = "auto"
     top: Literal["auto", "tee", "knit", "blouse", "cardigan", "fitted_tank", "cropped_tee", "shirt",
                  "hoodie", "turtleneck", "polo", "vest"] = "auto"
@@ -54,7 +54,9 @@ class ConceptChoices(BaseModel):
 MENU = {
     "footwear": [("auto", "Giày riêng của từng concept"), *[(key, label) for key, (label, _) in FOOTWEAR.items()], ("custom", "Giày tùy chỉnh")],
     "style": [("auto", "Theo từng concept (không ghi đè)"), ("cute", "Dễ thương · nhẹ nhàng, ấm áp"), ("glamour", "Glamour · táo bạo, cuốn hút")],
-    "outfit": [("auto", "Trang phục riêng của từng concept"), ("master", "Giữ trang phục nhân vật gốc"), ("black_strapless_mini", "Váy mini đen cúp ngực"),
+    "outfit": [("butter_sweatshirt_shorts", "Sweatshirt vàng bơ + short trắng + tất trắng"),
+               *[(key, label) for key, (label, _) in TANK_PLEATED_OUTFITS.items()],
+               ("pleated_skirt", "Chân váy xếp ly"), ("tennis_skirt", "Chân váy tennis xếp ly"), ("auto", "Trang phục riêng của từng concept"), ("master", "Giữ trang phục nhân vật gốc"), ("black_strapless_mini", "Váy mini đen cúp ngực"),
                ("white_strapless_mini", "Váy mini satin trắng cúp ngực"), ("black_white_lounge", "Crop tank + short đen viền trắng"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
                ("shirt_shorts", "Sơ mi + quần short"), ("bodysuit_trousers", "Bodysuit + quần dài"),
                ("offshoulder_skirt", "Áo trễ vai + chân váy"), ("denim_mix", "Phối quần short jeans và chân váy"),
@@ -263,6 +265,7 @@ def _apply_outfit(result, choices, slot):
                "wide_trousers": "wide-leg cotton trousers"}
     # Complete looks that replace the top as well.
     full_outfits = {
+        "butter_sweatshirt_shorts": "an oversized pale butter-yellow crew-neck sweatshirt in soft opaque cotton fleece, dropped shoulders, roomy long sleeves and a relaxed ribbed hem, paired with opaque fitted white high-rise short shorts and plain white ribbed crew socks, no shoes, no logos or handbag",
         "white_strapless_mini": "an opaque pearl-white satin strapless mini dress with a straight neckline, a structured fitted bodice, a defined waist seam and a smooth gently shaped short skirt, paired with white pointed-toe high-heeled pumps",
         "black_white_lounge": "an opaque black fitted cropped tank top with thin shoulder straps and white neckline piping and matching black lounge shorts with a white elastic waistband, white side and hem piping and a white drawstring tied in a small bow at the front, barefoot",
         "sundress": "a soft pastel summer dress with delicate embroidery and simple sandals",

@@ -120,6 +120,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     var showProjectPrompts by remember { mutableStateOf(false) }
     val visitPrefs = remember { context.getSharedPreferences("project-visits", android.content.Context.MODE_PRIVATE) }
     val visitKey = origin+"/"+projectId
+    var editingMasterOutfit by remember { mutableStateOf<String?>(null) }
     var masterOutfitId by rememberSaveable(visitKey) { mutableStateOf(visitPrefs.getString(visitKey+"/master-outfit", "").orEmpty()) }
     LaunchedEffect(visitKey, masterOutfitId) { visitPrefs.edit().putString(visitKey+"/master-outfit", masterOutfitId).apply() }
     var step by rememberSaveable(visitKey) { mutableIntStateOf(if (initialStep in 0..4) initialStep else visitPrefs.getInt(visitKey+"/step", 0).takeIf { it in 0..2 } ?: 0) }
@@ -210,7 +211,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     fun generate(path: String, payload: JSONObject = JSONObject()) {
         val requestPayload = try {
             val styled = styledConceptPayload(path, payload, choices)
-            if (path.startsWith("master/")) withMasterOutfit(styled, masterOutfitId, project?.assets.orEmpty()) else styled
+            if (path.startsWith("master/") && !path.endsWith("/outfit")) withMasterOutfit(styled, masterOutfitId, project?.assets.orEmpty()) else styled
         } catch (e: IllegalArgumentException) { error = e.message; return }
         if (requestPayload.has("choices")) choicesError(choices)?.let { error = it; showStyling = true; return }
         val purpose = when { path.startsWith("master/") -> "master"; path.startsWith("turnaround/") -> "turnaround"; else -> "concept" }
@@ -220,6 +221,14 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             proposals.filter { it.optInt("slot") in slots || it.optString("id") in ids }.map(::conceptLabel)
         } else emptyList()
         generationDraft = GenerationDraft(path, requestPayload, purpose, names)
+    }
+    fun reviewConceptBatch(ids: Set<String>) {
+        val selected = proposals.filter { it.getString("id") in ids }
+        if (selected.isEmpty()) return
+        val payload = JSONObject()
+        if (selected.first().optInt("run") == 0) payload.put("slots", JSONArray(selected.map { it.optInt("slot") }))
+        else payload.put("proposal_ids", JSONArray(selected.map { it.getString("id") }))
+        generate("concepts/generate", payload)
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris -> if (uris.isNotEmpty()) action { client.uploadAssets(origin, projectId, uris, context.contentResolver) } }
     LaunchedEffect(origin) {
@@ -341,6 +350,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
         val purpose = when (step) { 2 -> "concept"; else -> "master" }
         val target = detail.generationTarget(purpose, presets)
         if (step == 2) {
+            if (approved) TextButton(enabled = !busy, onClick = { editingMasterOutfit = workflow.realId("approved_master_id") }) { Text("Change Master outfit · optional") }
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = showCreateConcepts, onClick = { showCreateConcepts = true; scope.launch { lists[2].scrollToItem(0) } }, label = { Text("Create new batch") })
                 FilterChip(selected = !showCreateConcepts, onClick = { showCreateConcepts = false; scope.launch { lists[2].scrollToItem(0) } }, label = { Text("Previous batches") })
@@ -386,13 +396,17 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             }
             PhotoCollection(origin, masterPhotos, busy, Modifier.weight(1f), onChoose = { id ->
                 masters.find { id in it.optJSONObject("job")?.outputs().orEmpty() }?.let { row ->
-                    if (workflow.realId("approved_master_id") != row.getString("id")) action { client.approveMaster(origin, projectId, row.getString("id")) }
+                    action {
+                        if (workflow.realId("approved_master_id") != row.getString("id")) client.approveMaster(origin, projectId, row.getString("id"))
+                        navigateTo(2)
+                    }
                 }
             }, onDeleted = { action {} }, photoInfo = gallery, onOpenProject = { navigateTo(0) }, projectId = projectId, projectName = detail.name, purpose = "master",
                 pendingPhotos = masters.filter { isGenerating(it.optJSONObject("job")?.optString("status").orEmpty()) }.map { PendingPhoto(it.getString("id"), "Master ${it.optInt("round")}/${it.optInt("variant")} · Creating…") },
             ) {
                 Text("Master collection", style = MaterialTheme.typography.titleLarge)
-                MasterOutfitPicker(origin, detail.assets, masterOutfitId, enabled = !busy) { masterOutfitId = it }
+                ServerChoice("Master to change outfit", editingMasterOutfit.orEmpty(), listOf("") + masters.filter { it.optJSONObject("job")?.optString("status") == "succeeded" }.map { it.getString("id") }, enabled = !busy, labels = mapOf("" to "Optional: select a Master…") + masters.associate { it.getString("id") to "Master ${it.optInt("round")}/${it.optInt("variant")}" }) { editingMasterOutfit = it.takeIf { id -> id.isNotBlank() } }
+                MasterOutfitPicker(origin, detail.assets, masterOutfitId, enabled = !busy, menu = stylingMenu) { masterOutfitId = it }
                 ServerChoice("Number of master images", masterCount.toString(), listOf("1", "2", "3", "4"), enabled = !busy,
                     labels = mapOf("1" to "1 image", "2" to "2 images", "3" to "3 images", "4" to "4 images")) { masterCount = it.toInt() }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -562,11 +576,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             color = MaterialTheme.colorScheme.surface,
         ) {
             Button(onClick = {
-                val selected = proposals.filter { it.getString("id") in picked }
-                val payload = JSONObject()
-                if (selected.firstOrNull()?.optInt("run") == 0) payload.put("slots", JSONArray(selected.map { it.optInt("slot") }))
-                else payload.put("proposal_ids", JSONArray(selected.map { it.getString("id") }))
-                generate("concepts/generate", payload)
+                reviewConceptBatch(picked)
             }, enabled = approved && !busy && picked.isNotEmpty(), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).heightIn(min = 48.dp)) {
                 Text(if (picked.isEmpty()) "Select concepts to generate" else "Generate · ${picked.size} concepts")
             }
@@ -602,11 +612,21 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             showSetups = false; notice = "Applied ${setup.name}"
         } }, onDismiss = { showSetups = false },
     )
+    editingMasterOutfit?.let { versionId ->
+        val current = project
+        val master = workflow.rows("masters").find { it.optString("id") == versionId }
+        val sourceId = master?.optJSONObject("job")?.outputs()?.firstOrNull()
+        if (current != null && sourceId != null) MasterOutfitEditSheet(origin, current, sourceId, client,
+            onUploaded = { refresh() }, onDismiss = { editingMasterOutfit = null }, onReview = { outfitId ->
+                editingMasterOutfit = null
+                generationDraft = GenerationDraft("master/$versionId/outfit", JSONObject().put("outfit_reference_asset_id", outfitId), "master", emptyList())
+            })
+    }
     generationDraft?.let { draft ->
         val currentProject = project
         if (currentProject != null) {
             val initialTargets = generationTargets(currentProject, presets, providers)
-            val masterImage = workflow.rows("masters").find { it.optString("id") == workflow.realId("approved_master_id") }?.optJSONObject("job")?.outputs()?.firstOrNull()
+            val masterImage = workflow.rows("masters").find { it.optString("id") == (if (draft.path.endsWith("/outfit")) draft.path.split("/").getOrNull(1) else workflow.realId("approved_master_id")) }?.optJSONObject("job")?.outputs()?.firstOrNull()
             GenerationReviewSheet(origin, draft, initialTargets, choices, stylingMenu, providers, masterImage, currentProject.assets.count { it.selected }, setupStore, referencePhotos = currentProject.assets,
                 onEditMaster = { generationDraft = null; navigateTo(1) },
                 onEditConcepts = { generationDraft = null; showCreateConcepts = true },
@@ -616,12 +636,21 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                     action {
                         if (targets != initialTargets) client.applyGenerationTargets(origin, projectId, "Mobile generation setup", targets)
                         if (reviewed.payload.has("choices")) saveChoices(styling)
-                        if (reviewed.purpose == "master") {
+                        if (reviewed.purpose == "master" && !reviewed.path.endsWith("/outfit")) {
                             masterCount = reviewed.payload.optInt("variants", masterCount)
-                            masterOutfitId = reviewed.payload.optString("outfit_reference_asset_id").takeUnless { it == "null" }.orEmpty()
+                            masterOutfitId = reviewed.payload.optJSONObject("master_outfit")?.optString("outfit")?.let { "preset:$it" } ?: reviewed.payload.optString("outfit_reference_asset_id").takeUnless { it == "null" }.orEmpty()
                         }
                         if (reviewed.payload.optBoolean("custom")) customCount = reviewed.payload.optInt("count", customCount)
-                        client.projectAction(origin, projectId, reviewed.path, JSONObject(reviewed.payload.toString()).put("confirmed", true))
+                        val queued = client.projectAction(origin, projectId, reviewed.path, JSONObject(reviewed.payload.toString()).put("confirmed", true))
+                        if (reviewed.path == "concepts/generate") {
+                            val created = queued.optJSONArray("concept_ids")
+                            val firstId = created?.optString(0).orEmpty()
+                            concepts = client.projectArray(origin, projectId, "concepts")
+                            selectedBatch = concepts.find { it.optString("id") == firstId }?.optInt("run")
+                            showCreateConcepts = false
+                            navigateTo(2)
+                        }
+                        if (reviewed.path.endsWith("/outfit")) navigateTo(1)
                         notice = "Queued ${generationImageCount(reviewed)} images"
                         library.queueRevision++
                     }
@@ -651,7 +680,11 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             disliked = conceptIdentity(row) in dislikes,
             onToggleDislike = { toggleDislike(row) },
             onDismiss = { detailConcept = null },
-            onChoose = { picked = if (id in picked) picked - id else picked + id; detailConcept = null },
+            onChoose = {
+                val adding = id !in picked
+                picked = if (adding) picked + id else picked - id
+                detailConcept = null
+            },
             onEdit = { detailConcept = null; edit = row },
             onDeleted = { deleted -> galleryFeed.remove(deleted); action {} },
             onOpenProject = { destination -> detailConcept = null; onOpenProject(destination) },

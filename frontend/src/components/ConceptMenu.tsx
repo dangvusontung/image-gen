@@ -28,7 +28,6 @@ export function useConceptChoices(projectId: string) {
         if (saved.outfit === 'auto') saved.outfit = CONCEPT_DEFAULTS.outfit
         if (saved.footwear === 'auto') saved.footwear = CONCEPT_DEFAULTS.footwear
       }
-      if (['tank_pleated_classic', 'tank_pleated_minimal', 'tank_pleated_sport', 'tank_pleated_vintage', 'pleated_skirt', 'tennis_skirt'].includes(saved.outfit)) saved.outfit = 'auto'
       return { ...CONCEPT_DEFAULTS, ...saved }
     } catch { return CONCEPT_DEFAULTS }
   })
@@ -46,7 +45,7 @@ function FullBodyChoice({ choices, onChange }: { choices: ConceptChoices; onChan
 export function ConceptMenu({ projectId, choices, onChange }: { projectId: string; choices: ConceptChoices; onChange: (choices: ConceptChoices) => void }) {
   const menu = useQuery({ queryKey: ['concept-options', projectId], queryFn: () => request<Record<string, [string, string][]>>(`/projects/${projectId}/concept-options`) })
   const masterOutfit = choices.outfit === 'master'
-  const change = (key: keyof ConceptChoices, value: string) => onChange({ ...choices, [key]: value })
+  const change = (key: keyof ConceptChoices, value: string) => onChange({ ...choices, [key]: value, ...(key === 'outfit' && (value === 'butter_sweatshirt_shorts' || value.startsWith('tank_pleated_')) ? { footwear: 'auto', top: 'auto' } : {}) })
   return <fieldset className="space-y-4 rounded-xl border p-4">
     <legend className="px-2 font-semibold">Chọn trang phục và bối cảnh</legend>
     <p className="text-sm text-muted-foreground">Áp dụng cho ảnh tạo mới và nút tạo lại ô. Có thể tạo nhiều đợt với lựa chọn khác nhau; mỗi ô vẫn có biểu cảm và góc máy riêng.</p>
@@ -86,10 +85,10 @@ export function ConceptMenu({ projectId, choices, onChange }: { projectId: strin
 
 export function OutfitSwitcher({ choices, onChange }: { choices: ConceptChoices; onChange: (next: ConceptChoices) => void }) {
   const masterOutfit = choices.outfit === 'master'
-  const outfits = [['black_strapless_mini', 'Váy mini đen cúp ngực'], ['auto', 'Trang phục riêng của từng concept'], ['master', MASTER_OUTFIT_LABEL], ['white_strapless_mini', 'Váy mini satin trắng cúp ngực'], ['black_white_lounge', 'Crop tank + short đen viền trắng'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
+  const outfits = [['butter_sweatshirt_shorts', 'Sweatshirt vàng bơ + short trắng + tất trắng'], ['tank_pleated_classic', 'Tank trắng + mini xếp ly xám'], ['tank_pleated_minimal', 'Tank đen + mini xếp ly kem'], ['tank_pleated_sport', 'Tank xanh pastel + mini xếp ly trắng'], ['tank_pleated_vintage', 'Tank đỏ rượu + mini xếp ly taupe'], ['black_strapless_mini', 'Váy mini đen cúp ngực'], ['auto', 'Trang phục riêng của từng concept'], ['master', MASTER_OUTFIT_LABEL], ['white_strapless_mini', 'Váy mini satin trắng cúp ngực'], ['black_white_lounge', 'Crop tank + short đen viền trắng'], ['bikini', 'Bikini'], ['satin_dress', 'Váy satin'], ['satin_pyjamas', 'Bộ ngủ satin'], ['shirt_shorts', 'Sơ mi + quần short'], ['bodysuit_trousers', 'Bodysuit + quần dài'], ['offshoulder_skirt', 'Áo trễ vai + chân váy']]
   return <div className="flex flex-wrap items-end gap-4 rounded-xl border p-4">
     <label className="grid gap-2 text-sm font-medium">Trang phục
-      <select aria-label="Đổi trang phục concept" className="rounded border bg-background p-2" value={choices.outfit} onChange={e => onChange({ ...choices, outfit: e.target.value, top: 'auto' })}>
+      <select aria-label="Đổi trang phục concept" className="rounded border bg-background p-2" value={choices.outfit} onChange={e => onChange({ ...choices, outfit: e.target.value, top: 'auto', ...((e.target.value === 'butter_sweatshirt_shorts' || e.target.value.startsWith('tank_pleated_')) ? { footwear: 'auto' } : {}) })}>
         {outfits.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         {!outfits.some(([value]) => value === choices.outfit) && <option value={choices.outfit}>Trang phục tùy chọn từ menu nâng cao</option>}
       </select>

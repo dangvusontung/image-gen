@@ -7,6 +7,7 @@ from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.builtin import DEFAULT_REFERENCE_ID, builtin_reference, is_builtin
+from app.concept_options import ConceptChoices, MENU, apply_choices
 from app.database import get_db
 from app.hairstyles import HairStyle, hairstyle_direction
 from app.generation_policy import generation_target
@@ -35,6 +36,7 @@ class Generate(BaseModel):
     hairstyle: HairStyle = "reference"
     custom_hairstyle: str = Field(default="", max_length=500)
     outfit_reference_asset_id: str | None = Field(default=None, min_length=1, max_length=36)
+    master_outfit: ConceptChoices | None = None
     #: Turnaround only: which angles to render. None means all six.
     angles: list[str] | None = Field(default=None, min_length=1, max_length=6)
 
@@ -192,6 +194,12 @@ def get_workflow(project_id: str, db: Session = Depends(get_db)):
     }
 
 
+@router.get("/api/projects/{project_id}/master/outfit-options")
+def master_outfit_options(project_id: str, db: Session = Depends(get_db)):
+    get_project_or_404(db, project_id)
+    return {"outfit": [(key, label) for key, label in MENU["outfit"] if key not in ("auto", "master") ]}
+
+
 @router.post("/api/projects/{project_id}/master/generate", response_model=GenerationResult, status_code=201)
 def generate_master(project_id: str, data: Generate, request: Request, db: Session = Depends(get_db), registry=Depends(get_registry)):
     project = get_project_or_404(db, project_id)
@@ -204,10 +212,21 @@ def generate_master(project_id: str, data: Generate, request: Request, db: Sessi
         has_any = db.query(Asset).filter(Asset.project_id == project_id, Asset.kind.in_(["reference", "side_profile"])).count()
         fail("references_required",
              "Chọn ít nhất một ảnh tham chiếu ở bước 1" if has_any else "Tải ít nhất một ảnh tham chiếu", 400)
+    if data.master_outfit is not None:
+        if data.outfit_reference_asset_id or data.master_outfit.outfit in ("auto", "master"):
+            fail("outfit_source_conflict", "Chọn một nguồn outfit: ảnh hoặc preset", 422)
+        allowed = {"outfit", "custom_outfit", "top", "footwear", "custom_footwear"}
+        if data.master_outfit.model_dump(exclude_defaults=True).keys() - allowed:
+            fail("outfit_options_invalid", "Master chỉ nhận các lựa chọn trang phục", 422)
     outfit_index = None
     if data.outfit_reference_asset_id is not None:
         outfit_index = next((index for index, asset in enumerate(refs, start=1)
                              if asset.id == data.outfit_reference_asset_id), None)
+        if outfit_index is None:
+            source = db.query(Asset).filter_by(id=data.outfit_reference_asset_id, project_id=project_id, kind="template", trashed=False).first()
+            if source is not None:
+                refs.append(source)
+                outfit_index = len(refs)
         if outfit_index is None:
             fail("outfit_reference_invalid", "Chọn ảnh trang phục trong các ảnh tham chiếu đang được chọn của dự án này", 400)
     provider_name, _model_id, _default_size = generation_target(project, "master")
@@ -230,6 +249,12 @@ def generate_master(project_id: str, data: Generate, request: Request, db: Sessi
         meta["outfit_reference_asset_id"] = data.outfit_reference_asset_id
         meta["outfit_reference_index"] = outfit_index
         meta["outfit"] = {"mode": "reference", "asset_id": data.outfit_reference_asset_id, "reference_index": outfit_index}
+    if data.master_outfit is not None:
+        wardrobe = apply_choices({"outfit": "", "silhouette": ""}, data.master_outfit, 1, [])
+        prompt += ("\nMASTER OUTFIT — PRIORITY OVERRIDE: Wear this selected outfit instead of any base-template clothing: "
+                   + wardrobe["outfit"] + (". Footwear: " + wardrobe["footwear"] if "footwear" in wardrobe else "")
+                   + ". References supply identity only; preserve the selected hairstyle, Master pose and background.")
+        meta["outfit"] = {"mode": "preset", "choices": data.master_outfit.model_dump(), "description": wardrobe["outfit"]}
     if template:
         prompt += TEMPLATE_NOTE
         labels.append(template[1])
@@ -245,6 +270,43 @@ def generate_master(project_id: str, data: Generate, request: Request, db: Sessi
         jobs.append(job)
     finish(db, request, jobs, data.confirmed)
     return {"job_ids": [j.id for j in jobs]}
+
+
+class MasterOutfitEdit(BaseModel):
+    outfit_reference_asset_id: str = Field(min_length=1, max_length=36)
+    confirmed: bool = False
+
+
+@router.post("/api/projects/{project_id}/master/{version_id}/outfit", response_model=GenerationResult, status_code=201)
+def edit_master_outfit(project_id: str, version_id: str, data: MasterOutfitEdit, request: Request,
+                       db: Session = Depends(get_db), registry=Depends(get_registry)):
+    project = get_project_or_404(db, project_id)
+    source = owned(db, MasterVersion, project_id, version_id)
+    source_id = output(db, source)
+    source_asset = db.get(Asset, source_id)
+    if source_asset.trashed or source.job.dismissed:
+        fail("master_not_ready", "Master nguồn đã được đưa vào Trash", 400)
+    outfit = db.query(Asset).filter(Asset.id == data.outfit_reference_asset_id, Asset.project_id == project_id,
+                                  Asset.kind.in_(["reference", "side_profile", "template"]), Asset.trashed.is_(False)).first()
+    if outfit is None:
+        fail("outfit_reference_invalid", "Chọn ảnh tham chiếu hoặc template của dự án này", 400)
+    prompt = ("Edit reference image 1, the SOURCE MASTER. Change ONLY its outfit to the garments, colors, layers, "
+              "footwear and wearable accessories visible in reference image 2, the OUTFIT SOURCE. "
+              "Preserve the source Master's identity, face, age, hairstyle, body proportions, expression, pose, camera, "
+              "framing, background, lighting and rendering style. The second image supplies clothing only: never copy "
+              "its person's identity, body, pose, background, handheld props, logos or text. Keep clothing opaque. "
+              "Return the complete edited Master image, with no collage or added text.")
+    meta = {"source_master_version_id": source.id, "source_master_asset_id": source_id,
+            "edit_type": "master_outfit", "reference_labels": ["SOURCE MASTER, preserve identity and composition", "OUTFIT SOURCE, clothing only"],
+            "outfit_reference_asset_id": outfit.id, "outfit_reference_index": 2,
+            "outfit": {"mode": "reference", "asset_id": outfit.id, "reference_index": 2}}
+    job = queue(db, registry, project, purpose="master", prompt=prompt, reference_asset_ids=[source_id, outfit.id],
+                aspect_ratio=source.job.settings.get("aspect_ratio", "3:4"), meta=meta)
+    db.flush()
+    number = (db.query(func.max(MasterVersion.round)).filter_by(project_id=project_id).scalar() or 0) + 1
+    db.add(MasterVersion(project_id=project_id, job_id=job.id, round=number, variant=1))
+    finish(db, request, [job], data.confirmed)
+    return {"job_ids": [job.id]}
 
 
 @router.post("/api/projects/{project_id}/master/{version_id}/approve")

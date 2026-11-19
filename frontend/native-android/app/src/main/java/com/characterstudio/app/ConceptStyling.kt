@@ -56,7 +56,10 @@ internal fun ConceptStylingDialog(saved: JSONObject, menu: JSONObject, onDismiss
                 ServerChoice(label, draft.optString(key, "auto"), entries.map { it.getString(0) }, enabled = options != null,
                     labels = entries.associate { it.getString(0) to it.getString(1) }) { value ->
                     change(key, value)
-                    if (key == "outfit") change("top", "auto")
+                    if (key == "outfit") {
+                        change("top", "auto")
+                        if (value == "butter_sweatshirt_shorts" || value.startsWith("tank_pleated_")) change("footwear", "auto")
+                    }
                 }
                 if (key in listOf("outfit", "footwear", "scene") && draft.optString(key) == "custom") {
                     val custom = "custom_$key"

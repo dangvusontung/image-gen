@@ -179,8 +179,8 @@ def test_tank_pleated_concepts_and_outfit_override_generate(client, studio):
     assert [p['slot'] for p in defaults[117:121]] == [118, 119, 120, 121]
     assert [p['brief']['outfit'] for p in defaults[117:121]] == [v[1] for v in TANK_PLEATED_OUTFITS.values()]
     menu = dict(client.get(f'{base}/concept-options').json()['outfit'])
-    assert all(key not in menu for key in TANK_PLEATED_OUTFITS)
-    assert "pleated_skirt" not in menu and "tennis_skirt" not in menu
+    assert all(key in menu for key in TANK_PLEATED_OUTFITS)
+    assert "pleated_skirt" in menu and "tennis_skirt" in menu
     visible = client.get(f"{base}/concept-proposals").json()
     assert {118, 119, 120, 121, 156}.isdisjoint(p["slot"] for p in visible)
     for slot, outfit in [(118, 'auto'), (121, 'auto'), (1, 'tank_pleated_sport')]:
@@ -287,3 +287,14 @@ def test_retired_outfit_remains_readable_and_can_be_replaced(client, studio):
     assert response.json()["detail"]["code"] == "saved_choices_unavailable"
     replacement = client.post(regenerate, json={"choices": {"outfit": "bikini"}})
     assert replacement.status_code == 201, replacement.text
+
+
+def test_butter_sweatshirt_outfit_keeps_socks_and_does_not_change_pose():
+    original = {"outfit": "old", "silhouette": "old", "pose": "standing", "setting": "studio"}
+    result = apply_choices(original, ConceptChoices(outfit="butter_sweatshirt_shorts"), 1, [])
+    assert "butter-yellow" in result["outfit"]
+    assert "white high-rise short shorts" in result["outfit"]
+    assert "white ribbed crew socks" in result["outfit"]
+    assert "no shoes" in result["outfit"]
+    assert result["pose"] == original["pose"]
+    assert result["setting"] == original["setting"]

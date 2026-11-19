@@ -164,9 +164,9 @@ class BackendClient {
         request("${normalize(origin)}/api/assets/$assetId", "DELETE")
     }
 
-    suspend fun uploadAssets(origin: String, projectId: String, uris: List<Uri>, resolver: ContentResolver): List<AssetSummary> = withContext(Dispatchers.IO) {
+    suspend fun uploadAssets(origin: String, projectId: String, uris: List<Uri>, resolver: ContentResolver, kind: String = "reference"): List<AssetSummary> = withContext(Dispatchers.IO) {
         val multipart = okhttp3.MultipartBody.Builder().setType(okhttp3.MultipartBody.FORM)
-            .addFormDataPart("kind", "reference")
+            .addFormDataPart("kind", kind)
         uris.forEach { uri ->
             val filename = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
                 if (cursor.moveToFirst()) cursor.getString(0) else null

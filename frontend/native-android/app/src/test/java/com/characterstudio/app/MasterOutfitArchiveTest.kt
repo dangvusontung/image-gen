@@ -7,6 +7,7 @@ import org.junit.Test
 class MasterOutfitArchiveTest {
     private val assets = listOf(
         AssetSummary("selected", "chosen.png", "reference", true),
+        AssetSummary("template", "outfit.png", "template", false),
         AssetSummary("off", "off.png", "reference", false),
         AssetSummary("output", "output.png", "generated", true),
     )
@@ -20,6 +21,15 @@ class MasterOutfitArchiveTest {
         assertFalse(withMasterOutfit(payload, "", assets).has("outfit_reference_asset_id"))
         assertNull(masterOutfitSource(assets, "off"))
         assertNull(masterOutfitSource(assets, "output"))
+    }
+
+    @Test fun switchingBetweenTemplateAndPresetClearsPreviousSource() {
+        val image = withMasterOutfit(JSONObject(), "template", assets)
+        assertEquals("template", image.getString("outfit_reference_asset_id"))
+        val preset = withMasterOutfit(image, "preset:bikini", assets)
+        assertFalse(preset.has("outfit_reference_asset_id"))
+        assertEquals("bikini", preset.getJSONObject("master_outfit").getString("outfit"))
+        assertFalse(withMasterOutfit(preset, "selected", assets).has("master_outfit"))
     }
 
     @Test(expected = IllegalArgumentException::class) fun deselectedOutfitIsRejected() { withMasterOutfit(JSONObject(), "off", assets) }

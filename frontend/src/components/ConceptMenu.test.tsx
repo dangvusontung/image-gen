@@ -66,9 +66,19 @@ it('remembers the white strapless dress without changing scene, lighting or glas
 })
 
 
-it('hides pleated outfits and clears their old saved selection', () => {
+it('shows pleated outfits and preserves their saved selection', () => {
   localStorage.setItem('concept-choices:outfit-test', JSON.stringify({ outfit: 'tank_pleated_classic' }))
   render(<Harness />)
-  expect(screen.queryByRole('option', { name: /mini xếp ly/ })).not.toBeInTheDocument()
-  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('auto')
+  expect(screen.getAllByRole('option', { name: /mini xếp ly/ })).toHaveLength(4)
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('tank_pleated_classic')
+})
+
+it('keeps the sweatshirt set socks by switching footwear to the selected outfit', async () => {
+  const view = render(<Harness />)
+  await userEvent.selectOptions(screen.getByLabelText('Đổi trang phục concept'), 'butter_sweatshirt_shorts')
+  expect(screen.getByLabelText('Đổi giày concept')).toHaveValue('auto')
+  view.unmount()
+  render(<Harness />)
+  expect(screen.getByLabelText('Đổi trang phục concept')).toHaveValue('butter_sweatshirt_shorts')
+  expect(screen.getByLabelText('Đổi giày concept')).toHaveValue('auto')
 })

@@ -1,3 +1,4 @@
+import MasterOutfitEdit from './MasterOutfitEdit'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
@@ -70,6 +71,7 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
     try { localStorage.setItem(`master-outfit:${project.id}`, id) } catch { /* Storage may be unavailable. */ }
     setConfirmed(false)
   }
+  const [editingMaster, setEditingMaster] = useState<string | null>(null)
   const [variants, setVariants] = useState(1)
   const [angles, setAngles] = useState<string[]>(ANGLE_KEYS)
   const [confirmed, setConfirmed] = useState(false)
@@ -86,11 +88,15 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
   const count = step === 'master' ? variants : angles.length
   const paid = project.provider !== 'mock'
   const needConfirmation = (paid && count > 1) || (step === 'master' && Boolean(outfitReferenceId))
-  const selectedAssets = project.assets.filter(a => a.selected)
-  const outfitSource = selectedAssets.find(a => a.id === outfitReferenceId)
-  const outfitValid = !outfitReferenceId || Boolean(outfitSource)
+  const selectedAssets = project.assets.filter(a => a.selected && ['reference', 'side_profile'].includes(a.kind))
+  const outfitAssets = project.assets.filter(a => a.kind === 'template' || selectedAssets.some(ref => ref.id === a.id))
+  const outfitOptions = useQuery({ queryKey: ['master-outfit-options', project.id], enabled: step === 'master', queryFn: () => request<{ outfit: [string, string][] }>(`${base}/master/outfit-options`) })
+  const preset = outfitReferenceId.startsWith('preset:') ? outfitReferenceId.slice(7) : ''
+  const [customOutfit, setCustomOutfit] = useState('')
+  const outfitSource = outfitAssets.find(a => a.id === outfitReferenceId)
+  const outfitValid = !outfitReferenceId || Boolean(outfitSource) || Boolean(preset && (preset !== 'custom' || customOutfit.trim()))
   const ready = project.rights_confirmed && (step === 'master' ? selectedAssets.length > 0 && outfitValid : Boolean(data?.approved_master_id))
-  const outfitPayload = { outfit_reference_asset_id: outfitReferenceId || null }
+  const outfitPayload = preset ? { master_outfit: { outfit: preset, custom_outfit: customOutfit } } : { outfit_reference_asset_id: outfitReferenceId || null }
   const estimate = useQuery({ queryKey: ['estimate', project.id, project.provider, project.model, step, count], enabled: step !== 'history' && ready,
     queryFn: () => request<{ total_usd: number | null; note: string }>(`${base}/generation-estimate?purpose=${step}&count=${count}`), refetchInterval: 3000 })
   const pending = action.isPending
@@ -129,9 +135,16 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
       </fieldset>}
       {step === 'master' && <fieldset className="space-y-3 rounded-xl border p-4">
         <legend className="px-2 font-semibold">Trang phục Master</legend>
-        <p className="text-sm text-muted-foreground">Chọn ảnh làm nguồn quần áo, giày và phụ kiện. Các ảnh còn lại giữ vai trò nhận diện.</p>
+        <p className="text-sm text-muted-foreground">Chọn preset hoặc ảnh tham chiếu/template làm nguồn trang phục. Ảnh template chỉ dùng cho quần áo, không lấy nhận diện.</p>
         <button type="button" className="rounded border px-3 py-2 text-sm" aria-pressed={!outfitReferenceId} disabled={pending} onClick={() => changeOutfit('')}>Theo cấu hình Master</button>
-        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">{selectedAssets.map(asset => <button key={asset.id} type="button" aria-label={`Lấy trang phục từ ${asset.filename}`} aria-pressed={outfitReferenceId === asset.id} disabled={pending} onClick={() => changeOutfit(asset.id)} className={`overflow-hidden rounded-lg border-2 p-1 text-left ${outfitReferenceId === asset.id ? 'border-primary' : 'border-transparent'}`}>
+        <label className="block text-sm">Outfit có sẵn <select aria-label="Outfit Master có sẵn" className="ml-2 rounded border p-2" value={preset} disabled={pending || !outfitOptions.data} onChange={e => changeOutfit(e.target.value ? `preset:${e.target.value}` : '')}>
+          <option value="">Chọn preset…</option>
+          {outfitOptions.data?.outfit?.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+        </select></label>
+        {preset === 'custom' && <textarea aria-label="Trang phục Master tùy chỉnh" className="w-full rounded border p-2" maxLength={600} value={customOutfit} onChange={e => { setCustomOutfit(e.target.value); setConfirmed(false) }} />}
+        {outfitOptions.error && <ErrorAlert error={outfitOptions.error} title="Không tải được outfit" />}
+        {preset && <p role="status">Outfit: {outfitOptions.data?.outfit?.find(([id]) => id === preset)?.[1] ?? preset}</p>}
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">{outfitAssets.map(asset => <button key={asset.id} type="button" aria-label={`Lấy trang phục từ ${asset.filename}`} aria-pressed={outfitReferenceId === asset.id} disabled={pending} onClick={() => changeOutfit(asset.id)} className={`overflow-hidden rounded-lg border-2 p-1 text-left ${outfitReferenceId === asset.id ? 'border-primary' : 'border-transparent'}`}>
           <img src={assetUrl(asset.id)} alt={asset.filename} className="aspect-square w-full rounded object-contain" />
           <span className="block truncate text-xs">{asset.filename}</span>
         </button>)}</div>
@@ -177,6 +190,8 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
           {group.map(m => <article key={m.id} className="space-y-3 rounded-xl border p-4">
             <h4>Biến thể {m.variant}</h4><ImageJob job={m.job} projectId={project.id} gallery={masterGallery} />
             <Button disabled={pending || m.job.status !== 'succeeded' || data?.approved_master_id === m.id} onClick={() => run(`${base}/master/${m.id}/approve`, undefined, undefined, onApproved)}>{data?.approved_master_id === m.id ? 'Đã duyệt' : 'Duyệt nhân vật này'}</Button>
+            {m.job.status === 'succeeded' && m.job.output_asset_ids[0] && <Button variant="outline" disabled={pending} onClick={() => setEditingMaster(editingMaster === m.id ? null : m.id)}>Đổi outfit · tùy chọn</Button>}
+            {editingMaster === m.id && <MasterOutfitEdit project={project} masterId={m.id} masterAssetId={m.job.output_asset_ids[0]} onClose={() => setEditingMaster(null)} />}
             {['failed', 'cancelled'].includes(m.job.status) && <Button variant="outline" disabled={pending} onClick={() => run(`${base}/master/generate`, { variants: 1, ...hair, ...outfitPayload })}>Tạo lại từ ảnh tham chiếu</Button>}
           </article>)}
         </div>

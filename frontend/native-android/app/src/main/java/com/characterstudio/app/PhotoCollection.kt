@@ -67,7 +67,7 @@ internal fun PhotoCollection(
     }
     preview?.let { id ->
         ImageViewer(origin, id, imageIds = viewingMetadata.map { it.id }, photos = viewingMetadata, onOpenProject = onOpenProject?.let { open -> { projectId -> preview = null; open(projectId) } }, selectedIds = photos.filter { it.selected }.map { it.id }.toSet(),
-            onChoose = onChoose, choosing = busy,
+            onChoose = { chosen -> if (purpose == "master") preview = null; onChoose(chosen) }, choosing = busy,
             onDeleted = { deleted -> onDeleted(deleted); preview = null }) { preview = null }
     }
 }

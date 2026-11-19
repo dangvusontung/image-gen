@@ -40,6 +40,7 @@ internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initi
     val target = targets.getValue(draft.purpose)
     val provider = providers.find { it.name == target.provider }
     val modelSizes = provider?.sizes?.get(target.model).orEmpty()
+    val editingOutfit = draft.path.endsWith("/outfit")
     val editableStyling = draft.purpose == "concept" && payload.optString("prompt_mode") != "saved" && !payload.has("prompt")
     fun updateTarget(value: GenerationTarget) { targets = targets + (draft.purpose to value); validation = null; saved = false }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
@@ -47,9 +48,14 @@ internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initi
         Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Review generation", style = MaterialTheme.typography.headlineSmall)
             Text("${imageCountLabel(generationImageCount(draft.copy(payload = payload)))} · ${draft.purpose}", style = MaterialTheme.typography.titleMedium)
-            if (draft.purpose == "master") Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            if (editingOutfit) Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                if (masterId != null) AsyncImage("$origin/api/assets/$masterId/content", "Source Master", Modifier.size(112.dp), contentScale = ContentScale.Fit)
+                AsyncImage("$origin/api/assets/${payload.optString("outfit_reference_asset_id")}/content", "Outfit source", Modifier.size(112.dp), contentScale = ContentScale.Fit)
+                Text("Only change outfit. A new Master version will need approval.", Modifier.weight(1f), style = MaterialTheme.typography.bodySmall)
+            }
+            else if (draft.purpose == "master") Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text("$referenceCount selected reference images", style = MaterialTheme.typography.bodyMedium)
-                MasterOutfitPicker(origin, referencePhotos, payload.optString("outfit_reference_asset_id").takeUnless { it == "null" }.orEmpty()) { id -> payload = withMasterOutfit(payload, id, referencePhotos); validation = null }
+                MasterOutfitPicker(origin, referencePhotos, payload.optJSONObject("master_outfit")?.optString("outfit")?.let { "preset:$it" } ?: payload.optString("outfit_reference_asset_id").takeUnless { it == "null" }.orEmpty(), menu = menu) { id -> payload = withMasterOutfit(payload, id, referencePhotos); validation = null }
             }
             else Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (masterId != null) AsyncImage("$origin/api/assets/$masterId/content", "Approved master", Modifier.size(72.dp), contentScale = ContentScale.Fit)
@@ -62,7 +68,7 @@ internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initi
                 Text(draft.concepts.joinToString("\n"), style = MaterialTheme.typography.bodyMedium)
                 TextButton(onClick = onEditConcepts) { Text("Change concepts") }
             }
-            if (draft.purpose == "master" || payload.optBoolean("custom")) {
+            if ((draft.purpose == "master" && !editingOutfit) || payload.optBoolean("custom")) {
                 val key = if (draft.purpose == "master") "variants" else "count"
                 ServerChoice("Image count", payload.optInt(key, 1).toString(), listOf("1", "2", "3", "4"), enabled = true) { payload = JSONObject(payload.toString()).put(key, it.toInt()) }
             }
@@ -90,7 +96,7 @@ internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initi
                 setups.find { it.id == id }?.let { setup ->
                     targets = initialTargets + setup.steps
                     styling = JSONObject(setup.choices)
-                    if (draft.purpose == "master") payload = JSONObject(payload.toString()).put("variants", setup.masterCount)
+                    if (draft.purpose == "master" && !editingOutfit) payload = JSONObject(payload.toString()).put("variants", setup.masterCount)
                     if (payload.optBoolean("custom")) payload = JSONObject(payload.toString()).put("count", setup.customCount)
                     validation = null
                 }
@@ -110,7 +116,7 @@ internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initi
                 if (provider?.selectable != true || target.model !in provider.models) validation = "Choose an available provider and model."
                 if (target.size.isNotBlank() && modelSizes.isNotEmpty() && target.size !in modelSizes) validation = "Choose a supported image size."
                 val outfitId = payload.optString("outfit_reference_asset_id").takeUnless { it == "null" }.orEmpty()
-                if (draft.purpose == "master" && outfitId.isNotEmpty() && masterOutfitSource(referencePhotos, outfitId) == null) validation = "Choose an outfit photo from the selected references."
+                if (draft.purpose == "master" && !editingOutfit && outfitId.isNotEmpty() && masterOutfitSource(referencePhotos, outfitId) == null) validation = "Choose an outfit photo from the selected references."
                 if (validation == null) {
                     val body = JSONObject(payload.toString())
                     if (editableStyling) body.put("choices", JSONObject(styling.toString()))
