@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session, selectinload
 
 from app.builtin import is_builtin
@@ -83,6 +83,26 @@ def create_project(data: ProjectCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(project)
     return _detail(project)
+
+
+@router.get("/page")
+def list_projects_page(
+    offset: int = Query(default=0, ge=0),
+    limit: int = Query(default=24, ge=1, le=100),
+    q: str = "",
+    sort: str = "updated",
+    db: Session = Depends(get_db),
+):
+    """Compatibility pagination for older clients that used /projects/page."""
+    items = list_projects(db)
+    needle = q.strip().casefold()
+    if needle:
+        items = [item for item in items if needle in item.name.casefold()]
+    if sort == "name":
+        items.sort(key=lambda item: item.name.casefold())
+    elif sort == "created":
+        items.sort(key=lambda item: item.created_at, reverse=True)
+    return {"items": items[offset:offset + limit], "total": len(items), "offset": offset, "limit": limit}
 
 
 @router.get("/{project_id}", response_model=ProjectDetail)
