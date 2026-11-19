@@ -4,12 +4,12 @@ import re
 from typing import Literal
 
 from fastapi import APIRouter, Depends, Query, Request
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.concept_defaults import catalog_entries, catalog_presentation, get_catalog
-from app.concept_options import ConceptChoices, MENU, apply_choices, style_instruction
+from app.concept_options import ConceptChoices, FULL_BODY_FRAMING, MENU, WARDROBE_FIELDS, apply_choices, style_instruction, without_wardrobe
 from app.database import get_db
 from app.generation_policy import generation_target
 from app.jobs.service import estimate_job_cost
@@ -201,26 +201,74 @@ def list_concepts(project_id: str, db: Session = Depends(get_db)):
     return [concept_out(c, project) for c in rows if not c.job.dismissed]
 
 
+MASTER_WARDROBE_INSTRUCTION = (
+    "MASTER OUTFIT — REQUIRED: Keep the exact outfit from the approved MASTER reference image, including every "
+    "garment, its silhouette, fit, colors, materials and layers, all worn accessories, socks and footwear. "
+    "Preserve bare feet if the MASTER is barefoot. Do not add, remove, replace or restyle any of these details. "
+    "Preserve the character and visual style. Vary only the scene, pose, expression and lighting. "
+    "Use the other references for angle guidance only. "
+    "Ignore any conflicting wardrobe instructions elsewhere in this prompt, including the brief, title or activity."
+)
+
+
+FULL_BODY_INSTRUCTION = (
+    "FULL-BODY FRAMING — REQUIRED: " + FULL_BODY_FRAMING + ". "
+    "Keep the full pose and both legs readable. Keep props and scenery clear of the feet. "
+    "Do not crop the head, arms, legs, feet or shoes. Use the prescribed footwear "
+    "or preserve bare feet when the outfit calls for them. This framing takes priority over conflicting crop directions."
+)
+
+
+def _framing_from_input(framing):
+    if re.match(r"^(?:full[- ]body|head[- ]to[- ](?:toe|feet))\b", framing, re.IGNORECASE):
+        return FULL_BODY_FRAMING
+    return framing
+
+
+def _has_catalog_refresh(concept):
+    # Slots 191+ were already used by custom runs before this catalog expansion.
+    return concept.slot < 191 or concept.job.meta.get("bookmark_key") == f"default:{concept.slot}"
+
+
+def _saved_brief(concept):
+    return {**concept.brief, **concept.job.meta.get("source_wardrobe", {})}
+
+
 def new_concept(db, registry, project, run, slot, mood, camera, revision, size, choices=None, brief=None, prompt_override=None):
     master, master_asset, turn = identity(db, project)
     prior = db.query(Concept).filter_by(project_id=project.id).order_by(Concept.created_at).all()
+    master_outfit = choices is not None and choices.outfit == "master"
+    source_wardrobe = {key: brief[key] for key in WARDROBE_FIELDS if key in brief} if master_outfit else {}
     # An all-auto menu must leave each concept exactly as written.
     if choices is not None and choices.overrides_concept():
         brief = apply_choices(brief, choices, slot, [c.brief for c in prior])
     else:
         choices = None
-    prompt, meta = snapshot(db, project.id, "concept", mood=mood, camera=camera,
-                            prior_briefs=json.dumps([c.brief for c in prior[-18:]], ensure_ascii=False),
+    full_body = brief.get("framing") == FULL_BODY_FRAMING or (choices is not None and choices.full_body)
+    if full_body:
+        brief = {**brief, "framing": FULL_BODY_FRAMING}
+        footwear = brief.get("footwear", "")
+        if "outside the crop" in footwear.lower():
+            brief.pop("footwear")
+            if footwear.lower().startswith("barefoot"):
+                brief["footwear"] = "barefoot"
+    prior_briefs = [without_wardrobe(c.brief) if master_outfit else c.brief for c in prior[-18:]]
+    prompt, meta = snapshot(db, project.id, "concept", mood=brief.get("expression", "") if master_outfit else mood,
+                            camera=camera, prior_briefs=json.dumps(prior_briefs, ensure_ascii=False),
                             brief=json.dumps(brief, ensure_ascii=False))
     if choices is not None:
-        prompt += "\nUser styling choices take priority over default scene/outfit suggestions. Follow the selected outfit, scene, activity and lighting in the concept brief exactly. Keep the master identity; reference clothing and backgrounds are not outfit or scene instructions."
+        if master_outfit:
+            prompt += "\nFollow the selected scene, activity, pose, expression and lighting in the concept brief."
+        else:
+            prompt += "\nUser styling choices take priority over default scene/outfit suggestions. Follow the selected outfit, scene, activity and lighting in the concept brief exactly. Keep the master identity; reference clothing and backgrounds are not outfit or scene instructions."
         styling = style_instruction(choices)
         if styling:
             prompt += "\n" + styling
         meta["concept_choices"] = choices.model_dump()
     if brief and brief.get("footwear"):
         prompt += "\nFOOTWEAR: " + brief["footwear"] + ". This separate footwear selection overrides footwear, socks or barefoot wording elsewhere in the brief. Preserve the selected clothing, pose and scene; do not replace them to match the shoes."
-    refs = [(master_asset, "MASTER identity authority")] + concept_turn_ref(turn, camera, (project.step_leads or {}).get("concept"))
+    master_label = "MASTER identity and outfit authority" if master_outfit else "MASTER identity authority"
+    refs = [(master_asset, master_label)] + concept_turn_ref(turn, camera, (project.step_leads or {}).get("concept"))
     template = step_template(db, project, "concept")
     if template:
         prompt += TEMPLATE_NOTE
@@ -230,6 +278,15 @@ def new_concept(db, registry, project, run, slot, mood, camera, revision, size, 
             fail("empty_prompt", "Prompt không được để trống", 400)
         prompt = prompt_override.strip()
         meta["prompt_edited"] = True
+    if full_body:
+        if FULL_BODY_INSTRUCTION not in prompt:
+            prompt += "\n" + FULL_BODY_INSTRUCTION
+        meta["full_body"] = True
+    if master_outfit:
+        # Keep saved-prompt reruns verbatim when the instruction is already present.
+        if not prompt.endswith(MASTER_WARDROBE_INSTRUCTION):
+            prompt += "\n" + MASTER_WARDROBE_INSTRUCTION
+        meta.update(master_outfit=True, source_wardrobe=source_wardrobe)
     meta.update(master_version_id=master.id, turnaround_version_id=turn.id if turn else None,
                 slot=slot, run=run, revision=revision, mood=mood, camera=camera, brief=brief,
                 reference_labels=[label for _, label in refs])
@@ -285,6 +342,7 @@ def parse_proposals(text: str) -> list[dict]:
         brief = {key: str(item.get(key) or "").strip() for key in PROPOSAL_FIELDS}
         if not brief["setting"] or not brief["activity"]:
             fail("proposals_incomplete", f"Concept {index} thiếu bối cảnh hoặc hoạt động", 502)
+        brief["framing"] = _framing_from_input(brief["framing"])
         parsed.append({"title": str(item.get("title") or f"Concept {index}").strip()[:255], "brief": brief})
     if len(parsed) < 9:
         fail("proposals_incomplete", f"Model chỉ đề xuất {len(parsed)}/9 concept", 502)
@@ -366,6 +424,8 @@ def generate_concepts(project_id: str, data: GenerateRequest, request: Request, 
     if data.custom:
         if data.choices is None or not data.choices.overrides_concept():
             fail("choices_required", "Chọn ít nhất một mục trong menu trang phục/bối cảnh", 400)
+        if data.choices.outfit == "master" and data.choices.scene == "auto":
+            fail("scene_required", "Chọn bối cảnh cho ảnh dùng trang phục nhân vật gốc", 400)
         run = (db.query(func.max(Concept.run)).filter_by(project_id=project_id).scalar() or 0) + 1
         # Custom images start after the built-in slots.
         base_slot = max(101, len(catalog.concepts) + 1)
@@ -389,8 +449,9 @@ def generate_concepts(project_id: str, data: GenerateRequest, request: Request, 
             saved.setdefault(concept.slot, concept)
         if set(saved) != set(data.slots):
             fail("invalid_slots", "Một số ô không thuộc đợt ảnh đã chọn", 400)
-        current = dict(catalog_entries(catalog)) if data.use_catalog_briefs else {}
-        chosen = [(slot, current.get(slot, {**concept.brief, "title": concept.mood}))
+        current = {slot: brief for slot, brief in catalog_entries(catalog)
+                   if slot in saved and _has_catalog_refresh(saved[slot])} if data.use_catalog_briefs else {}
+        chosen = [(slot, current.get(slot, {**_saved_brief(concept), "title": concept.mood}))
                   for slot, concept in saved.items()]
     elif latest is None:
         # Bulk generation uses curated defaults; explicit historical slots support reruns.
@@ -415,9 +476,15 @@ def generate_concepts(project_id: str, data: GenerateRequest, request: Request, 
     for slot, brief in chosen:
         title = (data.titles.get(slot) or brief.pop("title", f"Concept {slot}")).strip()
         brief.pop("title", None)
-        brief.update({k: v.strip() for k, v in data.briefs.get(slot, {}).items()})
+        if data.source_run is not None and saved[slot].job.meta.get("full_body"):
+            brief["framing"] = FULL_BODY_FRAMING
+        edits = data.briefs.get(slot, {})
+        brief.update({k: _framing_from_input(v.strip()) if k == "framing" else v.strip() for k, v in edits.items()})
+        choices = data.choices
+        if choices is None and data.source_run is not None and saved[slot].job.meta.get("master_outfit"):
+            choices = ConceptChoices(outfit="master")
         concept, job = new_concept(db, registry, project, run, slot, title,
-                                   brief.get("camera", ""), 1, data.size, data.choices, brief=brief)
+                                   brief.get("camera", ""), 1, data.size, choices, brief=brief)
         if data.source_run is not None:
             source_key = (f"default:{slot}" if data.use_catalog_briefs and slot in current
                           else concept_out(saved[slot], project).bookmark_key)
@@ -437,33 +504,46 @@ def regenerate(project_id: str, concept_id: str, data: RegenerateRequest, reques
     project = get_project_or_404(db, project_id)
     old = owned(db, Concept, project_id, concept_id)
     revision = (db.query(func.max(Concept.revision)).filter_by(project_id=project_id, run=old.run, slot=old.slot).scalar() or 0) + 1
-    brief = dict(old.brief)
+    brief = _saved_brief(old)
     title = old.mood
-    if data.prompt_mode == "current":
+    if data.prompt_mode == "current" and _has_catalog_refresh(old):
         current = next((brief for slot, brief in catalog_entries(get_catalog(), include_retired=True) if slot == old.slot), None)
         if current is not None:
             title = current.pop("title")
             brief = current
+    if old.job.meta.get("full_body"):
+        brief["framing"] = FULL_BODY_FRAMING
     if data.brief:
         unknown = sorted(set(data.brief) - set(PROPOSAL_FIELDS))
         if unknown:
             fail("unknown_brief_field", f"Trường không hợp lệ: {', '.join(unknown)}", 400)
-        brief.update({k: v.strip() for k, v in data.brief.items()})
+        brief.update({k: _framing_from_input(v.strip()) if k == "framing" else v.strip() for k, v in data.brief.items()})
     camera = brief.get("camera") or old.camera
     choices = data.choices
     prompt = data.prompt
+    old_master_outfit = old.job.meta.get("master_outfit", False)
+    original_choices = old.job.meta.get("concept_choices", {})
     if data.prompt_mode == "saved":
         if any(value is not None for value in (data.choices, data.brief, data.title, data.prompt)):
             fail("conflicting_prompt_mode", "Prompt cũ không dùng chung với chỉnh sửa prompt hoặc trang phục", 400)
         prompt = old.job.prompt
     elif data.prompt_mode is None:
-        if choices is None and old.job.meta.get("concept_choices"):
-            choices = ConceptChoices.model_validate(old.job.meta["concept_choices"])
+        if choices is None and original_choices:
+            try:
+                choices = ConceptChoices.model_validate(original_choices)
+            except ValidationError:
+                fail("saved_choices_unavailable", "Lựa chọn đã lưu không còn hợp lệ. Chọn trang phục hiện có rồi tạo lại.", 409)
         if prompt is None and old.job.meta.get("prompt_edited"):
             prompt = old.job.prompt
+            if old_master_outfit and choices is not None and choices.outfit != "master":
+                prompt = prompt.removesuffix("\n" + MASTER_WARDROBE_INSTRUCTION)
+    if choices is None and old_master_outfit:
+        choices = ConceptChoices(outfit="master")
     concept, job = new_concept(db, registry, project, old.run, old.slot, (data.title or title).strip(), camera,
                                revision, data.size, choices, brief=brief, prompt_override=prompt)
     job.meta = {**job.meta, "bookmark_key": concept_out(old, project).bookmark_key}
+    if data.prompt_mode == "saved" and old_master_outfit:
+        job.meta = {**job.meta, "concept_choices": original_choices}
     finish(db, request, [job], True)
     return GenerationResult(id=concept.id, job_ids=[job.id], concept_ids=[concept.id])
 

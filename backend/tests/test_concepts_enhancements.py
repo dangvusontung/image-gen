@@ -230,7 +230,7 @@ def test_exports_validation_and_project_isolation(client, studio):
     assert client.get(f"{base}/contact-sheet").status_code == 400
     # With no proposed round, the step offers the built-in nine straight from the prompt.
     built_in = client.get(f"{base}/concept-proposals").json()
-    assert len(built_in) == 145 and all(p["run"] == 0 for p in built_in)
+    assert len(built_in) == 149 and all(p["run"] == 0 for p in built_in)
     propose(client, base)
     unknown = client.post(f"{base}/concepts/generate", json={"proposal_ids": ["nope"], "confirmed": True})
     assert unknown.status_code == 404 and unknown.json()["detail"]["code"] == "proposal_not_found"
@@ -264,7 +264,7 @@ def test_concepts_can_exclude_an_approved_turnaround(client, studio):
 def test_default_concepts_mix_direct_and_slightly_off_camera_gaze():
     from app.concept_defaults import DEFAULT_CONCEPTS
     from app.routes.concepts import preferred_angle
-    assert len(DEFAULT_CONCEPTS) == 190
+    assert len(DEFAULT_CONCEPTS) == 194
     direct = [c for c in DEFAULT_CONCEPTS[:9] if c["gaze"] == "looking directly into the camera lens, eyes open"]
     assert len(direct) == 5
     off_camera = [c for c in DEFAULT_CONCEPTS[:9] if c not in direct]
@@ -281,7 +281,7 @@ def test_default_concepts_mix_direct_and_slightly_off_camera_gaze():
 def test_regenerate_uses_exact_edited_prompt_and_keeps_it_for_next_revision(client, studio):
     base, _, _ = studio
     proposals = propose(client, base)
-    result = render(client, base, proposals[:1])
+    result = render(client, base, [next(p for p in proposals if p["brief"]["framing"] == "three-quarter-body")])
     wait_for_job(client, result['job_ids'][0])
     concept_id = result['concept_ids'][0]
     edited = 'Render this same character at the pool, wearing a blue shirt.'
@@ -299,7 +299,7 @@ def test_seven_added_concepts_are_selectable_and_renderable(client, studio):
     base, _, _ = studio
     # Include historical slots when checking the original reference batches.
     defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
-    assert len(defaults) == 190
+    assert len(defaults) == 194
     added = defaults[9:16]
     assert [p['slot'] for p in added] == list(range(10, 17))
     assert [p['title'] for p in added] == ['At-home manicure', 'Soft morning knit', 'Kitchen daydream',
@@ -727,7 +727,7 @@ def test_bedroom_beach_reference_concepts_keep_outfit_and_scene(client, studio):
     # Include historical slots when checking the original reference batches.
     defaults = client.get(f'{base}/concept-proposals?include_retired=true').json()
     added = defaults[126:130]
-    assert len(defaults) == 190
+    assert len(defaults) == 194
     assert [p['slot'] for p in added] == [127, 128, 129, 130]
     assert len({p['brief']['outfit'] for p in added}) == 4
     assert 'headland' in added[2]['brief']['setting']

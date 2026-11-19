@@ -10,7 +10,7 @@ CONCEPT_GROUPS = (
     "Phòng khách & sinh hoạt", "Phòng ngủ & nghỉ ngơi", "Bếp & bên cửa sổ",
     "Phòng tắm", "Làm đẹp & công việc", "Café", "Bể bơi", "Biển",
     "Ngoài trời & du lịch", "Việt Nam", "Thời trang & ánh đèn",
-    "Studio & chân dung", "Yoga",
+    "Studio & chân dung", "Yoga", "Toàn thân",
 )
 PRESENTATION_FIELDS = {"label", "group", "family", "tags"}
 

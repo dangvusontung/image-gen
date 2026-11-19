@@ -1,17 +1,26 @@
 """User-controlled concept styling, stored in each job's immutable metadata."""
+import re
+
 from app.footwear import BLACK_MINI, FOOTWEAR
 from app.outfit_presets import TANK_PLEATED_OUTFITS
 from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 
+FULL_BODY_FRAMING = (
+    "full-body vertical portrait, entire person visible from crown to both feet, both shoes fully visible when worn, "
+    "clear space above the head and below the soles, character fills most of the frame height"
+)
+
+
 class ConceptChoices(BaseModel):
     model_config = ConfigDict(extra="forbid")
+    full_body: bool = False
     glasses: bool = False
     footwear: Literal["auto", "white_slingback", "black_pumps", "sneakers", "barefoot", "custom"] = "auto"
     custom_footwear: str = Field(default="", max_length=400)
     style: Literal["auto", "cute", "glamour"] = "auto"
-    outfit: Literal["auto", "denim_mix", "denim_shorts", "denim_skirt", "pleated_skirt", "tennis_skirt",
+    outfit: Literal["auto", "master", "denim_mix", "denim_shorts", "denim_skirt", "pleated_skirt", "tennis_skirt",
                     "wide_trousers", "straight_jeans", "cargo_shorts", "sundress", "midi_dress", "knit_dress",
                     "tank_pleated_classic", "tank_pleated_minimal", "tank_pleated_sport", "tank_pleated_vintage",
                     "black_strapless_mini", "white_strapless_mini", "black_white_lounge", "bikini", "satin_dress", "satin_pyjamas", "shirt_shorts", "bodysuit_trousers", "offshoulder_skirt",
@@ -27,15 +36,16 @@ class ConceptChoices(BaseModel):
 
     def overrides_concept(self) -> bool:
         """True when the user picked something that should replace the concept's own wording."""
-        return any((self.footwear != "auto", self.glasses, self.outfit != "auto", self.top != "auto", self.scene != "auto",
+        return any((self.full_body, self.footwear != "auto", self.glasses, self.outfit != "auto", self.top != "auto", self.scene != "auto",
                     self.lighting != "auto", self.style != "auto", self.activity.strip()))
 
     @model_validator(mode="after")
     def validate_custom(self):
-        if self.outfit == "custom" and not self.custom_outfit.strip():
-            raise ValueError("Nhập trang phục tùy chỉnh")
-        if self.footwear == "custom" and not self.custom_footwear.strip():
-            raise ValueError("Nhập giày tùy chỉnh")
+        if self.outfit != "master":
+            if self.outfit == "custom" and not self.custom_outfit.strip():
+                raise ValueError("Nhập trang phục tùy chỉnh")
+            if self.footwear == "custom" and not self.custom_footwear.strip():
+                raise ValueError("Nhập giày tùy chỉnh")
         if self.scene == "custom" and not self.custom_scene.strip():
             raise ValueError("Nhập bối cảnh tùy chỉnh")
         return self
@@ -44,7 +54,7 @@ class ConceptChoices(BaseModel):
 MENU = {
     "footwear": [("auto", "Giày riêng của từng concept"), *[(key, label) for key, (label, _) in FOOTWEAR.items()], ("custom", "Giày tùy chỉnh")],
     "style": [("auto", "Theo từng concept (không ghi đè)"), ("cute", "Dễ thương · nhẹ nhàng, ấm áp"), ("glamour", "Glamour · táo bạo, cuốn hút")],
-    "outfit": [("auto", "Trang phục riêng của từng concept"), ("black_strapless_mini", "Váy mini đen cúp ngực"),
+    "outfit": [("auto", "Trang phục riêng của từng concept"), ("master", "Giữ trang phục nhân vật gốc"), ("black_strapless_mini", "Váy mini đen cúp ngực"),
                ("white_strapless_mini", "Váy mini satin trắng cúp ngực"), ("black_white_lounge", "Crop tank + short đen viền trắng"), ("bikini", "Bikini"), ("satin_dress", "Váy satin"), ("satin_pyjamas", "Bộ ngủ satin"),
                ("shirt_shorts", "Sơ mi + quần short"), ("bodysuit_trousers", "Bodysuit + quần dài"),
                ("offshoulder_skirt", "Áo trễ vai + chân váy"), ("denim_mix", "Phối quần short jeans và chân váy"),
@@ -197,6 +207,44 @@ def apply_choices(brief, choices, slot, prior):
     if choices.activity.strip():
         result["activity"] = choices.activity.strip()
         result["pose"] = "a natural anatomically coherent pose suited to the chosen activity"
+    if choices.outfit != "master":
+        _apply_outfit(result, choices, slot)
+    light = choices.lighting
+    if light == "auto" and scene in ("poolside", "beach"):
+        light = "daylight"
+    lights = {"daylight": "soft diffused summer daylight with gentle warm reflected fill", "golden": "warm late-afternoon golden light with soft open shadows", "blue_hour": "soft blue-hour ambient light with warm practical highlights"}
+    if light in lights:
+        result["lighting"] = lights[light]
+        if scene == "auto":
+            # Remove the planner's weather/time when the user explicitly selects lighting.
+            result["setting"] = result["setting"].split(", ")[0]
+    if choices.style == "glamour":
+        result["expression"] = "a self-assured half-smile with poised fashion-editorial confidence"
+        result["gaze"] = "a confident engaging gaze appropriate to the selected camera angle"
+        result["pose"] += "; poised fashion-editorial posture with relaxed shoulders and a natural weight shift"
+    if choices.outfit == "master":
+        return without_wardrobe(result)
+    if choices.glasses:
+        result["outfit"] += "; wearing clear-lens eyeglasses with a simple thin frame, eyes clearly visible"
+    if choices.footwear != "auto":
+        result["footwear"] = choices.custom_footwear.strip() if choices.footwear == "custom" else FOOTWEAR[choices.footwear][1]
+    return result
+
+
+WARDROBE_FIELDS = ("outfit", "silhouette", "footwear")
+_BARE_FEET = re.compile(r",?\s*\b(?:barefoot|bare[- ]footed)\b|\bbare (feet|foot)\b", re.IGNORECASE)
+
+
+def without_wardrobe(brief):
+    result = {key: value for key, value in brief.items() if key not in WARDROBE_FIELDS}
+    # Many existing catalog poses and scene presets embed footwear in the pose/framing.
+    for key in ("activity", "pose", "framing"):
+        if key in result:
+            result[key] = _BARE_FEET.sub(lambda match: match[1] or "", result[key]).strip(" ,")
+    return result
+
+
+def _apply_outfit(result, choices, slot):
     outfit = choices.outfit
     if outfit == "denim_mix":
         outfit = ("denim_shorts", "denim_skirt")[(slot - 1) % 2]
@@ -250,27 +298,9 @@ def apply_choices(brief, choices, slot, prior):
         result["silhouette"] = "the custom outfit described above, exactly as written"
     elif choices.top != "auto":
         result["outfit"] = f"{tops[choices.top]}, with {result['silhouette']}"
-    light = choices.lighting
-    if light == "auto" and scene in ("poolside", "beach"):
-        light = "daylight"
-    lights = {"daylight": "soft diffused summer daylight with gentle warm reflected fill", "golden": "warm late-afternoon golden light with soft open shadows", "blue_hour": "soft blue-hour ambient light with warm practical highlights"}
-    if light in lights:
-        result["lighting"] = lights[light]
-        if scene == "auto":
-            # Remove the planner's weather/time when the user explicitly selects lighting.
-            result["setting"] = result["setting"].split(", ")[0]
-    if choices.style == "glamour":
-        result["expression"] = "a self-assured half-smile with poised fashion-editorial confidence"
-        result["gaze"] = "a confident engaging gaze appropriate to the selected camera angle"
-        result["pose"] += "; poised fashion-editorial posture with relaxed shoulders and a natural weight shift"
-        if choices.top == "auto" and outfit in bottoms:
-            result["outfit"] = f"a fitted ribbed tank top and {bottoms[outfit]}, with coordinated scene-appropriate shoes"
-            result["silhouette"] = bottoms[outfit]
-    if choices.glasses:
-        result["outfit"] += "; wearing clear-lens eyeglasses with a simple thin frame, eyes clearly visible"
-    if choices.footwear != "auto":
-        result["footwear"] = choices.custom_footwear.strip() if choices.footwear == "custom" else FOOTWEAR[choices.footwear][1]
-    return result
+    if choices.style == "glamour" and choices.top == "auto" and outfit in bottoms:
+        result["outfit"] = f"a fitted ribbed tank top and {bottoms[outfit]}, with coordinated scene-appropriate shoes"
+        result["silhouette"] = bottoms[outfit]
 
 
 def style_instruction(choices):
@@ -278,11 +308,15 @@ def style_instruction(choices):
         # The concept's own expression, gaze and pose stand; nothing is added.
         return ""
     if choices.style != "glamour":
+        if choices.outfit == "master":
+            return "Use a warm, gentle expression and pose while preserving the MASTER visual style."
         return "Keep the warm, cute animated-film direction."
+    wardrobe = ("Honor the selected fitted top and denim shorts or skirt, with a polished silhouette, tailored seams and tasteful accessories. "
+                if choices.outfit != "master" else "")
     return ("USER STYLE DIRECTION — GLAMOUR: Prioritize confident, attractive fashion-editorial styling over the default cozy/cute styling. "
             "For an adult subject, use a subtly flirty self-assured half-smile, expressive direct or over-the-shoulder gaze, "
             "a poised natural hip weight shift, relaxed shoulders and elegant limb placement. Keep the chosen scene activity physically believable. "
-            "Honor the selected fitted top and denim shorts or skirt, with a polished silhouette, tailored seams and tasteful accessories. "
+            f"{wardrobe}"
             "Use warm sun-kissed reflected light, dimensional highlights, cinematic contrast and premium resort-fashion atmosphere where appropriate. "
             "Preserve the actual person's face, apparent age, body shape, skin tone and stylized 3D identity; do not exaggerate anatomy. "
             "Keep clothing opaque and the scene non-explicit. If the subject is a minor, use age-appropriate ordinary fashion poses and styling without flirtatious or sensual direction.")

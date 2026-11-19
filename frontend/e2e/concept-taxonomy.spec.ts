@@ -23,3 +23,36 @@ test('labels and similar poses remain discoverable when grouping and numbering c
   await search.fill('')
   await expect(page.locator('[data-concept-progress]')).toHaveCount(proposals.length)
 })
+
+test('renders a full-body catalog concept with the approved master outfit', async ({ page, request }) => {
+  const api = 'http://127.0.0.1:8100/api'
+  const project = await (await request.post(`${api}/projects`, { data: { name: 'Full-body catalog' } })).json()
+  const base = `${api}/projects/${project.id}`
+  await request.patch(base, { data: { rights_confirmed: true } })
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAAFklEQVR4nGM8kWLEwMDAxMDAwMDAAAARKAFipiAqoAAAAABJRU5ErkJggg==', 'base64')
+  expect((await request.post(`${base}/assets`, {
+    multipart: { files: { name: 'face.png', mimeType: 'image/png', buffer: png }, kind: 'reference' },
+  })).ok()).toBeTruthy()
+  expect((await request.post(`${base}/master/generate`, { data: {} })).ok()).toBeTruthy()
+  await expect.poll(async () => (await (await request.get(`${base}/workflow`)).json()).masters[0]?.job.status).toBe('succeeded')
+  const master = (await (await request.get(`${base}/workflow`)).json()).masters[0]
+  expect((await request.post(`${base}/master/${master.id}/approve`)).ok()).toBeTruthy()
+
+  await page.goto(`/#/projects/${project.id}`)
+  await page.getByRole('tab', { name: /Concept/ }).click()
+  await page.getByLabel('Đổi trang phục concept').selectOption('master')
+  await page.getByText(/concept · Mở\/đóng danh sách/).click()
+  await page.getByRole('searchbox', { name: 'Tìm concept' }).fill('C191')
+  await expect(page.locator('[data-concept-progress]')).toHaveCount(1)
+  await expect(page.getByText('Khung toàn thân', { exact: true })).toBeVisible()
+  await page.getByRole('button', { name: 'Chỉ chọn các concept đang hiện' }).click()
+  const response = page.waitForResponse(res => res.url().endsWith('/concepts/generate') && res.request().method() === 'POST')
+  await page.getByRole('button', { name: 'Tạo ảnh cho 1 concept' }).click()
+  const generated = await response
+  expect(generated.status()).toBe(201)
+  const [jobId] = (await generated.json()).job_ids
+  await expect.poll(async () => (await (await request.get(`${api}/jobs/${jobId}`)).json()).status).toBe('succeeded')
+  const job = await (await request.get(`${api}/jobs/${jobId}`)).json()
+  expect(job.meta).toMatchObject({ full_body: true, master_outfit: true })
+  expect(job.prompt).toContain('clear space above the head and below the soles')
+})

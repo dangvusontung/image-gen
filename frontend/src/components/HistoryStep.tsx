@@ -4,7 +4,7 @@ import { ErrorAlert } from '@/components/ErrorAlert'
 import { DownloadLinks, ImagePreview, JobDetails } from '@/components/GenerationUI'
 
 export default function HistoryStep({ projectId }: { projectId: string }) {
-  const jobs = useQuery({ queryKey: ['jobs', projectId], queryFn: () => request<GenerationJob[]>(`/projects/${projectId}/jobs?limit=500`), refetchInterval: 1500 })
+  const jobs = useQuery({ queryKey: ['jobs', projectId], queryFn: () => request<GenerationJob[]>(`/projects/${projectId}/jobs?limit=500`) })
   const workflow = useQuery({ queryKey: ['workflow', projectId], queryFn: () => request<{ approvals: { target_type: string; target_id: string; created_at: string }[] }>(`/projects/${projectId}/workflow`), refetchInterval: 1500 })
   const purpose: Record<string, string> = { master: 'Nhân vật gốc', turnaround: 'Turnaround', concept: 'Concept', enhance: 'Nâng cấp' }
   return <section className="space-y-5">

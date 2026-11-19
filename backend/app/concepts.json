@@ -4174,6 +4174,94 @@
         "Phòng ngủ & nghỉ ngơi",
         "Ren"
       ]
+    },
+    {
+      "slot": 191,
+      "title": "Stepping through the station",
+      "setting": "an open railway platform with a clear walking lane",
+      "activity": "walking along the platform toward a departure sign",
+      "pose": "mid-stride with the forward foot landing and the rear heel lifting, both legs unobstructed",
+      "outfit": "a slate-blue jacket over a white shirt and charcoal straight trousers",
+      "silhouette": "straight tailored separates",
+      "expression": "a calm focused look",
+      "gaze": "ahead along the platform",
+      "camera": "eye-level left three-quarter view",
+      "framing": "full-body vertical portrait, entire person visible from crown to both feet, both shoes fully visible when worn, clear space above the head and below the soles, character fills most of the frame height",
+      "lighting": "diffused morning light from the open side of the platform",
+      "footwear": "clean white low-top sneakers",
+      "label": "Sải bước trên sân ga",
+      "group": "Toàn thân",
+      "family": "Bước đi",
+      "tags": [
+        "Toàn thân",
+        "Bước đi"
+      ]
+    },
+    {
+      "slot": 192,
+      "title": "At the gallery entrance",
+      "setting": "a contemporary art gallery entrance with a pale stone floor and an open doorway",
+      "activity": "pausing before entering the exhibition",
+      "pose": "standing with weight on the rear leg, the other foot set slightly forward and arms relaxed at the sides",
+      "outfit": "a cream knit top and olive high-waisted wide-leg trousers",
+      "silhouette": "long wide-leg tailoring",
+      "expression": "a small expectant smile",
+      "gaze": "toward the exhibition entrance",
+      "camera": "straight-on frontal view at eye level",
+      "framing": "full-body vertical portrait, entire person visible from crown to both feet, both shoes fully visible when worn, clear space above the head and below the soles, character fills most of the frame height",
+      "lighting": "soft daylight through the gallery doors with gentle fill from the stone floor",
+      "footwear": "brown leather loafers",
+      "label": "Đứng cạnh cửa phòng tranh",
+      "group": "Toàn thân",
+      "family": "Đứng chuyển trọng tâm",
+      "tags": [
+        "Toàn thân",
+        "Đứng chuyển trọng tâm"
+      ]
+    },
+    {
+      "slot": 193,
+      "title": "Turning on a garden path",
+      "setting": "a gravel path in a botanical garden with low plants on either side",
+      "activity": "turning back toward the camera after hearing someone call",
+      "pose": "standing in a gentle pivot with both feet visible on the gravel, shoulders turning back while the hips stay angled along the path",
+      "outfit": "a rust-colored midi skirt and a tucked cream linen blouse",
+      "silhouette": "an A-line midi skirt and fitted blouse",
+      "expression": "a spontaneous bright smile",
+      "gaze": "back toward the camera",
+      "camera": "eye-level right three-quarter view",
+      "framing": "full-body vertical portrait, entire person visible from crown to both feet, both shoes fully visible when worn, clear space above the head and below the soles, character fills most of the frame height",
+      "lighting": "warm late-afternoon rim light and soft green reflected fill",
+      "footwear": "dark closed-toe ankle boots",
+      "label": "Ngoảnh lại trên lối vườn",
+      "group": "Toàn thân",
+      "family": "Xoay người",
+      "tags": [
+        "Toàn thân",
+        "Xoay người"
+      ]
+    },
+    {
+      "slot": 194,
+      "title": "Stretching in the sunlit studio",
+      "setting": "a spacious dance studio with a clear wooden floor and tall windows",
+      "activity": "taking a standing stretch between practice sessions",
+      "pose": "standing with feet planted shoulder-width apart and one arm reaching diagonally overhead, both feet separated and the raised hand fully inside the frame",
+      "outfit": "a forest-green track jacket and dark straight-leg training pants",
+      "silhouette": "a streamlined athletic silhouette",
+      "expression": "a relaxed concentrated expression",
+      "gaze": "following the raised hand",
+      "camera": "eye-level frontal view with natural perspective",
+      "framing": "full-body vertical portrait, entire person visible from crown to both feet, both shoes fully visible when worn, clear space above the head and below the soles, character fills most of the frame height",
+      "lighting": "soft lateral window light across the floor and figure",
+      "footwear": "neutral gray trainers",
+      "label": "Vươn vai trong studio sáng",
+      "group": "Toàn thân",
+      "family": "Vươn vai",
+      "tags": [
+        "Toàn thân",
+        "Vươn vai"
+      ]
     }
   ],
   "retired_slots": {

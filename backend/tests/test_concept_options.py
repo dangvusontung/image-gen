@@ -191,3 +191,99 @@ def test_tank_pleated_concepts_and_outfit_override_generate(client, studio):
         expected = defaults[slot - 1]['brief']['outfit'] if outfit == 'auto' else TANK_PLEATED_OUTFITS[outfit][1]
         assert expected in job['prompt']
         assert defaults[slot - 1]['brief']['setting'] in job['prompt']
+
+
+def test_master_outfit_for_catalog_proposals_custom_and_regeneration(client, studio):
+    base, master, _ = studio
+    url = f"{base}/concepts/generate"
+    choices = {"outfit": "master", "top": "tee", "footwear": "custom", "glasses": True, "style": "glamour"}
+
+    def assert_master_job(job):
+        assert job["status"] == "succeeded"
+        assert job["meta"]["master_outfit"] is True
+        assert job["meta"]["concept_choices"]["outfit"] == "master"
+        assert job["meta"]["reference_labels"][0] == "MASTER identity and outfit authority"
+        assert job["reference_asset_ids"][0] == master["job"]["output_asset_ids"][0]
+        assert "Keep the exact outfit from the approved MASTER" in job["prompt"]
+        assert "worn accessories, socks and footwear" in job["prompt"]
+        assert "Honor the selected fitted top" not in job["prompt"]
+        assert "FOOTWEAR:" not in job["prompt"]
+        assert not {"outfit", "silhouette", "footwear"} & job["meta"]["brief"].keys()
+
+    catalog = render(client, base, slots=[1], choices=choices, briefs={1: {"footwear": "gold platform boots"}})
+    catalog_job = wait_for_job(client, catalog["job_ids"][0])
+    assert_master_job(catalog_job)
+    assert "gold platform boots" not in catalog_job["prompt"]
+    assert "barefoot" not in catalog_job["meta"]["brief"]["pose"]
+
+    proposal = propose(client, base)[0]
+    from_proposal = render(client, base, [proposal], choices={"outfit": "master"})
+    proposal_job = wait_for_job(client, from_proposal["job_ids"][0])
+    assert_master_job(proposal_job)
+    assert proposal_job["meta"]["brief"]["setting"] == proposal["brief"]["setting"]
+
+    missing_scene = client.post(url, json={"custom": True, "choices": {"outfit": "master"}})
+    assert missing_scene.status_code == 400
+    assert missing_scene.json()["detail"]["code"] == "scene_required"
+    custom = render(client, base, custom=True, choices={"outfit": "master", "scene": "custom", "custom_scene": "a lakeside path"})
+    custom_job = wait_for_job(client, custom["job_ids"][0])
+    assert_master_job(custom_job)
+    assert custom_job["meta"]["brief"]["setting"] == "a lakeside path"
+
+    regenerate = f"{base}/concepts/{custom['concept_ids'][0]}/regenerate"
+    for payload in ({}, {"prompt_mode": "saved"}, {"prompt": "A quiet portrait beside the lake."}):
+        response = client.post(regenerate, json=payload)
+        assert response.status_code == 201, response.text
+        job = wait_for_job(client, response.json()["job_ids"][0])
+        assert_master_job(job)
+        if payload.get("prompt_mode") == "saved":
+            assert job["prompt"] == custom_job["prompt"]
+
+    response = client.post(regenerate, json={"prompt_mode": "current", "choices": {"outfit": "auto"}})
+    assert response.status_code == 201, response.text
+    standard_job = wait_for_job(client, response.json()["job_ids"][0])
+    assert not standard_job["meta"].get("master_outfit")
+    assert "MASTER OUTFIT" not in standard_job["prompt"]
+    assert standard_job["meta"]["brief"]["outfit"] == "a simple contemporary outfit"
+
+    catalog_run = catalog_job["meta"]["run"]
+    rerun = render(client, base, source_run=catalog_run, slots=[1])
+    assert_master_job(wait_for_job(client, rerun["job_ids"][0]))
+
+    response = client.post(
+        f"{base}/concepts/{response.json()['concept_ids'][0]}/regenerate",
+        json={"prompt_mode": "current", "choices": {"outfit": "master"}},
+    )
+    assert response.status_code == 201, response.text
+    assert_master_job(wait_for_job(client, response.json()["job_ids"][0]))
+
+
+def test_retired_outfit_remains_readable_and_can_be_replaced(client, studio):
+    from app.database import SessionLocal
+    from app.models import GenerationJob
+
+    base, _, _ = studio
+    original = render(client, base, slots=[191], choices={"outfit": "bikini"})
+    job_id = original["job_ids"][0]
+    concept_id = original["concept_ids"][0]
+    retired_choices = {"outfit": "retired_outfit"}
+    with SessionLocal() as db:
+        job = db.get(GenerationJob, job_id)
+        job.meta = {**job.meta, "concept_choices": retired_choices}
+        db.commit()
+
+    assert client.get(f"/api/jobs/{job_id}").json()["meta"]["concept_choices"] == retired_choices
+    for path, rows in (("jobs", "id"), ("concepts", "job")):
+        response = client.get(f"{base}/{path}")
+        assert response.status_code == 200
+        listed = response.json()
+        if rows == "job":
+            listed = [row["job"] for row in listed]
+        assert next(row for row in listed if row["id"] == job_id)["meta"]["concept_choices"] == retired_choices
+
+    regenerate = f"{base}/concepts/{concept_id}/regenerate"
+    response = client.post(regenerate, json={})
+    assert response.status_code == 409
+    assert response.json()["detail"]["code"] == "saved_choices_unavailable"
+    replacement = client.post(regenerate, json={"choices": {"outfit": "bikini"}})
+    assert replacement.status_code == 201, replacement.text

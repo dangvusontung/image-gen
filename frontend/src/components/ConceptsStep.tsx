@@ -4,7 +4,7 @@ import { conceptDisplayNumbers, groupConcepts } from '@/lib/conceptGroups'
 import EditConceptPrompt from '@/components/EditConceptPrompt'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import CopyConceptConfiguration from '@/components/CopyConceptConfiguration'
-import { ConceptMenu, OutfitSwitcher, useConceptChoices } from '@/components/ConceptMenu'
+import { ConceptMenu, OutfitSwitcher, useConceptChoices, type ConceptChoices } from '@/components/ConceptMenu'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
 import { useImageSize } from '@/lib/imageSize'
 import { Fragment, useEffect, useMemo, useState } from 'react'
@@ -25,6 +25,7 @@ function CompactDescription({ text }: { text: string }) {
   </div>
 }
 
+const WARDROBE_FIELDS = ['outfit', 'footwear', 'silhouette']
 const BRIEF_FIELDS = ['setting', 'activity', 'pose', 'outfit', 'footwear', 'silhouette', 'expression', 'gaze', 'camera', 'framing', 'lighting']
 
 const BRIEF_LABEL: Record<string, string> = {
@@ -38,7 +39,7 @@ function FixAndRetry({ concept, projectId, size, choices, disabled }: {
   concept: Concept
   projectId: string
   size: string
-  choices: unknown
+  choices: ConceptChoices
   disabled: boolean
 }) {
   const action = useGenerationAction(projectId)
@@ -57,7 +58,7 @@ function FixAndRetry({ concept, projectId, size, choices, disabled }: {
         <label className="grid gap-1 text-xs">Tiêu đề
           <input className="rounded border p-2 text-sm" value={title} onChange={(e) => setTitle(e.target.value)} />
         </label>
-        {BRIEF_FIELDS.filter((f) => f in concept.brief).map((field) => (
+        {BRIEF_FIELDS.filter((f) => f in concept.brief && (choices.outfit !== 'master' || !WARDROBE_FIELDS.includes(f))).map((field) => (
           <label key={field} className="grid gap-1 text-xs">{BRIEF_LABEL[field] ?? field}
             <input
               className="rounded border p-2 text-sm"
@@ -256,12 +257,13 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         <h3 className="font-semibold">{c.label || `${c.slot}. ${c.mood}`}</h3>
         {c.catalog_code && <p className="text-xs text-muted-foreground">{c.catalog_code} · Số {c.display_number ?? c.slot} · {c.family}</p>}
         <p className="break-words text-xs text-muted-foreground">{c.job.provider} · {c.job.model}{c.job.settings.size ? ` · ${c.job.settings.size}` : ''}</p>
-        <p className="text-xs text-muted-foreground">Bản {c.revision}</p>
+        <p className="text-xs text-muted-foreground">Bản {c.revision}{c.job.meta?.master_outfit === true && ' · Trang phục nhân vật gốc'}</p>
+        {c.job.meta?.full_body === true && <p className="text-xs text-muted-foreground">Khung toàn thân</p>}
         <CompactDescription key={c.id} text={c.camera} />
         {c.stale && <p className="text-sm text-amber-700">Dựa trên nhân vật gốc cũ</p>}
 
         {!compact && <>
-          <p className="text-sm">Trang phục: {c.brief.outfit}</p>
+          {c.brief.outfit && <p className="text-sm">Trang phục: {c.brief.outfit}</p>}
           <p className="text-sm">{c.brief.setting} · {c.brief.activity}</p>
           <details className="text-xs"><summary>Chi tiết concept và phiên bản trước</summary>
             <dl className="mt-2 space-y-1">{Object.entries(c.brief).filter(([, v]) => v).map(([k, v]) => <div key={k}><dt className="inline font-medium">{BRIEF_LABEL[k] ?? k}: </dt><dd className="inline">{v}</dd></div>)}</dl>
@@ -282,7 +284,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     </div>}
     <PromptEditor projectId={project.id} name="concept" />
     <p className="text-sm text-muted-foreground">
-      {list.length} concept lối sống khác nhau, mỗi concept một bối cảnh, hoạt động, trang phục và ánh sáng riêng.
+      {list.length} concept lối sống với các bối cảnh, hoạt động và ánh sáng khác nhau.
       Chọn concept bạn muốn rồi tạo ảnh — không cần bước nào khác.
     </p>
 
@@ -391,6 +393,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
             {p.label && <span className="block font-semibold">{p.label}</span>}
             {p.catalog_code && <span className="block text-xs text-muted-foreground">{p.catalog_code} · Số {displayNumber(p.slot)}</span>}
             <span className="block font-semibold">{emojiOf(p) && `${emojiOf(p)} `}{displayNumber(p.slot)}. {fieldOf(p.slot, 'title', p.title)}</span>
+            {/^full[- ]body\b/i.test(fieldOf(p.slot, 'framing', p.brief.framing ?? '')) && <span className="block text-xs text-muted-foreground">Khung toàn thân</span>}
             <span className="block line-clamp-2 text-xs text-muted-foreground">{fieldOf(p.slot, 'setting', p.brief.setting)}</span>
             <span className="block text-xs underline">Xem / sửa chi tiết{edits[p.slot] ? ' · đã sửa' : ''}</span>
           </button>
@@ -420,7 +423,8 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         Tạo ảnh riêng từ menu bên dưới, không liên quan tới các concept ở trên.
       </p>
       <div className="mt-3 space-y-3">
-        <ConceptMenu projectId={project.id} choices={choices} onChange={value => { setChoices(value); setCustomConfirmed(false); setRerunConfirmed(false) }} />
+        <ConceptMenu projectId={project.id} choices={choices} onChange={value => { setChoices(value); setConfirmed(false); setCustomConfirmed(false); setRerunConfirmed(false) }} />
+        {choices.outfit === 'master' && choices.scene === 'auto' && <p className="text-sm text-muted-foreground">Chọn bối cảnh cho ảnh dùng trang phục nhân vật gốc.</p>}
         <div className="flex flex-wrap items-center gap-4 rounded-lg border p-4">
           <label className="text-sm">Số ảnh
             <select aria-label="Số ảnh tùy chỉnh" className="ml-2 rounded border p-2" value={customCount}
@@ -432,6 +436,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
             <input type="checkbox" checked={customConfirmed} onChange={e => setCustomConfirmed(e.target.checked)} /> Xác nhận chi phí
           </label>}
           <Button disabled={pending || !ready || (paid && !customConfirmed)
+            || (choices.outfit === 'master' && choices.scene === 'auto')
             || (choices.outfit === 'custom' && !choices.custom_outfit.trim())
             || (choices.scene === 'custom' && !choices.custom_scene.trim())}
             onClick={() => action.mutate({
@@ -453,7 +458,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
           <label className="grid gap-1 text-sm">Tiêu đề
             <input className="rounded border p-2" value={fieldOf(p.slot, 'title', p.title)} onChange={e => editField(p.slot, 'title', e.target.value)} />
           </label>
-          {Object.entries(p.brief).map(([field, value]) => <label key={field} className="grid gap-1 text-sm">{BRIEF_LABEL[field] ?? field}
+          {Object.entries(p.brief).filter(([field]) => choices.outfit !== 'master' || !WARDROBE_FIELDS.includes(field)).map(([field, value]) => <label key={field} className="grid gap-1 text-sm">{BRIEF_LABEL[field] ?? field}
             <input className="rounded border p-2" aria-label={`${BRIEF_LABEL[field] ?? field} của concept ${displayNumber(p.slot)}`}
               value={fieldOf(p.slot, field, value)} onChange={e => editField(p.slot, field, e.target.value)} />
           </label>)}
