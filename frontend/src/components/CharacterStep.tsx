@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
-import { request, useProviders, type ProjectDetail, type GenerationJob } from '@/api/client'
+import { assetUrl, request, useProviders, type ProjectDetail, type GenerationJob } from '@/api/client'
 import { DownloadLinks, ImagePreview, JobDetails, JobPlaceholder, type GalleryImage } from '@/components/GenerationUI'
 import { ErrorAlert } from '@/components/ErrorAlert'
 import { Button } from '@/components/ui/button'
@@ -62,6 +62,14 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
     try { localStorage.setItem(`character-hair:${project.id}`, JSON.stringify(next)) } catch { /* Browser storage may be unavailable. */ }
     setConfirmed(false)
   }
+  const [outfitChoices, setOutfitChoices] = useState<Record<string, string>>({})
+  const savedOutfit = () => { try { return localStorage.getItem(`master-outfit:${project.id}`) || '' } catch { return '' } }
+  const outfitReferenceId = outfitChoices[project.id] ?? savedOutfit()
+  const changeOutfit = (id: string) => {
+    setOutfitChoices(previous => ({ ...previous, [project.id]: id }))
+    try { localStorage.setItem(`master-outfit:${project.id}`, id) } catch { /* Storage may be unavailable. */ }
+    setConfirmed(false)
+  }
   const [variants, setVariants] = useState(1)
   const [angles, setAngles] = useState<string[]>(ANGLE_KEYS)
   const [confirmed, setConfirmed] = useState(false)
@@ -77,9 +85,12 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
   const data = workflow.data
   const count = step === 'master' ? variants : angles.length
   const paid = project.provider !== 'mock'
-  const needConfirmation = paid && count > 1
+  const needConfirmation = (paid && count > 1) || (step === 'master' && Boolean(outfitReferenceId))
   const selectedAssets = project.assets.filter(a => a.selected)
-  const ready = project.rights_confirmed && (step === 'master' ? selectedAssets.length > 0 : Boolean(data?.approved_master_id))
+  const outfitSource = selectedAssets.find(a => a.id === outfitReferenceId)
+  const outfitValid = !outfitReferenceId || Boolean(outfitSource)
+  const ready = project.rights_confirmed && (step === 'master' ? selectedAssets.length > 0 && outfitValid : Boolean(data?.approved_master_id))
+  const outfitPayload = { outfit_reference_asset_id: outfitReferenceId || null }
   const estimate = useQuery({ queryKey: ['estimate', project.id, project.provider, project.model, step, count], enabled: step !== 'history' && ready,
     queryFn: () => request<{ total_usd: number | null; note: string }>(`${base}/generation-estimate?purpose=${step}&count=${count}`), refetchInterval: 3000 })
   const pending = action.isPending
@@ -116,6 +127,20 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
         </label>}
         <p className="text-sm text-muted-foreground">Áp dụng khi tạo nhân vật gốc mới. Turnaround và concept sẽ giữ kiểu tóc của nhân vật đã duyệt. Giữ màu tóc gốc trừ khi mô tả màu mới.</p>
       </fieldset>}
+      {step === 'master' && <fieldset className="space-y-3 rounded-xl border p-4">
+        <legend className="px-2 font-semibold">Trang phục Master</legend>
+        <p className="text-sm text-muted-foreground">Chọn ảnh làm nguồn quần áo, giày và phụ kiện. Các ảnh còn lại giữ vai trò nhận diện.</p>
+        <button type="button" className="rounded border px-3 py-2 text-sm" aria-pressed={!outfitReferenceId} disabled={pending} onClick={() => changeOutfit('')}>Theo cấu hình Master</button>
+        <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">{selectedAssets.map(asset => <button key={asset.id} type="button" aria-label={`Lấy trang phục từ ${asset.filename}`} aria-pressed={outfitReferenceId === asset.id} disabled={pending} onClick={() => changeOutfit(asset.id)} className={`overflow-hidden rounded-lg border-2 p-1 text-left ${outfitReferenceId === asset.id ? 'border-primary' : 'border-transparent'}`}>
+          <img src={assetUrl(asset.id)} alt={asset.filename} className="aspect-square w-full rounded object-contain" />
+          <span className="block truncate text-xs">{asset.filename}</span>
+        </button>)}</div>
+        {!outfitValid && <p role="alert" className="text-sm text-destructive">Ảnh outfit không còn được chọn. Chọn lại ảnh hoặc dùng cấu hình Master.</p>}
+        {outfitSource && <div className="flex items-center gap-3 rounded-lg bg-muted p-3" role="status">
+          <img src={assetUrl(outfitSource.id)} alt="Ảnh nguồn trang phục Master" className="h-20 w-20 object-contain" />
+          <p className="text-sm">Trang phục từ: <strong>{outfitSource.filename}</strong> · {count} ảnh Master</p>
+        </div>}
+      </fieldset>}
       <div className="flex flex-wrap items-center gap-4">
         {step === 'master' && <label>Số biến thể <select aria-label="Số biến thể" className="rounded border p-2" value={variants} onChange={e => { setVariants(Number(e.target.value)); setConfirmed(false) }}>
           {[1, 2, 3, 4].map(n => <option key={n}>{n}</option>)}
@@ -134,7 +159,7 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
         <p className="text-sm">{(estimate.data ? estimate.data.total_usd : unitPrice != null ? unitPrice * count : null) != null ? `Ước tính: $${(estimate.data?.total_usd ?? (unitPrice ?? 0) * count).toFixed(3)} / ${count} ảnh` : 'Chi phí ước tính chưa có'}</p>
         {needConfirmation && <label className="text-sm"><input type="checkbox" checked={confirmed} onChange={e => setConfirmed(e.target.checked)} /> Tôi xác nhận tạo {count} ảnh và chi phí nhà cung cấp</label>}
         <Button disabled={pending || !ready || !count || (step === 'master' && hair.hairstyle === 'custom' && !hair.custom_hairstyle.trim()) || (needConfirmation && !confirmed)}
-          onClick={() => run(`${base}/${step}/generate`, step === 'master' ? { variants, confirmed, ...hair } : { confirmed, angles })}>
+          onClick={() => run(`${base}/${step}/generate`, step === 'master' ? { variants, confirmed, ...hair, ...outfitPayload } : { confirmed, angles })}>
           Tạo {step === 'master' ? 'nhân vật gốc' : `${angles.length} góc`}
         </Button>
       </div>
@@ -152,7 +177,7 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
           {group.map(m => <article key={m.id} className="space-y-3 rounded-xl border p-4">
             <h4>Biến thể {m.variant}</h4><ImageJob job={m.job} projectId={project.id} gallery={masterGallery} />
             <Button disabled={pending || m.job.status !== 'succeeded' || data?.approved_master_id === m.id} onClick={() => run(`${base}/master/${m.id}/approve`, undefined, undefined, onApproved)}>{data?.approved_master_id === m.id ? 'Đã duyệt' : 'Duyệt nhân vật này'}</Button>
-            {['failed', 'cancelled'].includes(m.job.status) && <Button variant="outline" disabled={pending} onClick={() => run(`${base}/master/generate`, { variants: 1, ...hair })}>Tạo lại từ ảnh tham chiếu</Button>}
+            {['failed', 'cancelled'].includes(m.job.status) && <Button variant="outline" disabled={pending} onClick={() => run(`${base}/master/generate`, { variants: 1, ...hair, ...outfitPayload })}>Tạo lại từ ảnh tham chiếu</Button>}
           </article>)}
         </div>
       </section>)}

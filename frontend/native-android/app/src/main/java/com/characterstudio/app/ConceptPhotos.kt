@@ -64,7 +64,7 @@ internal class ConceptLibraryRepository(private val context: android.content.Con
                                 if (job?.optString("status") != "succeeded" || outputs == null) emptyList() else
                                     (0 until outputs.length()).map { i ->
                                         val id = outputs.getString(i)
-                                        conceptIdentity(row) to GalleryItem(id, project.id, project.name, "concept", "$id.png", prompt = job.optString("prompt"), provider = job.optString("provider"), model = job.optString("model"), createdAt = job.optString("created_at"), tags = (conceptTags(row) + conceptGroup(row) + photoTags(job.optJSONObject("meta") ?: org.json.JSONObject())).distinct(), conceptKey = conceptIdentity(row))
+                                        conceptIdentity(row) to GalleryItem(id, project.id, project.name, "concept", "$id.png", prompt = job.optString("prompt"), provider = job.optString("provider"), model = job.optString("model"), createdAt = job.optString("created_at"), tags = (conceptTags(row) + listOfNotNull(conceptCollectionName(row)) + conceptGroup(row) + photoTags(job.optJSONObject("meta") ?: org.json.JSONObject())).distinct(), conceptKey = conceptIdentity(row))
                                     }
                             }
                         } catch (e: CancellationException) { throw e }

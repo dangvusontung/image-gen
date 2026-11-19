@@ -169,6 +169,8 @@ export interface GenerationJob {
 }
 
 export interface ConceptPresentation {
+  archived?: boolean; replacement_slot?: number | null
+  collection_id?: string | null; collection_name?: string
   label?: string; group?: string; family?: string; tags?: string[]
   catalog_code?: string; display_number?: number | null
 }

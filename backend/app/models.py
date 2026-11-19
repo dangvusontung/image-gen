@@ -9,6 +9,14 @@ from app.database import Base, UTCDateTime
 SOURCE_KINDS = ("reference", "side_profile", "template")
 
 
+class ConceptCatalogState(Base):
+    __tablename__ = "concept_catalog_states"
+
+    slot = Column(Integer, primary_key=True)
+    archived = Column(Boolean, nullable=False, default=False, server_default="0")
+    replacement_slot = Column(Integer, nullable=True)
+
+
 class ConceptBookmark(Base):
     __tablename__ = "concept_bookmarks"
 

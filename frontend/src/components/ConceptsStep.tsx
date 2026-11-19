@@ -1,3 +1,4 @@
+import { isArchivedConcept, matchesConceptArchive, type ConceptArchiveFilter } from '@/lib/conceptArchive'
 import { conceptProgress, matchesProgress, progressLabel } from '@/lib/conceptProgress'
 import { CONCEPT_EMOJIS, CONCEPT_EMOJI_STORAGE, conceptMarkKey, readEmojiMarks } from '@/lib/conceptEmoji'
 import { conceptDisplayNumbers, groupConcepts } from '@/lib/conceptGroups'
@@ -127,6 +128,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
     setEmojiMarks(next)
     try { localStorage.setItem(CONCEPT_EMOJI_STORAGE, JSON.stringify(next)) } catch { /* Browser storage may be unavailable. */ }
   }
+  const [archiveFilter, setArchiveFilter] = useState<ConceptArchiveFilter>('active')
   const [conceptSearch, setConceptSearch] = useState('')
   const [progressFilter, setProgressFilter] = useState('all')
   const [historyKey, setHistoryKey] = useState<string | null>(null)
@@ -158,7 +160,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const base = `/projects/${project.id}`
   const concepts = useQuery({ queryKey: ['concepts', project.id], queryFn: () => request<Concept[]>(`${base}/concepts`), refetchInterval: 1500 })
   const progress = useMemo(() => conceptProgress(concepts.data ?? []), [concepts.data])
-  const proposals = useQuery({ queryKey: ['concept-proposals', project.id], queryFn: () => request<ConceptProposal[]>(`${base}/concept-proposals`), refetchInterval: 3000 })
+  const proposals = useQuery({ queryKey: ['concept-proposals', project.id, archiveFilter], queryFn: () => request<ConceptProposal[]>(`${base}/concept-proposals${archiveFilter === 'active' ? '' : `?status=${archiveFilter}`}`), refetchInterval: 3000 })
   const workflow = useQuery({ queryKey: ['workflow', project.id], queryFn: () => request<{ approved_master_id: string | null }>(`${base}/workflow`), refetchInterval: 1500 })
   const providers = useProviders()
   const provider = providers.data?.find(p => p.name === project.provider)
@@ -179,7 +181,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
   const unitPrice = (resolvedSize ? model?.price_table?.[resolvedSize] : undefined) ?? model?.price_per_image_usd
   const pending = action.isPending
   const ready = project.rights_confirmed && Boolean(workflow.data?.approved_master_id)
-  const list = proposals.data ?? []
+  const list = (proposals.data ?? []).filter(row => matchesConceptArchive(row, archiveFilter))
   const displayNumbers = conceptDisplayNumbers(list)
   const [groupMode, setGroupMode] = useState<'family' | 'scene'>('family')
   const displayNumber = (slot: number) => displayNumbers.get(slot) ?? slot
@@ -312,6 +314,15 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
         </div>)}</div>
       </DialogContent>
     </Dialog>
+    <label className="flex items-center gap-2 text-sm">Trạng thái concept
+      <select aria-label="Trạng thái concept" className="rounded border p-2" value={archiveFilter} onChange={e => {
+        setArchiveFilter(e.target.value as ConceptArchiveFilter); setPicked([]); setConfirmed(false); setDetailSlot(null)
+      }}>
+        <option value="active">Đang dùng</option><option value="archived">Archived</option><option value="all">Tất cả</option>
+      </select>
+    </label>
+    {archiveFilter !== 'active' && <p className="text-sm text-muted-foreground">Catalog bao gồm concept cũ đã được thay thế. Bạn vẫn có thể chọn chúng để tạo ảnh.</p>}
+    {!proposals.isLoading && !list.length && archiveFilter === 'archived' && <p>Không có concept archived.</p>}
     {list.length > 0 && <details className="space-y-4 rounded-xl border p-4">
       <summary className="cursor-pointer font-semibold">{list.length} concept · Mở/đóng danh sách</summary>
       <div className="flex flex-wrap items-center gap-3">
@@ -391,6 +402,7 @@ export default function ConceptsStep({ project, onEnhance }: { project: ProjectD
           </label>
           <button type="button" className="mt-2 w-full space-y-2 text-left" onClick={() => setDetailSlot(p.slot)} aria-label={`Xem chi tiết concept ${displayNumber(p.slot)}`}>
             {p.label && <span className="block font-semibold">{p.label}</span>}
+            {isArchivedConcept(p) && <span className="block text-xs text-amber-700">Archived{p.replacement_slot ? ` · Thay thế bởi C${String(p.replacement_slot).padStart(3, '0')}` : ''}</span>}
             {p.catalog_code && <span className="block text-xs text-muted-foreground">{p.catalog_code} · Số {displayNumber(p.slot)}</span>}
             <span className="block font-semibold">{emojiOf(p) && `${emojiOf(p)} `}{displayNumber(p.slot)}. {fieldOf(p.slot, 'title', p.title)}</span>
             {/^full[- ]body\b/i.test(fieldOf(p.slot, 'framing', p.brief.framing ?? '')) && <span className="block text-xs text-muted-foreground">Khung toàn thân</span>}

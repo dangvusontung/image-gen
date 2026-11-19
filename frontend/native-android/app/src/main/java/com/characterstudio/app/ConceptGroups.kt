@@ -33,7 +33,7 @@ internal fun searchable(value: String): String = Normalizer.normalize(value, Nor
 internal fun matchesConcept(row: JSONObject, query: String): Boolean {
     val text = searchable(listOf(conceptLabel(row), row.optString("title", row.optString("mood")),
         row.optJSONObject("brief")?.toString().orEmpty(), conceptGroup(row), row.optString("family"),
-        conceptTags(row).joinToString(" "), row.optString("catalog_code"), row.optInt("slot").toString(),
+        conceptTags(row).joinToString(" "), conceptCollectionName(row).orEmpty(), conceptCollectionId(row).orEmpty(), row.optString("catalog_code"), row.optInt("slot").toString(),
         conceptOrder(row).toString()).joinToString(" "))
     return query.isBlank() || searchable(query.trim()).split(Regex("\\s+")).all { text.contains(it) }
 }

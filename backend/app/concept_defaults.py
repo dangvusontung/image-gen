@@ -10,9 +10,17 @@ CONCEPT_GROUPS = (
     "Phòng khách & sinh hoạt", "Phòng ngủ & nghỉ ngơi", "Bếp & bên cửa sổ",
     "Phòng tắm", "Làm đẹp & công việc", "Café", "Bể bơi", "Biển",
     "Ngoài trời & du lịch", "Việt Nam", "Thời trang & ánh đèn",
-    "Studio & chân dung", "Yoga", "Toàn thân",
+    "Studio & chân dung", "Gym", "Yoga", "Toàn thân",
 )
-PRESENTATION_FIELDS = {"label", "group", "family", "tags"}
+PRESENTATION_FIELDS = {"label", "group", "family", "tags", "collection_id"}
+
+
+class ConceptCollection(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    id: str = Field(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=80)
+    name: str = Field(min_length=1, max_length=120)
+    description: str = ""
 
 
 class CatalogConcept(BaseModel):
@@ -24,6 +32,7 @@ class CatalogConcept(BaseModel):
     group: str = Field(min_length=1)
     family: str = Field(min_length=1)
     tags: list[str] = Field(min_length=1)
+    collection_id: str | None = None
     setting: str
     activity: str
     pose: str
@@ -40,6 +49,7 @@ class CatalogConcept(BaseModel):
 class ConceptCatalog(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
+    collections: list[ConceptCollection] = Field(default_factory=list)
     concepts: list[CatalogConcept] = Field(min_length=1)
     retired_slots: dict[int, int] = Field(default_factory=dict)
 
@@ -47,6 +57,12 @@ class ConceptCatalog(BaseModel):
     def validate_slots(self) -> "ConceptCatalog":
         if any(concept.group not in CONCEPT_GROUPS for concept in self.concepts):
             raise ValueError("Every concept must belong to a known scene group.")
+        collection_ids = [collection.id for collection in self.collections]
+        if len(collection_ids) != len(set(collection_ids)):
+            raise ValueError("Collection IDs must be unique.")
+        if any(concept.collection_id is not None and concept.collection_id not in collection_ids
+               for concept in self.concepts):
+            raise ValueError("Every collection_id must reference a known collection.")
         slots = sorted(concept.slot for concept in self.concepts)
         if slots != list(range(1, len(slots) + 1)):
             raise ValueError("Concept slots must be unique and contiguous starting at 1.")
@@ -83,9 +99,13 @@ def catalog_presentation(catalog: ConceptCatalog) -> dict[int, dict]:
         key=lambda row: (CONCEPT_GROUPS.index(row.group), row.family, row.slot),
     )
     numbers = {row.slot: number for number, row in enumerate(active, start=1)}
+    collection_names = {collection.id: collection.name for collection in catalog.collections}
     return {
         row.slot: {
             **row.model_dump(include=PRESENTATION_FIELDS),
+            "collection_name": collection_names.get(row.collection_id, ""),
+            "archived": row.slot in catalog.retired_slots,
+            "replacement_slot": catalog.retired_slots.get(row.slot),
             "catalog_code": f"C{row.slot:03d}",
             "display_number": numbers.get(row.slot),
         }

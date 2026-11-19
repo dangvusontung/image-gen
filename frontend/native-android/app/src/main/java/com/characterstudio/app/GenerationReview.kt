@@ -25,7 +25,7 @@ internal fun generationImageCount(draft: GenerationDraft): Int = when {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initialTargets: Map<String, GenerationTarget>, choices: JSONObject, menu: JSONObject, providers: List<ProviderSummary>, masterId: String?, referenceCount: Int, setupStore: GenerationSetupStore, onEditMaster: () -> Unit, onEditConcepts: () -> Unit, onDismiss: () -> Unit, onConfirm: (GenerationDraft, Map<String, GenerationTarget>, JSONObject) -> Unit) {
+internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initialTargets: Map<String, GenerationTarget>, choices: JSONObject, menu: JSONObject, providers: List<ProviderSummary>, masterId: String?, referenceCount: Int, setupStore: GenerationSetupStore, referencePhotos: List<AssetSummary> = emptyList(), onEditMaster: () -> Unit, onEditConcepts: () -> Unit, onDismiss: () -> Unit, onConfirm: (GenerationDraft, Map<String, GenerationTarget>, JSONObject) -> Unit) {
     var targets by remember { mutableStateOf(initialTargets) }
     var styling by remember { mutableStateOf(JSONObject(choices.toString())) }
     var payload by remember { mutableStateOf(JSONObject(draft.payload.toString())) }
@@ -47,7 +47,10 @@ internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initi
         Column(Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text("Review generation", style = MaterialTheme.typography.headlineSmall)
             Text("${imageCountLabel(generationImageCount(draft.copy(payload = payload)))} · ${draft.purpose}", style = MaterialTheme.typography.titleMedium)
-            if (draft.purpose == "master") Text("$referenceCount selected reference images", style = MaterialTheme.typography.bodyMedium)
+            if (draft.purpose == "master") Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("$referenceCount selected reference images", style = MaterialTheme.typography.bodyMedium)
+                MasterOutfitPicker(origin, referencePhotos, payload.optString("outfit_reference_asset_id").takeUnless { it == "null" }.orEmpty()) { id -> payload = withMasterOutfit(payload, id, referencePhotos); validation = null }
+            }
             else Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (masterId != null) AsyncImage("$origin/api/assets/$masterId/content", "Approved master", Modifier.size(72.dp), contentScale = ContentScale.Fit)
                 Column {
@@ -106,6 +109,8 @@ internal fun GenerationReviewSheet(origin: String, draft: GenerationDraft, initi
                 validation = if (editableStyling) choicesError(styling) else null
                 if (provider?.selectable != true || target.model !in provider.models) validation = "Choose an available provider and model."
                 if (target.size.isNotBlank() && modelSizes.isNotEmpty() && target.size !in modelSizes) validation = "Choose a supported image size."
+                val outfitId = payload.optString("outfit_reference_asset_id").takeUnless { it == "null" }.orEmpty()
+                if (draft.purpose == "master" && outfitId.isNotEmpty() && masterOutfitSource(referencePhotos, outfitId) == null) validation = "Choose an outfit photo from the selected references."
                 if (validation == null) {
                     val body = JSONObject(payload.toString())
                     if (editableStyling) body.put("choices", JSONObject(styling.toString()))

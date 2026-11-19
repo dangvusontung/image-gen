@@ -34,6 +34,7 @@ class Generate(BaseModel):
     confirmed: bool = False
     hairstyle: HairStyle = "reference"
     custom_hairstyle: str = Field(default="", max_length=500)
+    outfit_reference_asset_id: str | None = Field(default=None, min_length=1, max_length=36)
     #: Turnaround only: which angles to render. None means all six.
     angles: list[str] | None = Field(default=None, min_length=1, max_length=6)
 
@@ -197,18 +198,38 @@ def generate_master(project_id: str, data: Generate, request: Request, db: Sessi
     if data.hairstyle == "custom" and not data.custom_hairstyle.strip():
         fail("hairstyle_required", "Describe the custom hairstyle", 422)
     refs = db.query(Asset).filter(Asset.project_id == project_id, Asset.kind.in_(["reference", "side_profile"]),
-                                  Asset.selected.is_(True)).order_by(Asset.position).all()
+                                  Asset.selected.is_(True), Asset.trashed.is_(False)).order_by(Asset.position).all()
     refs = lead_first(refs, (project.step_leads or {}).get("master"))
     if not refs:
         has_any = db.query(Asset).filter(Asset.project_id == project_id, Asset.kind.in_(["reference", "side_profile"])).count()
         fail("references_required",
              "Chọn ít nhất một ảnh tham chiếu ở bước 1" if has_any else "Tải ít nhất một ảnh tham chiếu", 400)
+    outfit_index = None
+    if data.outfit_reference_asset_id is not None:
+        outfit_index = next((index for index, asset in enumerate(refs, start=1)
+                             if asset.id == data.outfit_reference_asset_id), None)
+        if outfit_index is None:
+            fail("outfit_reference_invalid", "Chọn ảnh trang phục trong các ảnh tham chiếu đang được chọn của dự án này", 400)
     provider_name, _model_id, _default_size = generation_target(project, "master")
     prompt, meta = snapshot(db, project_id, provider_template("master", provider_name))
     prompt += hairstyle_direction(data.hairstyle, data.custom_hairstyle)
     meta["hairstyle"] = {"style": data.hairstyle, "custom": data.custom_hairstyle.strip() if data.hairstyle == "custom" else ""}
     template = step_template(db, project, "master")
     labels = ["Ảnh tham chiếu" for _ in refs]
+    if outfit_index is not None:
+        labels = ["IDENTITY REFERENCE" for _ in refs]
+        labels[outfit_index - 1] = "IDENTITY + OUTFIT SOURCE" if len(refs) == 1 else "OUTFIT SOURCE, clothing only"
+        identity_rule = ("The same single reference supplies identity and clothing." if len(refs) == 1 else
+                         f"All reference images except image {outfit_index} supply identity, face, age, hairstyle and natural body proportions; image {outfit_index} is clothing guidance only.")
+        prompt += (f"\nMASTER OUTFIT — PRIORITY OVERRIDE: Reference image {outfit_index} is the OUTFIT SOURCE. "
+                   "Copy its garments, colors, layers, footwear and wearable accessories for the master character. "
+                   "This replaces any default or generic outfit instructions in the base template. "
+                   f"{identity_rule} Keep any explicitly selected hairstyle instructions above. "
+                   "Do not copy the outfit source's pose, background, handheld props, logos or lettering. "
+                   "Show the selected outfit clearly in the master portrait.")
+        meta["outfit_reference_asset_id"] = data.outfit_reference_asset_id
+        meta["outfit_reference_index"] = outfit_index
+        meta["outfit"] = {"mode": "reference", "asset_id": data.outfit_reference_asset_id, "reference_index": outfit_index}
     if template:
         prompt += TEMPLATE_NOTE
         labels.append(template[1])

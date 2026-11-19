@@ -6,9 +6,11 @@ from typing import Literal
 from fastapi import APIRouter, Depends, Query, Request
 from pydantic import BaseModel, Field, ValidationError
 from sqlalchemy import func
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, object_session
 
 from app.concept_defaults import catalog_entries, catalog_presentation, get_catalog
+from app.concept_state import database_catalog
+from app.models import ConceptCatalogState
 from app.concept_options import ConceptChoices, FULL_BODY_FRAMING, MENU, WARDROBE_FIELDS, apply_choices, style_instruction, without_wardrobe
 from app.database import get_db
 from app.generation_policy import generation_target
@@ -185,7 +187,7 @@ def concept_out(concept, project):
         f"default:{concept.slot}" if catalog and title == catalog_title
         else f"project:{project.id}:run:{concept.run}:slot:{concept.slot}")
     return ConceptOut(
-        **(catalog_presentation(get_catalog()).get(concept.slot, {}) if bookmark_key.startswith("default:") else {}),
+        **(catalog_presentation(database_catalog(object_session(concept))).get(concept.slot, {}) if bookmark_key.startswith("default:") else {}),
         bookmark_key=bookmark_key,
         id=concept.id, run=concept.run, slot=concept.slot, revision=concept.revision,
         mood=concept.mood, camera=concept.camera, brief=concept.brief, master_version_id=concept.master_version_id,
@@ -354,20 +356,45 @@ def proposal_out(row):
                               master_version_id=row.master_version_id, created_at=row.created_at)
 
 
+class CatalogArchiveUpdate(BaseModel):
+    archived: bool
+    replacement_slot: int | None = Field(default=None, ge=1)
+
+
+@router.patch("/concept-catalog/{slot}")
+def update_catalog_archive(project_id: str, slot: int, data: CatalogArchiveUpdate, db: Session = Depends(get_db)):
+    """Update shared catalog state (applies across projects)."""
+    get_project_or_404(db, project_id)
+    catalog = database_catalog(db)
+    slots = {row.slot for row in catalog.concepts}
+    if slot not in slots:
+        fail("concept_not_found", "Concept không tồn tại", 404)
+    replacement = data.replacement_slot if data.archived else None
+    if replacement is not None and (replacement not in slots or replacement == slot or replacement in catalog.retired_slots):
+        fail("replacement_invalid", "Concept thay thế phải đang hoạt động và khác concept hiện tại", 422)
+    if data.archived and db.query(ConceptCatalogState).filter_by(replacement_slot=slot).first():
+        fail("replacement_in_use", "Concept này đang thay thế cho concept archived khác", 409)
+    row = db.get(ConceptCatalogState, slot)
+    row.archived, row.replacement_slot = data.archived, replacement
+    db.commit()
+    return {"slot": slot, "archived": row.archived, "replacement_slot": row.replacement_slot}
+
+
 @router.get("/concept-proposals", response_model=list[ConceptProposalOut])
-def list_proposals(project_id: str, include_retired: bool = False, db: Session = Depends(get_db)):
+def list_proposals(project_id: str, include_retired: bool = False, status: Literal["active", "archived", "all"] | None = None, db: Session = Depends(get_db)):
     """List the latest proposed round or curated defaults, with optional historical slots."""
     project = get_project_or_404(db, project_id)
     latest = db.query(func.max(ConceptProposal.run)).filter_by(project_id=project.id).scalar()
-    if latest is None:
-        catalog = get_catalog()
+    if latest is None or include_retired or status is not None:
+        catalog = database_catalog(db)
         presentation = catalog_presentation(catalog)
         return [
             ConceptProposalOut(**presentation[index], bookmark_key=f"default:{index}", id=f"default-{index}", run=0, slot=index, title=concept["title"],
                                brief={k: v for k, v in concept.items() if k != "title"},
                                master_version_id=project.approved_master_id or "",
                                created_at=project.created_at)
-            for index, concept in catalog_entries(catalog, include_retired=include_retired)
+            for index, concept in catalog_entries(catalog, include_retired=(include_retired if status is None else status != "active"))
+            if status != "archived" or index in catalog.retired_slots
         ]
     rows = db.query(ConceptProposal).filter_by(project_id=project.id, run=latest).order_by(ConceptProposal.slot).all()
     return [proposal_out(r) for r in rows]
@@ -416,7 +443,7 @@ async def propose_concepts(project_id: str, db: Session = Depends(get_db), regis
 def generate_concepts(project_id: str, data: GenerateRequest, request: Request, db: Session = Depends(get_db), registry=Depends(get_registry)):
     """Render the chosen proposals. Each proposal keeps its slot, so reruns stay comparable."""
     project = get_project_or_404(db, project_id)
-    catalog = get_catalog()
+    catalog = database_catalog(db)
     if data.source_run is None and len(data.slots) > len(catalog.concepts):
         fail("invalid_slots", "Số lượng ô vượt quá số concept hiện có", 422)
     if data.source_run is not None and (not data.slots or data.proposal_ids or data.custom):

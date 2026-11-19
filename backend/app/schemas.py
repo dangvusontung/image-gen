@@ -210,6 +210,10 @@ class HealthResponse(BaseModel):
 
 
 class ConceptPresentation(BaseModel):
+    archived: bool = False
+    replacement_slot: int | None = None
+    collection_id: str | None = None
+    collection_name: str = ""
     label: str = ""
     group: str = ""
     family: str = ""

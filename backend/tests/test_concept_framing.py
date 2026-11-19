@@ -19,7 +19,7 @@ def test_full_body_catalog_slots_render_with_master_outfit(client, studio):
     catalog = client.get(f"{base}/concept-proposals").json()
     full_body = [row for row in catalog if row["group"] == "Toàn thân"]
     assert [row["slot"] for row in full_body] == [191, 192, 193, 194]
-    assert sorted(row["display_number"] for row in full_body) == [146, 147, 148, 149]
+    assert sorted(row["display_number"] for row in full_body) == [160, 161, 162, 163]
     result = render(client, base, slots=[191, 192, 193, 194], choices={"outfit": "master"})
     for job_id in result["job_ids"]:
         job = wait_for_job(client, job_id)

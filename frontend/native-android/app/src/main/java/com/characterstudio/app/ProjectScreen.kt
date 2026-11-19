@@ -75,8 +75,11 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     var progressFilter by rememberSaveable(projectId) { mutableStateOf("all") }
     var detailConcept by remember { mutableStateOf<JSONObject?>(null) }
     var historyKey by remember { mutableStateOf<String?>(null) }
+    var archiveFilter by rememberSaveable(projectId) { mutableStateOf("active") }
+    var archiveLoading by remember { mutableStateOf(false) }
+    var collectionFilter by rememberSaveable(projectId) { mutableStateOf("") }
     var groupFilter by rememberSaveable(projectId) { mutableStateOf("All groups") }
-    var groupMode by rememberSaveable(projectId) { mutableStateOf("Tư thế / hoạt động") }
+    var groupMode by rememberSaveable(projectId) { mutableStateOf("Bộ concept") }
     val stylingPrefs = remember { context.getSharedPreferences("concept-styling", android.content.Context.MODE_PRIVATE) }
     val stylingKey = origin+"/"+projectId
     var choices by remember(stylingKey) { mutableStateOf(runCatching {
@@ -117,6 +120,8 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     var showProjectPrompts by remember { mutableStateOf(false) }
     val visitPrefs = remember { context.getSharedPreferences("project-visits", android.content.Context.MODE_PRIVATE) }
     val visitKey = origin+"/"+projectId
+    var masterOutfitId by rememberSaveable(visitKey) { mutableStateOf(visitPrefs.getString(visitKey+"/master-outfit", "").orEmpty()) }
+    LaunchedEffect(visitKey, masterOutfitId) { visitPrefs.edit().putString(visitKey+"/master-outfit", masterOutfitId).apply() }
     var step by rememberSaveable(visitKey) { mutableIntStateOf(if (initialStep in 0..4) initialStep else visitPrefs.getInt(visitKey+"/step", 0).takeIf { it in 0..2 } ?: 0) }
     val stepPager = rememberPagerState(initialPage = step.coerceIn(0, 2), pageCount = { 3 })
     LaunchedEffect(step) {
@@ -171,9 +176,21 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     }
     val titles = listOf("References", "Master", "Concepts", "Gallery", "History")
     val lists = titles.map { rememberLazyListState() }
+    suspend fun loadProposals() {
+        val requested = archiveFilter
+        val rows = client.projectArray(origin, projectId, "concept-proposals" + if (requested == "active") "" else "?status=$requested")
+        if (archiveFilter == requested) proposals = rows
+    }
+    LaunchedEffect(origin, projectId, archiveFilter) {
+        archiveLoading = true
+        try { loadProposals() }
+        catch (e: kotlinx.coroutines.CancellationException) { throw e }
+        catch (e: Exception) { error = e.message }
+        finally { archiveLoading = false }
+    }
     suspend fun refresh() {
         project = client.getProject(origin, projectId); presets = client.listPresets(origin); workflow = client.workflow(origin, projectId)
-        concepts = client.projectArray(origin, projectId, "concepts"); proposals = client.projectArray(origin, projectId, "concept-proposals")
+        concepts = client.projectArray(origin, projectId, "concepts"); loadProposals()
         val legacyMap = (proposals + concepts).filter { it.optString("bookmark_key").isNotBlank() }.associate {
             (it.optString("master_version_id")+":"+it.optInt("slot")) to it.getString("bookmark_key")
         }
@@ -191,7 +208,10 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
         scope.launch { try { block(); refresh() } catch (e: Exception) { error = e.message } finally { busy = false } }
     }
     fun generate(path: String, payload: JSONObject = JSONObject()) {
-        val requestPayload = styledConceptPayload(path, payload, choices)
+        val requestPayload = try {
+            val styled = styledConceptPayload(path, payload, choices)
+            if (path.startsWith("master/")) withMasterOutfit(styled, masterOutfitId, project?.assets.orEmpty()) else styled
+        } catch (e: IllegalArgumentException) { error = e.message; return }
         if (requestPayload.has("choices")) choicesError(choices)?.let { error = it; showStyling = true; return }
         val purpose = when { path.startsWith("master/") -> "master"; path.startsWith("turnaround/") -> "turnaround"; else -> "concept" }
         val names = if (path == "concepts/generate" && !payload.optBoolean("custom")) {
@@ -261,9 +281,20 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     val batchConcepts = concepts.filter { it.optInt("run") == activeBatch }.sortedWith(compareBy<JSONObject> { it.optInt("slot") }.thenByDescending { it.optInt("revision") })
     val projectProgress = projectConceptProgress(concepts)
     fun progressOf(row: JSONObject) = projectProgress[conceptIdentity(row)] ?: ProjectConceptProgress()
-    fun visible(row: JSONObject) = (when (dislikeFilter) { "only" -> conceptIdentity(row) in dislikes; "all" -> true; else -> conceptIdentity(row) !in dislikes }) && matchesConcept(row, query) && (!favouritesOnly || conceptIdentity(row) in favourites) && (groupFilter == "All groups" || conceptGroup(row) == groupFilter) && progressOf(row).matches(progressFilter)
-    fun section(row: JSONObject) = if (groupMode == "Bối cảnh") conceptGroup(row) else row.optString("family").ifBlank { conceptGroup(row) }
-    val visibleProposals = proposals.filter { visible(it) }.sortedBy { conceptOrder(it) }.groupBy { section(it) }
+    val collectionRows = (if (showCreateConcepts) proposals else batchConcepts).filter { matchesConceptArchive(it, archiveFilter) }
+    val collections = conceptCollections(collectionRows)
+    val effectiveCollection = collectionFilter.takeIf { it == UNASSIGNED_COLLECTION || collections.any { set -> set.id == it } }.orEmpty()
+    val groupingByCollection = groupMode == "Bộ concept" && collections.isNotEmpty()
+    fun visible(row: JSONObject) = matchesConceptArchive(row, archiveFilter) && matchesCollection(row, effectiveCollection) && (when (dislikeFilter) { "only" -> conceptIdentity(row) in dislikes; "all" -> true; else -> conceptIdentity(row) !in dislikes }) && matchesConcept(row, query) && (!favouritesOnly || conceptIdentity(row) in favourites) && (groupFilter == "All groups" || conceptGroup(row) == groupFilter) && progressOf(row).matches(progressFilter)
+    fun section(row: JSONObject) = when {
+        groupingByCollection -> conceptCollectionId(row) ?: UNASSIGNED_COLLECTION
+        groupMode == "Bối cảnh" -> conceptGroup(row)
+        else -> row.optString("family").ifBlank { conceptGroup(row) }
+    }
+    val visibleProposals = proposals.filter { visible(it) }.sortedBy { conceptOrder(it) }.groupBy { section(it) }.let { groups ->
+        if (groupingByCollection) groups.entries.sortedWith(compareBy({ it.key == UNASSIGNED_COLLECTION }, { conceptCollectionName(it.value.first()).orEmpty() })).associate { it.key to it.value }
+        else groups
+    }
     val groupedResults = batchConcepts.groupBy { it.optInt("slot") }.mapValues { (_, rows) -> rows.sortedByDescending { it.optInt("revision") } }
     val groupOptions = listOf("All groups") + (proposals + batchConcepts).map { conceptGroup(it) }.distinct().sorted()
     val favouriteVisibleCount = if (showCreateConcepts) proposals.count { conceptIdentity(it) in favourites }
@@ -320,8 +351,15 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                 TextButton(onClick = { favouritesOnly = !favouritesOnly; scope.launch { lists[2].scrollToItem(0) } }, enabled = bookmarkLoaded) {
                     Text(if (!bookmarkLoaded) "☆ …" else (if (favouritesOnly) "★ " else "☆ ")+favouriteVisibleCount)
                 }
-                TextButton(onClick = { showFilters = true }) { Text(if (favouritesOnly || dislikeFilter != "hide" || groupFilter != "All groups" || progressFilter != "all") "Filters •" else "Filters") }
+                TextButton(onClick = { showFilters = true }) { Text(if (archiveFilter != "active" || effectiveCollection.isNotEmpty() || favouritesOnly || dislikeFilter != "hide" || groupFilter != "All groups" || progressFilter != "all") "Filters •" else "Filters") }
             }
+            if (collections.isNotEmpty()) ConceptCollectionFilters(collections, effectiveCollection, collectionRows.any { conceptCollectionId(it) == null }) { selected ->
+                collectionFilter = selected
+                if (selected.isNotEmpty() && selected != UNASSIGNED_COLLECTION) groupMode = "Bộ concept"
+                scope.launch { lists[2].scrollToItem(0) }
+            }
+            if (archiveFilter != "active") Text(if (archiveFilter == "archived") "Archived concepts" else "Active + archived concepts", Modifier.padding(horizontal = 16.dp), style = MaterialTheme.typography.labelSmall)
+            if (archiveLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
             if (showCreateConcepts && libraryPreviewLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
             if (showSearch) OutlinedTextField(query, { query = it }, placeholder = { Text("Search concepts…") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), trailingIcon = { TextButton(onClick = { query = ""; showSearch = false }) { Text("×") } })
         }
@@ -354,6 +392,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                 pendingPhotos = masters.filter { isGenerating(it.optJSONObject("job")?.optString("status").orEmpty()) }.map { PendingPhoto(it.getString("id"), "Master ${it.optInt("round")}/${it.optInt("variant")} · Creating…") },
             ) {
                 Text("Master collection", style = MaterialTheme.typography.titleLarge)
+                MasterOutfitPicker(origin, detail.assets, masterOutfitId, enabled = !busy) { masterOutfitId = it }
                 ServerChoice("Number of master images", masterCount.toString(), listOf("1", "2", "3", "4"), enabled = !busy,
                     labels = mapOf("1" to "1 image", "2" to "2 images", "3" to "3 images", "4" to "4 images")) { masterCount = it.toInt() }
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -424,9 +463,17 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                         }
                     visibleProposals.forEach { (group, rows) ->
                     item(key = "proposal-group-"+group) {
-                        Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                            Text(group, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
-                            Text("${rows.size} concepts", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        val setId = if (groupingByCollection && group != UNASSIGNED_COLLECTION) group else null
+                        val groupTitle = if (groupingByCollection) conceptCollectionName(rows.first()) ?: "Chưa có bộ" else group
+                        val eligible = setId?.let { selectableCollection(proposals.filter { row -> matchesConceptArchive(row, archiveFilter) }, it, dislikes) }.orEmpty()
+                        Column(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp)) {
+                            Row(Modifier.fillMaxWidth(), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                Text(groupTitle, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                                Text("${rows.size} concepts", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                            if (setId != null) TextButton(enabled = !busy && eligible.isNotEmpty(), onClick = { picked = toggleCollectionSelection(picked, eligible) }) {
+                                Text(if (picked.containsAll(eligible)) "Deselect set" else "Select set · ${eligible.size}")
+                            }
                         }
                     }
                     items(rows, key = { "proposal-${it.getString("id")}" }) { row -> val id = row.getString("id")
@@ -454,6 +501,8 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                                 }
                                 Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                                     Text(conceptLabel(row), style = MaterialTheme.typography.titleMedium)
+                                    if (archivedConcept(row)) Text("Archived" + row.optInt("replacement_slot").takeIf { it > 0 }?.let { " · Replaced by C${it.toString().padStart(3, '0')}" }.orEmpty(), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.tertiary)
+                                    if (!groupingByCollection) conceptCollectionName(row)?.let { Text(it, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary) }
                                     if (globalPhotos.isNotEmpty()) Text("${globalPhotos.size} images · ${globalPhotos.map { it.projectId }.distinct().size} projects", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
                                     if (conceptIdentity(row) in dislikes) Text("Disliked", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
                                     row.optJSONObject("brief")?.optString("setting")?.takeIf { it.isNotBlank() }?.let {
@@ -534,14 +583,16 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             FilterChip(selected = favouritesOnly, onClick = { favouritesOnly = !favouritesOnly }, label = { Text("★ Favourites only ("+favouriteVisibleCount+")") })
             Text(favouriteVisibleCount.toString()+" available here · "+favourites.size+" saved on server", style = MaterialTheme.typography.bodySmall)
+            ServerChoice("Catalog status", archiveFilter, listOf("active", "archived", "all"), enabled = true,
+                labels = mapOf("active" to "Active", "archived" to "Archived", "all" to "All")) { archiveFilter = it; picked = emptySet(); collectionFilter = "" }
             ServerChoice("Disliked concepts", dislikeFilter, listOf("hide", "only", "all"), enabled = true,
                 labels = mapOf("hide" to "Hide disliked", "only" to "Disliked only", "all" to "Show all")) { dislikeFilter = it }
             ServerChoice("Created in this project", progressFilter, listOf("all", "created", "uncreated", "active", "failed"), enabled = true,
                 labels = mapOf("all" to "All concepts", "created" to "Has images", "uncreated" to "Not created", "active" to "Creating", "failed" to "Failed, no image")) { progressFilter = it }
-            ServerChoice("Gom nhóm theo", groupMode, listOf("Tư thế / hoạt động", "Bối cảnh"), enabled = true) { groupMode = it }
+            ServerChoice("Gom nhóm theo", groupMode, listOf("Bộ concept", "Tư thế / hoạt động", "Bối cảnh"), enabled = true) { groupMode = it }
             ServerChoice("Group", groupFilter, groupOptions, enabled = true) { groupFilter = it }
         }
-    }, confirmButton = { TextButton(onClick = { showFilters = false; scope.launch { lists[2].scrollToItem(0) } }) { Text("Done") } }, dismissButton = { TextButton(onClick = { favouritesOnly = false; dislikeFilter = "hide"; groupFilter = "All groups"; progressFilter = "all"; query = "" }) { Text("Reset") } })
+    }, confirmButton = { TextButton(onClick = { showFilters = false; scope.launch { lists[2].scrollToItem(0) } }) { Text("Done") } }, dismissButton = { TextButton(onClick = { favouritesOnly = false; archiveFilter = "active"; collectionFilter = ""; dislikeFilter = "hide"; groupFilter = "All groups"; progressFilter = "all"; query = "" }) { Text("Reset") } })
     if (showSetups && project != null) SetupLibrarySheet(
         setupStore, GenerationSetup("", "", choices.toString(), generationTargets(project!!, presets, providers), masterCount, customCount), busy, error,
         onApply = { setup -> action {
@@ -556,7 +607,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
         if (currentProject != null) {
             val initialTargets = generationTargets(currentProject, presets, providers)
             val masterImage = workflow.rows("masters").find { it.optString("id") == workflow.realId("approved_master_id") }?.optJSONObject("job")?.outputs()?.firstOrNull()
-            GenerationReviewSheet(origin, draft, initialTargets, choices, stylingMenu, providers, masterImage, currentProject.assets.count { it.selected }, setupStore,
+            GenerationReviewSheet(origin, draft, initialTargets, choices, stylingMenu, providers, masterImage, currentProject.assets.count { it.selected }, setupStore, referencePhotos = currentProject.assets,
                 onEditMaster = { generationDraft = null; navigateTo(1) },
                 onEditConcepts = { generationDraft = null; showCreateConcepts = true },
                 onDismiss = { generationDraft = null },
@@ -565,7 +616,10 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                     action {
                         if (targets != initialTargets) client.applyGenerationTargets(origin, projectId, "Mobile generation setup", targets)
                         if (reviewed.payload.has("choices")) saveChoices(styling)
-                        if (reviewed.purpose == "master") masterCount = reviewed.payload.optInt("variants", masterCount)
+                        if (reviewed.purpose == "master") {
+                            masterCount = reviewed.payload.optInt("variants", masterCount)
+                            masterOutfitId = reviewed.payload.optString("outfit_reference_asset_id").takeUnless { it == "null" }.orEmpty()
+                        }
                         if (reviewed.payload.optBoolean("custom")) customCount = reviewed.payload.optInt("count", customCount)
                         client.projectAction(origin, projectId, reviewed.path, JSONObject(reviewed.payload.toString()).put("confirmed", true))
                         notice = "Queued ${generationImageCount(reviewed)} images"

@@ -74,6 +74,12 @@ internal fun ConceptDetail(origin: String, row: JSONObject, photos: List<Gallery
                     item(span = { GridItemSpan(maxLineSpan) }) {
                         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                             Text(conceptLabel(row), style = MaterialTheme.typography.headlineSmall)
+                            if (archivedConcept(row)) Text("Archived concept", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.tertiary)
+                            conceptCollectionName(row)?.let { name ->
+                                Surface(shape = MaterialTheme.shapes.small, color = MaterialTheme.colorScheme.primaryContainer) {
+                                    Text("Bộ · $name", Modifier.padding(horizontal = 12.dp, vertical = 6.dp), style = MaterialTheme.typography.labelLarge)
+                                }
+                            }
                             if (disliked) Text("Disliked · tap 👎 again to undo", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.error)
                             val tags = conceptTags(row)
                             if (tags.isNotEmpty()) Text(tags.joinToString(" · "), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

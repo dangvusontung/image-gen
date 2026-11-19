@@ -21,6 +21,10 @@ separately, so switching clients can show a different connection state.
 - Swipe between References, Master, and Concepts; open Gallery from its floating button.
 - Photo collections with cached thumbnails, full-screen viewing, linked comparison of
   2–4 images, Markdown prompts, and multi-select save/Trash/enhance actions.
+- Concept sets are separate from scene/pose groups. Filter by set, select/deselect
+  its available concepts together, and see the set name in concept detail. Set controls
+  appear when the backend provides `collection_id` / `collection_name`; older servers
+  retain scene/pose grouping.
 - Concept details show results from the current project or all projects. Favourite
   concepts sync with the backend; dislikes, Best photos, and named generation setups
   are stored locally on this phone, separately for each backend address.
