@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { act, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import type { GenerationJob } from '@/api/client'
@@ -32,6 +32,40 @@ const panel = () => screen.queryByRole('region', { name: 'Tiến trình tạo �
 afterEach(() => vi.unstubAllGlobals())
 
 describe('generation monitor', () => {
+  it('polls after an SSE error and replaces stale jobs when the stream reconnects', async () => {
+    const connections: MockEventSource[] = []
+    class MockEventSource extends EventTarget {
+      onerror: (() => void) | null = null
+      close = vi.fn()
+
+      constructor() {
+        super()
+        connections.push(this)
+      }
+
+      emit(name: string, payload: unknown) {
+        this.dispatchEvent(new MessageEvent(name, { data: JSON.stringify(payload) }))
+      }
+    }
+    vi.stubGlobal('EventSource', MockEventSource)
+    const running = job({ id: 'a', status: 'running' })
+    serve([[running], [running]])
+    await screen.findByText('Đang tạo 1 ảnh')
+
+    const [first] = connections
+    act(() => {
+      first.emit('generation', running)
+      first.emit('snapshot_end', {})
+    })
+    act(() => first.onerror?.())
+    expect(first.close).toHaveBeenCalledOnce()
+    // Initial HTTP load, an immediate refresh on error, then interval polling.
+    await waitFor(() => expect(fetch).toHaveBeenCalledTimes(3), { timeout: 3000 })
+    await waitFor(() => expect(connections).toHaveLength(2), { timeout: 6000 })
+    act(() => connections[1].emit('snapshot_end', {}))
+    await waitFor(() => expect(panel()).toBeNull())
+  }, 10000)
+
   it('stays hidden when nothing is generating', async () => {
     serve([[job({ id: 'old', status: 'succeeded' })]])
     await waitFor(() => expect(panel()).toBeNull())

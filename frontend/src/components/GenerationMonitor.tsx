@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { CheckCircle2Icon, LoaderCircleIcon, XCircleIcon, XIcon } from 'lucide-react'
 import { request, type GenerationJob } from '@/api/client'
+import { apiUrl } from '@/lib/backend'
 import { active, statusLabel } from '@/components/GenerationUI'
 import { Button } from '@/components/ui/button'
 
@@ -21,12 +22,87 @@ interface Finished {
 
 /** Floating panel: what is generating now, and a short-lived note as each job finishes. */
 export default function GenerationMonitor({ projectId, projectName }: { projectId: string; projectName: string }) {
-  // Same key and URL as the history step, so both share one poll.
+  const queryClient = useQueryClient()
+  const [polling, setPolling] = useState(typeof EventSource === 'undefined')
   const jobs = useQuery({
     queryKey: ['jobs', projectId],
     queryFn: () => request<GenerationJob[]>(`/projects/${projectId}/jobs?limit=500`),
-    refetchInterval: 1500,
+    refetchInterval: polling ? 1500 : false,
   })
+  useEffect(() => {
+    if (typeof EventSource === 'undefined') return
+    const queryKey = ['jobs', projectId]
+    let source: EventSource | undefined
+    let timer: ReturnType<typeof setTimeout>
+    const refreshRelated = () => {
+      queryClient.invalidateQueries({ queryKey: ['gallery', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['workflow', projectId] })
+      queryClient.invalidateQueries({ queryKey: ['projects'] })
+      queryClient.invalidateQueries({ queryKey: ['global-jobs'] })
+    }
+
+    function retry() {
+      source?.close()
+      source = undefined
+      clearTimeout(timer)
+      setPolling(true)
+      void queryClient.invalidateQueries({ queryKey, exact: true })
+      timer = setTimeout(connect, 5000)
+    }
+
+    function connect() {
+      let connection: EventSource
+      try {
+        connection = new EventSource(apiUrl(`/projects/${projectId}/jobs/events`))
+      } catch {
+        retry()
+        return
+      }
+      source = connection
+      let snapshot: GenerationJob[] | null = []
+      timer = setTimeout(retry, 10000)
+      connection.onerror = () => {
+        if (source === connection) retry()
+      }
+      connection.addEventListener('generation', (event) => {
+        if (source !== connection) return
+        const generation = JSON.parse((event as MessageEvent).data) as GenerationJob
+        if (snapshot) {
+          snapshot.push(generation)
+          return
+        }
+        queryClient.setQueryData<GenerationJob[]>(queryKey, (current = []) => {
+          const next = current.filter((job) => job.id !== generation.id)
+          next.push(generation)
+          return next.sort((a, b) => b.created_at.localeCompare(a.created_at))
+        })
+        refreshRelated()
+      })
+      connection.addEventListener('generation_removed', (event) => {
+        if (source !== connection) return
+        const { id } = JSON.parse((event as MessageEvent).data) as { id: string }
+        queryClient.setQueryData<GenerationJob[]>(queryKey, (current = []) => current.filter((job) => job.id !== id))
+        refreshRelated()
+      })
+      connection.addEventListener('snapshot_end', () => {
+        if (source !== connection || snapshot === null) return
+        clearTimeout(timer)
+        // An in-flight fallback response could overwrite the new snapshot.
+        void queryClient.cancelQueries({ queryKey, exact: true })
+        queryClient.setQueryData(queryKey, snapshot)
+        snapshot = null
+        setPolling(false)
+        refreshRelated()
+      })
+    }
+
+    connect()
+    return () => {
+      clearTimeout(timer)
+      source?.close()
+      source = undefined
+    }
+  }, [projectId, queryClient])
   const [finished, setFinished] = useState<Finished[]>([])
   // Jobs already finished when the panel opened: the backlog, never announced.
   const backlog = useRef<Set<string> | null>(null)

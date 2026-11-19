@@ -1,10 +1,14 @@
+import asyncio
+import json
 from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
-from app.database import get_db
+from app.database import SessionLocal, get_db
+from app.jobs.events import job_events_hub
 from app.jobs.service import JobRequestError, request_cancel, retry_job
 from app.models import GenerationJob, JobStatus, Project, StickerPack
 from app.providers.registry import ProviderRegistry, get_registry
@@ -12,6 +16,7 @@ from app.routes.projects import get_project_or_404
 from app.schemas import JobHistoryOut, JobOut
 
 router = APIRouter(tags=["jobs"])
+_JOB_EVENTS_RECHECK_SECONDS = 15
 
 
 def notify_runner(request: Request) -> None:
@@ -46,6 +51,64 @@ def list_jobs(
     if purpose:
         query = query.filter(GenerationJob.purpose == purpose)
     return query.order_by(GenerationJob.created_at.desc()).limit(limit).all()
+
+
+@router.get("/api/projects/{project_id}/jobs/events")
+def job_events(project_id: str, request: Request, db: Session = Depends(get_db, scope="function")):
+    """Stream one event per generation as its job record changes.
+
+    A generation is represented by one GenerationJob.  Sending the whole job
+    list made a large batch look like one update to the client and needlessly
+    retransmitted every generation whenever one of them changed.
+    """
+    get_project_or_404(db, project_id)
+
+    def snapshot() -> dict[str, str]:
+        with SessionLocal() as session:
+            jobs = (session.query(GenerationJob)
+                    .filter(GenerationJob.project_id == project_id, GenerationJob.dismissed.is_(False))
+                    .order_by(GenerationJob.created_at.desc()).limit(500).all())
+            return {job.id: JobOut.model_validate(job).model_dump_json() for job in jobs}
+
+    async def stream():
+        last_jobs: dict[str, str] = {}
+        initial = True
+        heartbeat_at = 0.0
+        loop = asyncio.get_running_loop()
+        with job_events_hub.subscribe(project_id) as signal:
+            while True:
+                if await request.is_disconnected():
+                    return
+                signal.clear()
+                current_jobs = await asyncio.to_thread(snapshot)
+                now = loop.time()
+                changed = [job_id for job_id, value in current_jobs.items()
+                           if last_jobs.get(job_id) != value]
+                removed = [job_id for job_id in last_jobs if job_id not in current_jobs]
+                if initial or changed or removed:
+                    for job_id in changed:
+                        yield f"event: generation\ndata: {current_jobs[job_id]}\n\n"
+                    for job_id in removed:
+                        yield f"event: generation_removed\ndata: {json.dumps({'id': job_id})}\n\n"
+                    if initial:
+                        yield "event: snapshot_end\ndata: {}\n\n"
+                        initial = False
+                    last_jobs = current_jobs
+                    heartbeat_at = now
+                elif now - heartbeat_at >= _JOB_EVENTS_RECHECK_SECONDS:
+                    yield ": keep-alive\n\n"
+                    heartbeat_at = now
+                remaining = heartbeat_at + _JOB_EVENTS_RECHECK_SECONDS - loop.time()
+                if remaining <= 0:
+                    continue
+                try:
+                    await asyncio.wait_for(signal.wait(), timeout=remaining)
+                except TimeoutError:
+                    pass
+
+    return StreamingResponse(stream(), media_type="text/event-stream", headers={
+        "Cache-Control": "no-cache", "Connection": "keep-alive", "X-Accel-Buffering": "no",
+    })
 
 
 @router.get("/api/jobs", response_model=list[JobHistoryOut])

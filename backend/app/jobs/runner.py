@@ -10,6 +10,7 @@ from sqlalchemy import or_, update
 from sqlalchemy.orm import Session
 
 from app.config import GENERATED_MAX_SIZE
+from app.jobs.events import job_events_hub
 from app.models import Asset, GenerationJob, JobStatus, Project
 from app.providers.base import (
     ErrorKind,
@@ -171,13 +172,13 @@ class JobRunner:
             ).count()
             now = _now()
             due = (
-                db.query(GenerationJob.id, GenerationJob.provider)
+                db.query(GenerationJob.id, GenerationJob.provider, GenerationJob.project_id)
                 .filter(GenerationJob.status == JobStatus.QUEUED)
                 .filter(or_(GenerationJob.next_attempt_at.is_(None), GenerationJob.next_attempt_at <= now))
                 .order_by(GenerationJob.created_at)
                 .all()
             )
-            for job_id, provider in due:
+            for job_id, provider, project_id in due:
                 if free <= 0:
                     break
                 if provider == "bfl" and bfl_active >= 5:
@@ -189,6 +190,8 @@ class JobRunner:
                 ).rowcount
                 db.commit()
                 if claimed:
+                    # This bulk update bypasses the ORM flush listener.
+                    job_events_hub.publish(project_id)
                     self._spawn(job_id, self._execute(job_id))
                     free -= 1
                     if provider == "bfl":

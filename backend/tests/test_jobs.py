@@ -1,8 +1,10 @@
 import asyncio
+import json
 from datetime import datetime, timedelta, timezone
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import update
 
 from app.database import SessionLocal
 from app.jobs.service import JobRequestError, check_spend
@@ -13,8 +15,10 @@ def test_zero_spend_limit_disables_cap():
     check_spend(None, 10000, limit=0)
 from app.main import app
 from app.models import GenerationJob, JobStatus
-from app.providers.base import ImageRequest, Submission, SubmissionState
+from app.providers.base import ImageRequest, ProviderError, Submission, SubmissionState
 from app.providers.mock import MockProvider
+from app.routes.jobs import job_events
+from starlette.requests import Request
 from tests.conftest import make_image, wait_for_job
 
 
@@ -35,6 +39,104 @@ def test_job_succeeds_and_stores_generated_asset(client, project, enqueue):
 
     listed = client.get(f"/api/projects/{project}/jobs").json()
     assert [j["id"] for j in listed] == [job_id]
+
+
+def test_job_events_snapshot_changes_and_removal(client, project, enqueue):
+    assert client.get("/api/projects/missing/jobs/events").status_code == 404
+    job_id = enqueue()
+    wait_for_job(client, job_id)
+
+    async def receive():
+        return {"type": "http.request"}
+
+    async def check_events():
+        with SessionLocal() as db:
+            response = job_events(project, Request({"type": "http"}, receive), db)
+        assert response.media_type == "text/event-stream"
+        events = response.body_iterator
+        try:
+            initial = await asyncio.wait_for(anext(events), timeout=3)
+            assert initial.startswith("event: generation\n")
+            assert json.loads(initial.split("data: ", 1)[1])["id"] == job_id
+            assert await anext(events) == "event: snapshot_end\ndata: {}\n\n"
+
+            with SessionLocal() as db:
+                db.get(GenerationJob, job_id).error_message = "updated"
+                db.commit()
+            updated = await asyncio.wait_for(anext(events), timeout=3)
+            assert updated.startswith("event: generation\n")
+            assert json.loads(updated.split("data: ", 1)[1])["error_message"] == "updated"
+
+            assert client.delete(f"/api/jobs/{job_id}").status_code == 200
+            removed = await asyncio.wait_for(anext(events), timeout=3)
+            assert removed.startswith("event: generation_removed\n")
+            assert json.loads(removed.split("data: ", 1)[1]) == {"id": job_id}
+        finally:
+            await events.aclose()
+
+    asyncio.run(check_events())
+
+
+def test_job_events_pushes_runner_status_change(client, project, enqueue):
+    job_id = enqueue()
+    wait_for_job(client, job_id)
+    with SessionLocal() as db:
+        db.get(GenerationJob, job_id).status = JobStatus.SUBMITTING
+        db.commit()
+
+    async def receive():
+        return {"type": "http.request"}
+
+    async def check_events():
+        with SessionLocal() as db:
+            events = job_events(project, Request({"type": "http"}, receive), db).body_iterator
+        try:
+            initial = await anext(events)
+            assert json.loads(initial.split("data: ", 1)[1])["status"] == JobStatus.SUBMITTING
+            assert await anext(events) == "event: snapshot_end\ndata: {}\n\n"
+
+            pending = asyncio.create_task(anext(events))
+            await asyncio.sleep(0)
+            assert not pending.done()
+            await asyncio.to_thread(app.state.runner._fail, job_id, ProviderError("test_failure", "test"))
+            updated = await asyncio.wait_for(pending, timeout=0.75)
+            assert updated.startswith("event: generation\n")
+            payload = json.loads(updated.split("data: ", 1)[1])
+            assert (payload["id"], payload["status"], payload["error_code"]) == (job_id, JobStatus.FAILED, "test_failure")
+        finally:
+            await events.aclose()
+
+    asyncio.run(check_events())
+
+
+def test_job_events_rechecks_database_without_a_signal(client, project, enqueue, monkeypatch):
+    from app.routes import jobs
+
+    monkeypatch.setattr(jobs, "_JOB_EVENTS_RECHECK_SECONDS", 0.1)
+    job_id = enqueue()
+    wait_for_job(client, job_id)
+
+    async def receive():
+        return {"type": "http.request"}
+
+    async def check_events():
+        with SessionLocal() as db:
+            events = job_events(project, Request({"type": "http"}, receive), db).body_iterator
+        try:
+            await anext(events)
+            assert await anext(events) == "event: snapshot_end\ndata: {}\n\n"
+            # Bulk writes bypass the ORM notifications.
+            with SessionLocal() as db:
+                db.execute(update(GenerationJob).where(GenerationJob.id == job_id).values(error_message="missed"))
+                db.commit()
+            updated = await asyncio.wait_for(anext(events), timeout=1)
+            assert updated.startswith("event: generation\n")
+            assert json.loads(updated.split("data: ", 1)[1])["error_message"] == "missed"
+            assert await asyncio.wait_for(anext(events), timeout=1) == ": keep-alive\n\n"
+        finally:
+            await events.aclose()
+
+    asyncio.run(check_events())
 
 
 def test_enqueue_validates_offline(client, project, enqueue, reference_ids):
