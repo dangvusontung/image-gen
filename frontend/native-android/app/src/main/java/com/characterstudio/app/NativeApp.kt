@@ -27,6 +27,8 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.compose.runtime.key
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -35,8 +37,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.unit.dp
 import android.app.DownloadManager
 import android.net.Uri
@@ -51,13 +56,23 @@ fun NativeApp() {
     var origin by remember { mutableStateOf(prefs.origin) }
     var screen by remember { mutableStateOf(if (origin == null) "connect" else "dashboard") }
     var selectedProject by remember { mutableStateOf<String?>(null) }
-    var projectInitialStep by remember { mutableIntStateOf(0) }
+    var projectInitialStep by remember { mutableIntStateOf(-1) }
+    var projectReturnScreen by remember { mutableStateOf("dashboard") }
+    val libraryScope = rememberCoroutineScope()
+    val library = remember(origin) { origin?.let { LibrarySession(it, libraryScope, context.applicationContext) } }
 
-    BackHandler(enabled = screen == "project" || screen == "gallery" || screen == "trash") {
-        screen = "dashboard"
+    val lifecycleOwner = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    LaunchedEffect(library, lifecycleOwner) {
+        val session = library ?: return@LaunchedEffect
+        lifecycleOwner.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) { session.syncHomeGeneration() }
     }
 
-    androidx.compose.material3.MaterialTheme {
+    BackHandler(enabled = screen == "project" || screen == "gallery" || screen == "trash" || screen == "queue") {
+        screen = if (screen == "project") projectReturnScreen else "dashboard"
+    }
+
+    androidx.compose.material3.MaterialTheme(colorScheme = StudioColors) {
+    androidx.compose.material3.Surface(Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
     androidx.compose.foundation.layout.Box(Modifier.fillMaxSize().safeDrawingPadding().imePadding()) {
     when (screen) {
         "connect" -> ConnectionScreen { connected ->
@@ -65,22 +80,32 @@ fun NativeApp() {
             origin = connected
             screen = "dashboard"
         }
-        "project" -> ProjectScreen(
+        "project" -> key(selectedProject) { ProjectScreen(
             origin = origin!!,
             projectId = selectedProject!!,
             initialStep = projectInitialStep,
-            onBack = { screen = "dashboard" },
+            library = library!!,
+            onOpenProject = { selectedProject = it; projectInitialStep = -1 },
+            onBack = { screen = projectReturnScreen },
         )
+        }
+        "queue" -> QueueScreen(library!!, onBack = { screen = "dashboard" }, onOpenProject = {
+            selectedProject = it; projectInitialStep = -1; projectReturnScreen = "queue"; screen = "project"
+        })
         "trash" -> TrashScreen(origin = origin!!, onBack = { screen = "dashboard" })
-        "gallery" -> GalleryScreen(origin = origin!!, onBack = { screen = "dashboard" })
+        "gallery" -> GalleryScreen(session = library!!, onBack = { screen = "dashboard" }, onOpenProject = {
+            selectedProject = it; projectInitialStep = -1; projectReturnScreen = "gallery"; screen = "project"
+        })
         else -> DashboardScreen(
-            origin = origin!!,
-            onOpen = { selectedProject = it; projectInitialStep = 0; screen = "project" },
-            onProjectGallery = { selectedProject = it; projectInitialStep = 3; screen = "project" },
+            session = library!!,
+            onOpen = { selectedProject = it; projectInitialStep = -1; projectReturnScreen = "dashboard"; screen = "project" },
+            onProjectGallery = { selectedProject = it; projectInitialStep = 3; projectReturnScreen = "dashboard"; screen = "project" },
+            onQueue = { screen = "queue" },
             onGallery = { screen = "gallery" },
             onTrash = { screen = "trash" },
             onDisconnect = { prefs.origin = null; origin = null; screen = "connect" },
         )
+    }
     }
     }
     }
@@ -93,91 +118,171 @@ private class AppPrefs(context: android.content.Context) {
         set(value) { values.edit().apply { if (value == null) remove("backend") else putString("backend", value) }.apply() }
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun DashboardScreen(origin: String, onOpen: (String) -> Unit, onProjectGallery: (String) -> Unit, onGallery: () -> Unit, onTrash: () -> Unit, onDisconnect: () -> Unit) {
+private fun DashboardScreen(session: LibrarySession, onOpen: (String) -> Unit, onProjectGallery: (String) -> Unit, onGallery: () -> Unit, onQueue: () -> Unit, onTrash: () -> Unit, onDisconnect: () -> Unit) {
+    val origin = session.origin
     val client = remember { BackendClient() }
     val scope = rememberCoroutineScope()
-    var projects by remember { mutableStateOf<List<ProjectSummary>>(emptyList()) }
-    var error by remember { mutableStateOf<String?>(null) }
-    var loading by remember { mutableStateOf(true) }
+    val feed = session.projects
+    val projects = feed.items
+    val visibleProjects = projects
+    val error = feed.error
+    val loading = feed.loading && projects.isEmpty()
     var showCreate by remember { mutableStateOf(false) }
-
-    fun refresh() {
-        loading = true
-        scope.launch {
-            runCatching { client.listProjects(origin) }
-                .onSuccess { projects = it; error = null }
-                .onFailure { error = it.message }
-            loading = false
+    var showConnection by remember { mutableStateOf(false) }
+    var showMore by remember { mutableStateOf(false) }
+    var showSearch by session::showSearch
+    var search by session::search
+    var sort by session::sort
+    var showSort by remember { mutableStateOf(false) }
+    LaunchedEffect(search, sort) {
+        val sortKey = when (sort) {
+            "Name A–Z" -> "name_asc"; "Name Z–A" -> "name_desc"
+            "Most photos" -> "photos"; "Most active jobs" -> "active"; else -> "updated"
+        }
+        if (search.trim() != session.appliedQuery || sortKey != session.appliedSort) {
+            kotlinx.coroutines.delay(300)
+            session.appliedQuery = search.trim(); session.appliedSort = sortKey
+            feed.refresh()
+            session.listState.scrollToItem(0)
+        } else feed.ensureLoaded()
+    }
+    LaunchedEffect(feed) {
+        snapshotFlow { session.listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index to feed.items.size }.collect { (last, size) ->
+            if (last != null && last >= size - 5 && feed.error == null) feed.loadMore()
         }
     }
-    LaunchedEffect(origin) { refresh() }
 
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(14.dp)) {
-        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Projects", style = MaterialTheme.typography.headlineMedium)
-            Text(origin, style = MaterialTheme.typography.bodySmall)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                TextButton(onClick = onGallery) { Text("Gallery") }
-                TextButton(onClick = onTrash) { Text("Trash") }
-                TextButton(onClick = onDisconnect) { Text("Disconnect") }
-                Button(onClick = { showCreate = true }) { Text("New") }
+    androidx.compose.material3.pulltorefresh.PullToRefreshBox(isRefreshing = feed.refreshing, onRefresh = { feed.refresh() }, modifier = Modifier.fillMaxSize()) {
+    Column(Modifier.fillMaxSize().padding(horizontal = 16.dp, vertical = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(Modifier.fillMaxWidth()) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Text("Projects", style = MaterialTheme.typography.headlineSmall)
             }
-        }
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        if (loading) CircularProgressIndicator()
-        else if (projects.isEmpty()) Text("No projects yet. Create the first one.")
-        else LazyColumn(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(projects, key = { it.id }) { project ->
-                Card(Modifier.fillMaxWidth().clickable { onOpen(project.id) }) {
-                    Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                        Text(project.name, style = MaterialTheme.typography.titleLarge)
-                        Text(project.description ?: "No description", style = MaterialTheme.typography.bodyMedium)
-                        Text("${project.assetCount} assets · ${project.completedJobs} completed jobs · ${project.activeJobs} active", style = MaterialTheme.typography.bodySmall)
-                        OutlinedButton(onClick = { onProjectGallery(project.id) }) { Text("Project photos") }
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                TextButton(onClick = onGallery) { Text("Gallery") }
+                TextButton(onClick = onQueue) { Text("Queue · ${session.queue.count { isGenerating(it.status) }}") }
+                androidx.compose.foundation.layout.Box {
+                    TextButton(onClick = { showMore = true }) { Text("More ⋯") }
+                    androidx.compose.material3.DropdownMenu(
+                        expanded = showMore,
+                        onDismissRequest = { showMore = false },
+                    ) {
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text("Connection") },
+                            onClick = { showMore = false; showConnection = true },
+                        )
+                        androidx.compose.material3.DropdownMenuItem(
+                            text = { Text("Trash") },
+                            onClick = { showMore = false; onTrash() },
+                        )
                     }
                 }
             }
         }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            Text("${feed.total} projects", style = MaterialTheme.typography.labelLarge)
+            Row {
+                TextButton(onClick = { showSearch = !showSearch; if (!showSearch) search = "" }) {
+                    Text(if (showSearch) "Close search" else "Search")
+                }
+                androidx.compose.foundation.layout.Box {
+                    TextButton(onClick = { showSort = true }) { Text("Sort: $sort") }
+                    androidx.compose.material3.DropdownMenu(expanded = showSort, onDismissRequest = { showSort = false }) {
+                        listOf("Default", "Name A–Z", "Name Z–A", "Most photos", "Most active jobs").forEach { option ->
+                            androidx.compose.material3.DropdownMenuItem(
+                                text = { Text(if (sort == option) "✓ $option" else option) },
+                                onClick = { sort = option; showSort = false },
+                            )
+                        }
+                    }
+                }
+            }
+        }
+        if (showSearch) OutlinedTextField(
+            value = search, onValueChange = { search = it },
+            label = { Text("Search projects") }, placeholder = { Text("Name or description") },
+            singleLine = true, modifier = Modifier.fillMaxWidth(),
+            trailingIcon = { if (search.isNotEmpty()) TextButton(onClick = { search = "" }) { Text("Clear") } },
+        )
+        error?.let {
+            Text(it, color = MaterialTheme.colorScheme.error)
+            TextButton(onClick = { feed.refresh() }) { Text("Retry") }
+        }
+        LazyColumn(modifier = Modifier.weight(1f), contentPadding = androidx.compose.foundation.layout.PaddingValues(bottom = 88.dp), state = session.listState, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            if (loading) item { CircularProgressIndicator() }
+            if (!loading && error == null && projects.isEmpty()) item { Text(if (search.isBlank()) "No projects yet. Create the first one." else "No projects match your search.") }
+            items(visibleProjects, key = { it.id }) { project ->
+                Card(
+                    onClick = { onOpen(project.id) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                    colors = androidx.compose.material3.CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceContainerLowest),
+                    border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                ) {
+                    Row(Modifier.padding(12.dp), horizontalArrangement = Arrangement.spacedBy(16.dp),
+                        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                    ProjectPreview(origin, project)
+                    Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(project.name, style = MaterialTheme.typography.titleMedium, fontWeight = androidx.compose.ui.text.font.FontWeight.SemiBold, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
+                        project.description?.takeIf { it.isNotBlank() }?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall, maxLines = 1,
+                                overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                        Text("${project.assetCount} photos · ${project.completedJobs} completed", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        if (project.activeJobs > 0) Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            GenerationLoading()
+                            Text("${project.activeJobs} generating", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.primary)
+                        }
+                        androidx.compose.material3.FilledTonalButton(
+                            onClick = { onProjectGallery(project.id) },
+                            contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 0.dp),
+                            colors = androidx.compose.material3.ButtonDefaults.filledTonalButtonColors(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                                contentColor = MaterialTheme.colorScheme.primary,
+                            ),
+                        ) { Text("Photos ↗", style = MaterialTheme.typography.labelMedium) }
+                    }
+                    }
+                }
+            }
+            if (feed.hasMore) item {
+                if (feed.loading) CircularProgressIndicator(Modifier.padding(16.dp))
+                else TextButton(onClick = { feed.loadMore() }) { Text(if (feed.error != null) "Retry loading more" else "Load more") }
+            }
+        }
     }
-    if (showCreate) CreateProjectDialog(client, origin, { project -> showCreate = false; projects = projects + project; onOpen(project.id) }, { showCreate = false })
+    androidx.compose.material3.FloatingActionButton(
+        onClick = { showCreate = true },
+        modifier = Modifier.align(androidx.compose.ui.Alignment.BottomEnd).padding(24.dp)
+            .size(56.dp).then(Modifier.semantics { contentDescription = "New project" }),
+        shape = androidx.compose.foundation.shape.CircleShape,
+        containerColor = MaterialTheme.colorScheme.primary,
+        contentColor = MaterialTheme.colorScheme.onPrimary,
+    ) { Text("+", style = MaterialTheme.typography.headlineMedium) }
+    }
+    if (showCreate) CreateProjectDialog(client, origin, { project -> showCreate = false; feed.refresh(); onOpen(project.id) }, { showCreate = false })
+    if (showConnection) ConnectionDialog(origin, onDismiss = { showConnection = false }, onDisconnect = {
+        showConnection = false
+        onDisconnect()
+    })
 }
 
 @Composable
-private fun GalleryScreen(origin: String, onBack: () -> Unit) {
-    val client = remember { BackendClient() }
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    var items by remember { mutableStateOf<List<GalleryItem>>(emptyList()) }
-    var preview by remember { mutableStateOf<String?>(null) }
-    var error by remember { mutableStateOf<String?>(null) }
-    LaunchedEffect(origin) { runCatching { client.listGallery(origin) }.onSuccess { items = it }.onFailure { error = it.message } }
-    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        TextButton(onClick = onBack) { Text("← Projects") }
-        Text("Gallery", style = MaterialTheme.typography.headlineMedium)
-        error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
-        if (items.isEmpty()) Text("No completed generated images yet.")
-        LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            items(items, key = { it.id }) { item ->
-                Card(Modifier.fillMaxWidth()) {
-                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        ResultImage(origin, item.id) { preview = item.id }
-                        Column { Text(item.filename); Text("${item.projectName} · ${item.purpose}", style = MaterialTheme.typography.bodySmall) }
-                        TextButton(onClick = {
-                            val req = DownloadManager.Request(Uri.parse("$origin/api/assets/${item.id}/download?format=original"))
-                                .setTitle(item.filename).setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)
-                                .setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, item.filename)
-                            context.getSystemService(DownloadManager::class.java)?.enqueue(req)
-                        }) { Text("Save") }
-                        TextButton(onClick = { scope.launch {
-                            runCatching { client.trashAsset(origin, item.id) }.onSuccess { items = items.filterNot { it.id == item.id }; error = null }.onFailure { error = it.message }
-                        } }) { Text("Move image to Trash") }
-                    }
-                }
-            }
+private fun GalleryScreen(session: LibrarySession, onBack: () -> Unit, onOpenProject: (String) -> Unit) {
+    val feed = session.gallery
+    LaunchedEffect(feed) { feed.ensureLoaded() }
+    Column(Modifier.fillMaxSize()) {
+        Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+            TextButton(onClick = onBack) { Text("← Projects") }
+            Text("Gallery", Modifier.weight(1f), style = MaterialTheme.typography.titleLarge)
         }
+        PhotoGallery(session.origin, feed.items, Modifier.weight(1f), onOpenProject = onOpenProject,
+            feed = feed, gridState = session.gridState) { id -> feed.remove(id) }
     }
-    preview?.let { ImageViewer(origin, it) { preview = null } }
 }
 
 @Composable

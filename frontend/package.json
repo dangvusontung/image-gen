@@ -13,8 +13,10 @@
     "e2e": "playwright test",
     "android:sync": "npm run build && cap sync android",
     "android:open": "cap open android",
-    "android:build": "npm run android:sync && cd android && ./gradlew assembleDebug",
-    "android:install": "adb reverse tcp:8000 tcp:8000 && adb install -r android/app/build/outputs/apk/debug/app-debug.apk && adb shell am start -n com.characterstudio.app/.MainActivity",
+    "android:build": "./android/gradlew -p native-android assembleDebug",
+    "android:install": "adb reverse tcp:8000 tcp:8000 && adb install -r native-android/app/build/outputs/apk/debug/app-debug.apk && adb shell am force-stop com.characterstudio.app && adb shell am start -n com.characterstudio.app/.MainActivity",
+    "android:web:build": "npm run android:sync && cd android && ./gradlew assembleDebug",
+    "android:web:install": "adb reverse tcp:8000 tcp:8000 && adb install -r android/app/build/outputs/apk/debug/app-debug.apk && adb shell am force-stop com.characterstudio.app && adb shell am start -n com.characterstudio.app/.MainActivity",
     "android:qr": "node scripts/backend-qr.mjs"
   },
   "dependencies": {
