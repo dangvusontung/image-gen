@@ -13,7 +13,11 @@ import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 
+private class BackendHttpException(val status: Int, message: String) : IllegalStateException(message)
+
 class BackendClient {
+    private var legacyProjectServer: String? = null
+    private var legacyProjects = emptyList<ProjectSummary>()
     suspend fun getPrompt(origin: String, projectId: String, name: String): JSONObject = withContext(Dispatchers.IO) {
         requestJson("${normalize(origin)}/api/prompts/${Uri.encode(name)}?project_id=${Uri.encode(projectId)}")
     }
@@ -59,10 +63,16 @@ class BackendClient {
         buildList { for (i in 0 until rows.length()) add(rows.getJSONObject(i)) }
     }
 
+    internal suspend fun enhancementPlan(origin: String, projectId: String, plan: PhotoRetryPlan): JSONObject = withContext(Dispatchers.IO) {
+        val query = plan.payload.optString("from_enhancement_id").takeIf { it.isNotBlank() }?.let { "?from_enhancement_id=${Uri.encode(it)}" }.orEmpty()
+        requestJson("${normalize(origin)}/api/projects/$projectId/${plan.path}-plan$query")
+    }
+
     suspend fun projectAction(origin: String, id: String, path: String, payload: JSONObject = JSONObject()): JSONObject = withContext(Dispatchers.IO) {
         requestJson("${normalize(origin)}/api/projects/$id/$path", "POST", payload)
     }
     private val http = OkHttpClient.Builder()
+        .callTimeout(20, TimeUnit.SECONDS)
         .connectTimeout(8, TimeUnit.SECONDS)
         .readTimeout(8, TimeUnit.SECONDS)
         .build()
@@ -82,6 +92,37 @@ class BackendClient {
         buildList {
             for (index in 0 until body.length()) add(body.getJSONObject(index).toProjectSummary())
         }
+    }
+
+    internal suspend fun projectPage(origin: String, offset: Int, query: String, sort: String): FeedPage<ProjectSummary> = withContext(Dispatchers.IO) {
+        if (legacyProjectServer != origin) {
+            try {
+                val body = requestJson("${normalize(origin)}/api/projects/page?offset=$offset&limit=24&q=${Uri.encode(query)}&sort=$sort")
+                val items = body.getJSONArray("items")
+                return@withContext FeedPage((0 until items.length()).map { items.getJSONObject(it).toProjectSummary() }, body.getInt("total"))
+            } catch (e: BackendHttpException) {
+                if (e.status != 404) throw e
+                legacyProjectServer = origin
+            }
+        }
+        // Older backends return the full list. Keep it for subsequent local pages.
+        if (offset == 0) legacyProjects = listProjects(origin)
+        val filtered = legacyProjects.filter { it.name.contains(query, true) || it.description.orEmpty().contains(query, true) }
+        val sorted = when (sort) {
+            "name_asc" -> filtered.sortedBy { it.name.lowercase(java.util.Locale.ROOT) }
+            "name_desc" -> filtered.sortedByDescending { it.name.lowercase(java.util.Locale.ROOT) }
+            "photos" -> filtered.sortedByDescending { it.assetCount }
+            "active" -> filtered.sortedByDescending { it.activeJobs }
+            else -> filtered
+        }
+        FeedPage(sorted.drop(offset).take(24), sorted.size)
+    }
+
+    internal suspend fun galleryPage(origin: String, offset: Int, projectId: String? = null, limit: Int = 48): FeedPage<GalleryItem> = withContext(Dispatchers.IO) {
+        val suffix = projectId?.let { "&project_id=${Uri.encode(it)}" }.orEmpty()
+        val body = requestJson("${normalize(origin)}/api/gallery?offset=$offset&limit=$limit$suffix")
+        val items = body.getJSONArray("items")
+        FeedPage((0 until items.length()).map { items.getJSONObject(it).toGalleryItem() }, body.getInt("total"))
     }
 
     suspend fun createProject(origin: String, name: String, description: String?): ProjectSummary = withContext(Dispatchers.IO) {
@@ -186,6 +227,26 @@ class BackendClient {
         }
     }
 
+    internal suspend fun queueJobs(origin: String, activeOnly: Boolean): List<QueueJob> = withContext(Dispatchers.IO) {
+        val status = if (activeOnly) "&status=queued,submitting,running" else ""
+        val rows = JSONArray(request("${normalize(origin)}/api/jobs?limit=200$status"))
+        (0 until rows.length()).map { index ->
+            val job = rows.getJSONObject(index)
+            QueueJob(job.getString("id"), job.getString("project_id"), job.optString("project_name"), job.getString("purpose"), job.getString("status"),
+                job.optString("error_message").takeUnless { it.isBlank() || it == "null" }, jsonStringList(job, "output_asset_ids"), job.optString("prompt"), job.optString("provider"), job.optString("model"), job.optString("created_at"))
+        }
+    }
+
+    suspend fun applyGenerationTargets(origin: String, projectId: String, name: String, steps: Map<String, GenerationTarget>) {
+        val existing = listPresets(origin).find { it.steps == steps }
+        val presetId = existing?.id ?: withContext(Dispatchers.IO) {
+            val config = JSONObject()
+            steps.forEach { (step, target) -> config.put(step, JSONObject().put("provider", target.provider).put("model", target.model).put("size", target.size.ifBlank { null } ?: JSONObject.NULL)) }
+            requestJson("${normalize(origin)}/api/presets", "POST", JSONObject().put("name", name.take(120)).put("steps", config)).getString("id")
+        }
+        withContext(Dispatchers.IO) { requestJson("${normalize(origin)}/api/projects/$projectId", "PATCH", JSONObject().put("preset_id", presetId)) }
+    }
+
     suspend fun cancelJob(origin: String, jobId: String) = withContext(Dispatchers.IO) {
         request("${normalize(origin)}/api/jobs/$jobId/cancel", "POST")
     }
@@ -244,7 +305,7 @@ class BackendClient {
             if (!it.isSuccessful) {
                 val message = runCatching { JSONObject(content).optJSONObject("error")?.optString("message")
                     ?: JSONObject(content).optString("detail") }.getOrNull()
-                error(message?.takeIf { value -> value.isNotBlank() } ?: "Server returned HTTP ${it.code}")
+                throw BackendHttpException(it.code, message?.takeIf { value -> value.isNotBlank() } ?: "Server returned HTTP ${it.code}")
             }
             return content
         }
@@ -277,6 +338,7 @@ data class ProjectSummary(
     val assetCount: Int,
     val completedJobs: Int,
     val activeJobs: Int,
+    val thumbnailAssetId: String? = null,
 )
 
 data class ProjectDetail(
@@ -305,17 +367,26 @@ fun ProjectDetail.generationTarget(purpose: String, presets: List<StepPreset>): 
 
 data class AssetSummary(val id: String, val filename: String, val kind: String, val selected: Boolean)
 data class JobSummary(val id: String, val purpose: String, val status: String, val error: String?, val outputAssetIds: List<String>)
-data class GalleryItem(val id: String, val projectId: String, val projectName: String, val purpose: String, val filename: String)
+data class GalleryItem(
+    val id: String, val projectId: String, val projectName: String, val purpose: String, val filename: String,
+    val prompt: String = "", val provider: String = "", val model: String = "",
+    val width: Int = 0, val height: Int = 0, val createdAt: String = "",
+    val tags: List<String> = emptyList(), val conceptKey: String? = null,
+)
 data class ConceptSummary(val id: String, val status: String, val brief: String)
-data class ProviderSummary(val name: String, val displayName: String, val selectable: Boolean, val models: List<String>)
+data class ProviderSummary(val name: String, val displayName: String, val selectable: Boolean, val models: List<String>, val sizes: Map<String, List<String>> = emptyMap(), val defaultSizes: Map<String, String> = emptyMap())
+internal data class QueueJob(val id: String, val projectId: String, val projectName: String, val purpose: String, val status: String, val error: String?, val outputIds: List<String>, val prompt: String, val provider: String, val model: String, val createdAt: String) {
+    fun photos() = outputIds.map { GalleryItem(it, projectId, projectName, purpose, "$it.png", prompt, provider, model, createdAt = createdAt) }
+}
 
-private fun JSONObject.toProjectSummary() = ProjectSummary(
+internal fun JSONObject.toProjectSummary() = ProjectSummary(
     id = getString("id"),
     name = getString("name"),
     description = optString("description").takeIf { it.isNotBlank() && it != "null" },
     assetCount = optInt("asset_count"),
     completedJobs = optInt("completed_jobs"),
     activeJobs = optInt("active_jobs"),
+    thumbnailAssetId = optString("thumbnail_asset_id").takeIf { it.isNotBlank() && it != "null" },
 )
 
 private fun JSONObject.toProjectDetail() = ProjectDetail(
@@ -346,6 +417,10 @@ private fun JSONObject.toAssetSummary() = AssetSummary(
 private fun JSONObject.toGalleryItem() = GalleryItem(
     id = getString("id"), projectId = getString("project_id"), projectName = getString("project_name"),
     purpose = getString("purpose"), filename = getString("filename"),
+    prompt = optString("prompt").takeUnless { it == "null" }.orEmpty(),
+    provider = optString("provider"), model = optString("model"),
+    width = optInt("width"), height = optInt("height"), createdAt = optString("created_at"),
+    tags = photoTags(optJSONObject("meta") ?: JSONObject()),
 )
 
 private fun JSONObject.toConceptSummary() = ConceptSummary(
@@ -357,4 +432,6 @@ private fun JSONObject.toProviderSummary() = ProviderSummary(
     selectable = optBoolean("selectable"), models = optJSONArray("models")?.let { values ->
         buildList { for (index in 0 until values.length()) add(values.getJSONObject(index).optString("id")) }
     } ?: emptyList(),
+    sizes = optJSONArray("models")?.let { rows -> (0 until rows.length()).associate { i -> val row = rows.getJSONObject(i); row.getString("id") to (row.optJSONArray("sizes")?.let { values -> (0 until values.length()).map { values.getString(it) } } ?: emptyList()) } } ?: emptyMap(),
+    defaultSizes = optJSONArray("models")?.let { rows -> (0 until rows.length()).associate { i -> val row = rows.getJSONObject(i); row.getString("id") to row.optString("default_size").takeUnless { it == "null" }.orEmpty() } } ?: emptyMap(),
 )

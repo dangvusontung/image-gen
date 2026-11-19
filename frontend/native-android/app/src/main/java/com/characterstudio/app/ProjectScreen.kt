@@ -1,11 +1,15 @@
 package com.characterstudio.app
 
+import androidx.lifecycle.repeatOnLifecycle
+
 import android.app.DownloadManager
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.BackHandler
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -33,12 +37,15 @@ private fun JSONObject.outputs(): List<String> = optJSONArray("output_asset_ids"
 private fun JSONObject.realId(key: String) = optString(key).takeIf { it.isNotBlank() && it != "null" }
 
 @Composable
-internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit, initialStep: Int = 0) {
+internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit, initialStep: Int = -1, library: LibrarySession, onOpenProject: (String) -> Unit) {
     val client = remember { BackendClient() }; val scope = rememberCoroutineScope(); val context = LocalContext.current
     var project by remember { mutableStateOf<ProjectDetail?>(null) }
     var workflow by remember { mutableStateOf(JSONObject()) }
     var concepts by remember { mutableStateOf(emptyList<JSONObject>()) }; var proposals by remember { mutableStateOf(emptyList<JSONObject>()) }
-    var gallery by remember { mutableStateOf(emptyList<GalleryItem>()) }; var jobs by remember { mutableStateOf(emptyList<JobSummary>()) }
+    val galleryFeed = remember(projectId, library) { library.gallery(projectId) }
+    val gallery = galleryFeed.items
+    LaunchedEffect(galleryFeed) { galleryFeed.ensureLoaded() }
+    var jobs by remember { mutableStateOf(emptyList<JobSummary>()) }
     val favouritePrefs = remember { context.getSharedPreferences("concept-favourites", android.content.Context.MODE_PRIVATE) }
     val favouriteKey = origin+"/"+projectId
     var favourites by remember(origin) { mutableStateOf(emptySet<String>()) }
@@ -51,11 +58,25 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     var showAdvancedCreate by rememberSaveable { mutableStateOf(false) }
     var query by rememberSaveable(projectId) { mutableStateOf("") }
     var favouritesOnly by rememberSaveable(projectId) { mutableStateOf(false) }
+    var picked by remember { mutableStateOf(setOf<String>()) }
+    val dislikePrefs = remember { context.getSharedPreferences("concept-dislikes", android.content.Context.MODE_PRIVATE) }
+    var dislikes by remember(origin) { mutableStateOf(dislikePrefs.getStringSet(origin, emptySet()).orEmpty().toSet()) }
+    var dislikeFilter by rememberSaveable(projectId) { mutableStateOf("hide") }
+    fun toggleDislike(row: JSONObject) {
+        val key = conceptIdentity(row)
+        val disliked = key !in dislikes
+        dislikes = if (disliked) dislikes + key else dislikes - key
+        dislikePrefs.edit().putStringSet(origin, dislikes.toSet()).apply()
+        if (disliked) {
+            val hiddenIds = proposals.filter { conceptIdentity(it) == key }.map { it.getString("id") }.toSet()
+            picked = picked - hiddenIds
+        }
+    }
     var progressFilter by rememberSaveable(projectId) { mutableStateOf("all") }
+    var detailConcept by remember { mutableStateOf<JSONObject?>(null) }
     var historyKey by remember { mutableStateOf<String?>(null) }
     var groupFilter by rememberSaveable(projectId) { mutableStateOf("All groups") }
     var groupMode by rememberSaveable(projectId) { mutableStateOf("Tư thế / hoạt động") }
-    var versions by remember { mutableStateOf(emptyMap<Int, String>()) }
     val stylingPrefs = remember { context.getSharedPreferences("concept-styling", android.content.Context.MODE_PRIVATE) }
     val stylingKey = origin+"/"+projectId
     var choices by remember(stylingKey) { mutableStateOf(runCatching {
@@ -65,6 +86,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     }.getOrElse { defaultConceptChoices() }) }
     var stylingMenu by remember { mutableStateOf(JSONObject()) }
     var showStyling by remember { mutableStateOf(false) }
+    var masterCount by rememberSaveable(projectId) { mutableIntStateOf(1) }
     var customCount by rememberSaveable(projectId) { mutableIntStateOf(1) }
     fun saveChoices(next: JSONObject) { choices = JSONObject(next.toString()); stylingPrefs.edit().putString(stylingKey, choices.toString()).apply() }
     var promptEdit by remember { mutableStateOf<JSONObject?>(null) }
@@ -89,24 +111,65 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     var providers by remember { mutableStateOf(emptyList<ProviderSummary>()) }
     var error by remember { mutableStateOf<String?>(null) }; var notice by remember { mutableStateOf<String?>(null) }
     var busy by remember { mutableStateOf(false) }; var settings by remember { mutableStateOf(false) }
+    val setupStore = remember(origin) { GenerationSetupStore(context.applicationContext, origin) }
+    var showSetups by remember { mutableStateOf(false) }
+    var generationDraft by remember { mutableStateOf<GenerationDraft?>(null) }
     var showProjectPrompts by remember { mutableStateOf(false) }
-    var step by rememberSaveable(projectId) { mutableIntStateOf(initialStep) }; var picked by remember { mutableStateOf(setOf<String>()) }
+    val visitPrefs = remember { context.getSharedPreferences("project-visits", android.content.Context.MODE_PRIVATE) }
+    val visitKey = origin+"/"+projectId
+    var step by rememberSaveable(visitKey) { mutableIntStateOf(if (initialStep in 0..4) initialStep else visitPrefs.getInt(visitKey+"/step", 0).takeIf { it in 0..2 } ?: 0) }
+    val stepPager = rememberPagerState(initialPage = step.coerceIn(0, 2), pageCount = { 3 })
+    LaunchedEffect(step) {
+        if (step in 0..2 && stepPager.currentPage != step) stepPager.animateScrollToPage(step)
+    }
+    LaunchedEffect(stepPager) {
+        snapshotFlow { stepPager.settledPage }.collect { page ->
+            if (step in 0..2 && step != page) step = page
+        }
+    }
     val stepHistory = remember(projectId) { mutableStateListOf<Int>() }
     fun navigateTo(next: Int) {
         if (next != step) { stepHistory.add(step); step = next }
     }
     var edit by remember { mutableStateOf<JSONObject?>(null) }; var preview by remember { mutableStateOf<String?>(null) }
-    var selectedBatch by rememberSaveable(projectId) { mutableStateOf<Int?>(null) }
-    var showCreateConcepts by rememberSaveable(projectId) { mutableStateOf(true) }
+    var selectedBatch by rememberSaveable(visitKey) { mutableStateOf(visitPrefs.getInt(visitKey+"/batch", -1).takeIf { it >= 0 }) }
+    var showCreateConcepts by rememberSaveable(visitKey) { mutableStateOf(visitPrefs.getBoolean(visitKey+"/create", true)) }
+    val conceptLibrary = remember(origin) { ConceptLibraryRepository(context.applicationContext, origin) }
+    var libraryPreviews by remember(origin) { mutableStateOf<Map<String, List<GalleryItem>>>(emptyMap()) }
+    var libraryPreviewLoading by remember(origin) { mutableStateOf(false) }
+    LaunchedEffect(origin, step, showCreateConcepts) {
+        if (step != 2 || !showCreateConcepts) return@LaunchedEffect
+        try {
+            val cached = conceptLibrary.read()
+            libraryPreviews = cached?.entries.orEmpty()
+            if (cached?.fresh != true) {
+                libraryPreviewLoading = true
+                libraryPreviews = conceptLibrary.refresh().entries
+            }
+        } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+        catch (_: Exception) { /* Local results and cached thumbnails remain usable. */ }
+        finally { libraryPreviewLoading = false }
+    }
+    LaunchedEffect(visitKey, step, selectedBatch, showCreateConcepts) {
+        visitPrefs.edit().apply {
+            if (step in 0..2) putInt(visitKey+"/step", step)
+            putInt(visitKey+"/batch", selectedBatch ?: -1)
+            putBoolean(visitKey+"/create", showCreateConcepts)
+        }.apply()
+    }
     var confirmation by remember { mutableStateOf<Pair<String, () -> Unit>?>(null) }
-    BackHandler(enabled = preview == null && historyKey == null && !settings && !showProjectPrompts && edit == null && !showFilters && !showStyling && promptEdit == null && confirmation == null) {
+    var showSections by remember { mutableStateOf(false) }
+    var showProjectMenu by remember { mutableStateOf(false) }
+    BackHandler(enabled = !showSetups && generationDraft == null && detailConcept == null && preview == null && historyKey == null && !settings && !showProjectPrompts && edit == null && !showFilters && !showStyling && promptEdit == null && confirmation == null) {
         when {
+            showSections -> showSections = false
+            showProjectMenu -> showProjectMenu = false
             showSearch -> showSearch = false
-            stepHistory.isNotEmpty() -> step = stepHistory.removeAt(stepHistory.lastIndex)
+            step >= 3 -> step = if (stepHistory.isNotEmpty()) stepHistory.removeAt(stepHistory.lastIndex) else visitPrefs.getInt(visitKey+"/step", 0).coerceIn(0, 2)
             else -> onBack()
         }
     }
-    val titles = listOf("1. References", "2. Master", "3. Concepts", "4. Gallery", "5. History")
+    val titles = listOf("References", "Master", "Concepts", "Gallery", "History")
     val lists = titles.map { rememberLazyListState() }
     suspend fun refresh() {
         project = client.getProject(origin, projectId); presets = client.listPresets(origin); workflow = client.workflow(origin, projectId)
@@ -120,7 +183,7 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             migrated.forEach { client.setBookmark(origin, legacyMap.getValue(it), true) }
             if (migrated.isNotEmpty()) favouritePrefs.edit().putStringSet(localKey, old - migrated.toSet()).apply()
         }
-        gallery = client.listGallery(origin, projectId); jobs = client.listJobs(origin, projectId)
+        jobs = client.listJobs(origin, projectId)
     }
     fun action(block: suspend () -> Unit) {
         if (busy) return
@@ -131,10 +194,12 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
         val requestPayload = styledConceptPayload(path, payload, choices)
         if (requestPayload.has("choices")) choicesError(choices)?.let { error = it; showStyling = true; return }
         val purpose = when { path.startsWith("master/") -> "master"; path.startsWith("turnaround/") -> "turnaround"; else -> "concept" }
-        val target = project?.generationTarget(purpose, presets)
-        confirmation = ("Use "+target?.provider+" / "+target?.model+" · "+target?.size+" to generate images? Provider charges may apply.") to { action {
-            client.projectAction(origin, projectId, path, requestPayload.put("confirmed", true)); notice = "Queued. Results update automatically."
-        } }
+        val names = if (path == "concepts/generate" && !payload.optBoolean("custom")) {
+            val slots = payload.optJSONArray("slots")?.let { values -> (0 until values.length()).map { values.getInt(it) }.toSet() }.orEmpty()
+            val ids = payload.optJSONArray("proposal_ids")?.let { values -> (0 until values.length()).map { values.getString(it) }.toSet() }.orEmpty()
+            proposals.filter { it.optInt("slot") in slots || it.optString("id") in ids }.map(::conceptLabel)
+        } else emptyList()
+        generationDraft = GenerationDraft(path, requestPayload, purpose, names)
     }
     val picker = rememberLauncherForActivityResult(ActivityResultContracts.GetMultipleContents()) { uris -> if (uris.isNotEmpty()) action { client.uploadAssets(origin, projectId, uris, context.contentResolver) } }
     LaunchedEffect(origin) {
@@ -152,7 +217,8 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             delay(2000)
         }
     }
-    LaunchedEffect(projectId) {
+    val projectLifecycle = androidx.lifecycle.compose.LocalLifecycleOwner.current
+    LaunchedEffect(origin, projectId, projectLifecycle) {
         runCatching {
             stylingMenu = client.conceptOptions(origin, projectId)
             val outfits = stylingMenu.optJSONArray("outfit")
@@ -162,35 +228,85 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             }
         }.onFailure { error = it.message }
         runCatching { providers = client.listProviders(origin) }.onFailure { error = it.message }
-        while (true) { try { refresh() } catch (e: Exception) { error = e.message }; delay(3000) }
+        projectLifecycle.lifecycle.repeatOnLifecycle(androidx.lifecycle.Lifecycle.State.STARTED) {
+            var previousJobs: List<JobSummary>? = null
+            suspend fun updateGeneration() {
+                refresh()
+                if (previousJobs != null && previousJobs != jobs) {
+                    galleryFeed.refresh()
+                    library.projects.refresh()
+                    library.gallery.refresh()
+                }
+                previousJobs = jobs
+            }
+            while (true) {
+                try {
+                    updateGeneration()
+                    GenerationEvents.subscribe(origin, projectId).collect { updateGeneration() }
+                } catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                catch (_: Exception) { /* Poll below while SSE is unavailable. */ }
+                // Keep jobs moving even on older servers or proxies that reject SSE.
+                // Retry the stream after 30 seconds, without blocking the UI.
+                repeat(10) {
+                    delay(3000)
+                    try { updateGeneration() }
+                    catch (e: kotlinx.coroutines.CancellationException) { throw e }
+                    catch (e: Exception) { error = e.message }
+                }
+            }
+        }
     }
     val batches = concepts.map { it.optInt("run") }.distinct().sortedDescending()
     val activeBatch = selectedBatch?.takeIf { it in batches } ?: batches.firstOrNull()
     val batchConcepts = concepts.filter { it.optInt("run") == activeBatch }.sortedWith(compareBy<JSONObject> { it.optInt("slot") }.thenByDescending { it.optInt("revision") })
     val projectProgress = projectConceptProgress(concepts)
     fun progressOf(row: JSONObject) = projectProgress[conceptIdentity(row)] ?: ProjectConceptProgress()
-    fun visible(row: JSONObject) = matchesConcept(row, query) && (!favouritesOnly || conceptIdentity(row) in favourites) && (groupFilter == "All groups" || conceptGroup(row) == groupFilter) && progressOf(row).matches(progressFilter)
+    fun visible(row: JSONObject) = (when (dislikeFilter) { "only" -> conceptIdentity(row) in dislikes; "all" -> true; else -> conceptIdentity(row) !in dislikes }) && matchesConcept(row, query) && (!favouritesOnly || conceptIdentity(row) in favourites) && (groupFilter == "All groups" || conceptGroup(row) == groupFilter) && progressOf(row).matches(progressFilter)
     fun section(row: JSONObject) = if (groupMode == "Bối cảnh") conceptGroup(row) else row.optString("family").ifBlank { conceptGroup(row) }
     val visibleProposals = proposals.filter { visible(it) }.sortedBy { conceptOrder(it) }.groupBy { section(it) }
     val groupedResults = batchConcepts.groupBy { it.optInt("slot") }.mapValues { (_, rows) -> rows.sortedByDescending { it.optInt("revision") } }
-    val visibleResults = groupedResults.values.filter { rows -> rows.any { visible(it) } }.groupBy { section(it.first()) }
     val groupOptions = listOf("All groups") + (proposals + batchConcepts).map { conceptGroup(it) }.distinct().sorted()
     val favouriteVisibleCount = if (showCreateConcepts) proposals.count { conceptIdentity(it) in favourites }
         else groupedResults.values.count { rows -> rows.any { conceptIdentity(it) in favourites } }
     val approved = workflow.realId("approved_master_id") != null; val detail = project
+    Box(Modifier.fillMaxSize()) {
     Column(Modifier.fillMaxSize()) {
         Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-            TextButton(onClick = onBack) { Text("←") }
-            Text(detail?.name ?: "Loading…", modifier = Modifier.weight(1f), style = MaterialTheme.typography.titleMedium, maxLines = 1, overflow = TextOverflow.Ellipsis)
-            TextButton(onClick = { navigateTo(3) }) { Text("Photos") }
-            TextButton(onClick = { settings = true }, enabled = detail != null) { Text("Settings") }
+            IconButton(onClick = {
+                if (step >= 3) step = if (stepHistory.isNotEmpty()) stepHistory.removeAt(stepHistory.lastIndex) else visitPrefs.getInt(visitKey+"/step", 0).coerceIn(0, 2)
+                else onBack()
+            }) { Icon(DetailIcons.Back, "Back") }
+            Box(Modifier.weight(1f)) {
+                Column(Modifier.fillMaxWidth().clickable { showSections = true }.padding(vertical = 8.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
+                    Text(titles[step]+" ▾", style = MaterialTheme.typography.titleMedium)
+                    Text(detail?.name ?: "Loading…", style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                DropdownMenu(expanded = showSections, onDismissRequest = { showSections = false }) {
+                    titles.take(3).forEachIndexed { index, title ->
+                        DropdownMenuItem(text = { Text(if (step == index) "✓ $title" else title) }, onClick = { showSections = false; navigateTo(index) })
+                    }
+                }
+            }
+            Box {
+                IconButton(onClick = { showProjectMenu = true }) { Icon(DetailIcons.More, "More project options") }
+                DropdownMenu(expanded = showProjectMenu, onDismissRequest = { showProjectMenu = false }) {
+                    DropdownMenuItem(text = { Text("Settings") }, enabled = detail != null, onClick = { showProjectMenu = false; settings = true })
+                    DropdownMenuItem(text = { Text("Saved setups") }, enabled = detail != null, onClick = { showProjectMenu = false; showSetups = true })
+                    DropdownMenuItem(text = { Text("History") }, onClick = { showProjectMenu = false; navigateTo(4) })
+                }
+            }
         }
-        ScrollableTabRow(selectedTabIndex = step, edgePadding = 8.dp) { titles.forEachIndexed { i, title -> Tab(selected = step == i, onClick = { navigateTo(i) }, text = { Text(title) }) } }
+        if (step in 0..2) Text((step + 1).toString()+" / 3", Modifier.fillMaxWidth().padding(bottom = 4.dp), style = MaterialTheme.typography.labelSmall,
+            textAlign = androidx.compose.ui.text.style.TextAlign.Center, color = MaterialTheme.colorScheme.onSurfaceVariant)
         bookmarkError?.let { Text(it, Modifier.padding(12.dp), color = MaterialTheme.colorScheme.error, maxLines = 2) }
         error?.let { Text(it, Modifier.padding(12.dp), color = MaterialTheme.colorScheme.error, maxLines = 3) }
         notice?.let { Text(it, Modifier.padding(horizontal = 16.dp), color = MaterialTheme.colorScheme.primary) }
         if (busy) LinearProgressIndicator(Modifier.fillMaxWidth())
         if (detail == null) { CircularProgressIndicator(Modifier.padding(24.dp)); return@Column }
+        @Composable
+        fun StepContent(page: Int) {
+            val step = page
+            Column(Modifier.fillMaxSize()) {
         val purpose = when (step) { 2 -> "concept"; else -> "master" }
         val target = detail.generationTarget(purpose, presets)
         if (step == 2) {
@@ -204,57 +320,100 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                 TextButton(onClick = { favouritesOnly = !favouritesOnly; scope.launch { lists[2].scrollToItem(0) } }, enabled = bookmarkLoaded) {
                     Text(if (!bookmarkLoaded) "☆ …" else (if (favouritesOnly) "★ " else "☆ ")+favouriteVisibleCount)
                 }
-                TextButton(onClick = { showFilters = true }) { Text(if (favouritesOnly || groupFilter != "All groups" || progressFilter != "all") "Filters •" else "Filters") }
+                TextButton(onClick = { showFilters = true }) { Text(if (favouritesOnly || dislikeFilter != "hide" || groupFilter != "All groups" || progressFilter != "all") "Filters •" else "Filters") }
             }
+            if (showCreateConcepts && libraryPreviewLoading) LinearProgressIndicator(Modifier.fillMaxWidth())
             if (showSearch) OutlinedTextField(query, { query = it }, placeholder = { Text("Search concepts…") }, singleLine = true, modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp), trailingIcon = { TextButton(onClick = { query = ""; showSearch = false }) { Text("×") } })
         }
 
-        LazyColumn(state = lists[step], modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        if (step == 0) PhotoCollection(
+            origin, detail.assets.map { CollectionPhoto(it.id, it.filename, it.selected) }, busy, Modifier.weight(1f),
+            onChoose = { id -> detail.assets.find { it.id == id }?.let { asset -> action { client.updateAsset(origin, id, !asset.selected) } } },
+            onDeleted = { action {} },
+            projectId = projectId, projectName = detail.name,
+        ) {
+            Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                Checkbox(detail.rightsConfirmed, enabled = !busy, onCheckedChange = { checked -> action { client.updateProject(origin, projectId, checked) } })
+                Text("I have permission to use these images")
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { picker.launch("image/*") }, enabled = detail.rightsConfirmed && !busy, modifier = Modifier.weight(1f)) { Text("Add photos") }
+                Button(onClick = { navigateTo(1) }, enabled = detail.rightsConfirmed && detail.assets.any { it.selected }, modifier = Modifier.weight(1f)) { Text("Master →") }
+            }
+            Text(detail.assets.count { it.selected }.toString()+" / "+detail.assets.size+" selected", style = MaterialTheme.typography.labelLarge)
+        } else if (step == 1) {
+            val masters = workflow.rows("masters")
+            val masterPhotos = masters.filter { it.optJSONObject("job")?.optString("status") == "succeeded" }.flatMap { row ->
+                row.optJSONObject("job")!!.outputs().map { id -> CollectionPhoto(id, "Master "+row.optInt("round")+"/"+row.optInt("variant"), workflow.realId("approved_master_id") == row.getString("id")) }
+            }
+            PhotoCollection(origin, masterPhotos, busy, Modifier.weight(1f), onChoose = { id ->
+                masters.find { id in it.optJSONObject("job")?.outputs().orEmpty() }?.let { row ->
+                    if (workflow.realId("approved_master_id") != row.getString("id")) action { client.approveMaster(origin, projectId, row.getString("id")) }
+                }
+            }, onDeleted = { action {} }, photoInfo = gallery, onOpenProject = { navigateTo(0) }, projectId = projectId, projectName = detail.name, purpose = "master",
+                pendingPhotos = masters.filter { isGenerating(it.optJSONObject("job")?.optString("status").orEmpty()) }.map { PendingPhoto(it.getString("id"), "Master ${it.optInt("round")}/${it.optInt("variant")} · Creating…") },
+            ) {
+                Text("Master collection", style = MaterialTheme.typography.titleLarge)
+                ServerChoice("Number of master images", masterCount.toString(), listOf("1", "2", "3", "4"), enabled = !busy,
+                    labels = mapOf("1" to "1 image", "2" to "2 images", "3" to "3 images", "4" to "4 images")) { masterCount = it.toInt() }
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(onClick = { generate("master/generate", JSONObject().put("variants", masterCount).put("hairstyle", "reference")) }, enabled = !busy && detail.rightsConfirmed && detail.assets.any { it.selected }, modifier = Modifier.weight(1f)) { Text("Generate · $masterCount") }
+                    Button(onClick = { navigateTo(2) }, enabled = approved, modifier = Modifier.weight(1f)) { Text("Concepts →") }
+                }
+                Text("Tap a photo to view; use ✓ to approve a master.", style = MaterialTheme.typography.bodySmall)
+                masters.filter { it.optJSONObject("job")?.optString("status") in listOf("failed", "cancelled") }.forEach { row ->
+                    val job = row.optJSONObject("job") ?: JSONObject()
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                        if (isGenerating(job.optString("status"))) GenerationLoading()
+                        Text("Master "+row.optInt("round")+"/"+row.optInt("variant")+" · "+job.optString("status"), style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            }
+        } else if (step == 2 && !showCreateConcepts) {
+            ServerChoice("Batch", activeBatch?.toString().orEmpty(), batches.map { it.toString() }, enabled = batches.isNotEmpty(),
+                labels = batches.associate { it.toString() to ("Batch #"+it+" · "+concepts.count { row -> row.optInt("run") == it }+" versions") }) { selectedBatch = it.toInt() }
+            val visibleBatch = batchConcepts.filter { visible(it) }
+            val batchPhotos = visibleBatch.flatMap { row ->
+                val job = row.optJSONObject("job") ?: JSONObject()
+                if (job.optString("status") != "succeeded") emptyList() else job.outputs().map { id ->
+                    conceptGalleryPhoto(id, projectId, detail.name, row, gallery.find { it.id == id })
+                }
+            }.distinctBy { it.id }
+            val stopped = visibleBatch.filter { it.optJSONObject("job")?.optString("status") in listOf("failed", "cancelled") }
+            val grid = androidx.compose.runtime.key(activeBatch, query, favouritesOnly, groupFilter, progressFilter) { androidx.compose.foundation.lazy.grid.rememberLazyGridState() }
+            PhotoGallery(origin, batchPhotos, Modifier.weight(1f), onOpenProject = { navigateTo(0) }, gridState = grid,
+                onRefresh = { action {} }, bottomPadding = 96.dp,
+                pendingPhotos = visibleBatch.filter { isGenerating(it.optJSONObject("job")?.optString("status").orEmpty()) }.map { PendingPhoto(it.getString("id"), conceptLabel(it) + " · Creating…") },
+                statusItems = if (stopped.isEmpty()) null else {
+                    {
+                        stopped.forEach { row ->
+                            val job = row.getJSONObject("job")
+                            val failed = job.optString("status") == "failed"
+                            item(key = "status-${row.getString("id")}", span = { androidx.compose.foundation.lazy.grid.GridItemSpan(maxLineSpan) }) {
+                                Card(Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 4.dp)) {
+                                    Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                                        Text("${conceptLabel(row)} · v${row.optInt("revision")}", style = MaterialTheme.typography.titleSmall)
+                                        Text(if (failed) "Failed" else "Cancelled",
+                                            color = if (failed) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                                        job.realId("error_message")?.let { Text(it, style = MaterialTheme.typography.bodySmall) }
+                                        TextButton(onClick = { navigateTo(4) }) { Text("Generation history") }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+            ) { id -> galleryFeed.remove(id); action {} }
+        } else if (step == 3) PhotoGallery(origin, gallery, Modifier.weight(1f), onOpenProject = { navigateTo(0) }, feed = galleryFeed, gridState = library.grid(projectId), searchProjectId = projectId,
+            pendingPhotos = jobs.filter { isGenerating(it.status) }.map { PendingPhoto(it.id, "${it.purpose} · Creating…") },
+        ) { id ->
+            galleryFeed.remove(id)
+            action {}
+        } else LazyColumn(state = lists[step], modifier = Modifier.weight(1f).fillMaxWidth(), contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 96.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             when (step) {
-                0 -> {
-                    item {
-                        Row { Checkbox(detail.rightsConfirmed, enabled = !busy, onCheckedChange = { checked -> action { client.updateProject(origin, projectId, checked) } }); Text("I have permission to use these images", Modifier.padding(top = 12.dp)) }
-                        Button(onClick = { picker.launch("image/*") }, enabled = detail.rightsConfirmed && !busy, modifier = Modifier.fillMaxWidth()) { Text("Upload reference photos") }
-                        Text("${detail.assets.count { it.selected }} of ${detail.assets.size} photos selected")
-                        Button(onClick = { navigateTo(1) }, enabled = detail.rightsConfirmed && detail.assets.any { it.selected }, modifier = Modifier.fillMaxWidth()) { Text("Continue → Master") }
-                    }
-                    items(detail.assets, key = { it.id }) { asset -> Card(Modifier.fillMaxWidth()) { Column(Modifier.padding(12.dp)) {
-                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                            AsyncImage("$origin/api/assets/${asset.id}/content", asset.filename, Modifier.size(88.dp).clickable { preview = asset.id }, contentScale = ContentScale.Crop)
-                            Column(Modifier.weight(1f)) { Text(asset.filename, maxLines = 2, overflow = TextOverflow.Ellipsis); Text(asset.kind); Row { Checkbox(asset.selected, enabled = !busy, onCheckedChange = { checked -> action { client.updateAsset(origin, asset.id, checked) } }); Text("Use photo", Modifier.padding(top = 12.dp)) } }
-                        }
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                            TextButton(onClick = { saveImage(context, origin, asset.id, asset.filename) }) { Text("Save") }
-                            TextButton(onClick = { confirmation = "Delete this reference photo?" to { action { client.deleteAsset(origin, asset.id) } } }) { Text("Delete") }
-                        }
-                    } } }
-                }
-                1 -> {
-                    item {
-                        Text("Create and approve your character", style = MaterialTheme.typography.titleLarge)
-                        Text("${detail.provider} / ${detail.model}")
-                        Button(onClick = { generate("master/generate", JSONObject().put("variants", 1).put("hairstyle", "reference")) }, enabled = !busy && detail.rightsConfirmed && detail.assets.any { it.selected }, modifier = Modifier.fillMaxWidth()) { Text("Generate master") }
-                        Button(onClick = { navigateTo(2) }, enabled = approved, modifier = Modifier.fillMaxWidth()) { Text("Continue → Concepts") }
-                    }
-                    items(workflow.rows("masters"), key = { it.getString("id") }) { row -> val job = row.optJSONObject("job") ?: JSONObject()
-                        Card { Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("Master ${row.optInt("round")}/${row.optInt("variant")} · ${job.optString("status")}")
-                            job.outputs().forEach { id -> ResultImage(origin, id) { preview = id } }
-                            if (job.optString("status") == "succeeded") Button(onClick = { action { client.approveMaster(origin, projectId, row.getString("id")) } }, enabled = !busy && workflow.realId("approved_master_id") != row.getString("id")) { Text(if (workflow.realId("approved_master_id") == row.getString("id")) "Approved" else "Approve this master") }
-                        } }
-                    }
-                }
                 2 -> {
                     if (showCreateConcepts) {
-                    item {
-                        if (!approved) Text("Approve a master in step 2 first.")
-
-                        Button(onClick = {
-                            val selected = proposals.filter { it.getString("id") in picked }; val payload = JSONObject()
-                            if (selected.firstOrNull()?.optInt("run") == 0) payload.put("slots", JSONArray(selected.map { it.optInt("slot") })) else payload.put("proposal_ids", JSONArray(selected.map { it.getString("id") }))
-                            generate("concepts/generate", payload)
-                        }, enabled = approved && !busy && picked.isNotEmpty(), modifier = Modifier.fillMaxWidth()) { Text("Generate selected (${picked.size})") }
-                    }
+                    if (!approved) item { Text("Approve a master in step 2 first.") }
                     item {
                         TextButton(onClick = { showAdvancedCreate = !showAdvancedCreate }) { Text(if (showAdvancedCreate) "Less options ▴" else "More creation options ▾") }
                         if (showAdvancedCreate) {
@@ -264,85 +423,75 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                     }
                         }
                     visibleProposals.forEach { (group, rows) ->
-                    item(key = "proposal-group-"+group) { Text(group, style = MaterialTheme.typography.titleLarge) }
+                    item(key = "proposal-group-"+group) {
+                        Row(Modifier.fillMaxWidth().padding(top = 12.dp, bottom = 4.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            Text(group, Modifier.weight(1f), style = MaterialTheme.typography.titleMedium)
+                            Text("${rows.size} concepts", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                     items(rows, key = { "proposal-${it.getString("id")}" }) { row -> val id = row.getString("id")
-                        var expanded by remember(id) { mutableStateOf(false) }
-                        Card { Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                            Row { Checkbox(id in picked, onCheckedChange = { checked -> picked = if (checked) picked + id else picked - id }); Text(conceptLabel(row), Modifier.weight(1f).padding(top = 12.dp), style = MaterialTheme.typography.titleMedium); TextButton(onClick = { toggleFavourite(row) }, enabled = !bookmarkSaving) { Text(if (conceptIdentity(row) in favourites) "★" else "☆") } }
-                            if (row.optString("catalog_code").isNotBlank()) Text("${row.optString("catalog_code")} · #${conceptOrder(row)} · ${row.optString("family")}", style = MaterialTheme.typography.labelSmall)
-                            if (conceptTags(row).isNotEmpty()) Text(conceptTags(row).joinToString(" · "), style = MaterialTheme.typography.bodySmall)
-                            val state = progressOf(row)
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
-                                Text(state.label(), modifier = Modifier.weight(1f), style = MaterialTheme.typography.labelMedium, color = if (state.imageIds.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
-                                if (state.rows.isNotEmpty()) TextButton(onClick = { historyKey = conceptIdentity(row) }) { Text("View results") }
+                        val selected = id in picked
+                        val state = progressOf(row)
+                        val globalPhotos = libraryPreviews[conceptIdentity(row)].orEmpty()
+                        val thumbnail = state.imageIds.firstOrNull() ?: globalPhotos.firstOrNull()?.id
+                        Card(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp),
+                            colors = CardDefaults.cardColors(containerColor = if (selected) MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f) else MaterialTheme.colorScheme.surface),
+                            border = androidx.compose.foundation.BorderStroke(1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)),
+                        ) {
+                            Row(Modifier.fillMaxWidth().clickable { detailConcept = row }.padding(start = 8.dp, end = 4.dp, top = 8.dp, bottom = 4.dp), verticalAlignment = androidx.compose.ui.Alignment.Top) {
+                                Box(Modifier.padding(8.dp).size(88.dp)) {
+                                    Surface(Modifier.fillMaxSize(), shape = MaterialTheme.shapes.medium, color = MaterialTheme.colorScheme.surfaceContainerHigh) {
+                                        if (thumbnail != null) AsyncImage("$origin/api/assets/$thumbnail/content", "Concept preview", Modifier.fillMaxSize(), contentScale = ContentScale.Crop)
+                                        else Box(contentAlignment = androidx.compose.ui.Alignment.Center) {
+                                            if (state.active) GenerationLoading() else Icon(DetailIcons.Gallery, "No concept image yet", tint = MaterialTheme.colorScheme.onSurfaceVariant)
+                                        }
+                                    }
+                                    Surface(Modifier.align(androidx.compose.ui.Alignment.BottomStart), shape = androidx.compose.foundation.shape.CircleShape, color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f)) {
+                                        Checkbox(selected, enabled = conceptIdentity(row) !in dislikes, onCheckedChange = { checked -> picked = if (checked) picked + id else picked - id }, modifier = Modifier.size(40.dp))
+                                    }
+                                }
+                                Column(Modifier.weight(1f).padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    Text(conceptLabel(row), style = MaterialTheme.typography.titleMedium)
+                                    if (globalPhotos.isNotEmpty()) Text("${globalPhotos.size} images · ${globalPhotos.map { it.projectId }.distinct().size} projects", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                                    if (conceptIdentity(row) in dislikes) Text("Disliked", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.error)
+                                    row.optJSONObject("brief")?.optString("setting")?.takeIf { it.isNotBlank() }?.let {
+                                        Text(it, maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                    }
+                                    val tags = conceptTags(row)
+                                    if (tags.isNotEmpty()) Text(tags.take(3).joinToString("  ·  "), style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                Column {
+                                IconToggleButton(checked = conceptIdentity(row) in favourites, onCheckedChange = { toggleFavourite(row) }, enabled = !bookmarkSaving) {
+                                    Icon(if (conceptIdentity(row) in favourites) DetailIcons.StarFilled else DetailIcons.Star, "Bookmark concept", tint = if (conceptIdentity(row) in favourites) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                IconToggleButton(checked = conceptIdentity(row) in dislikes, onCheckedChange = { toggleDislike(row) }) {
+                                    Icon(DetailIcons.Dislike, if (conceptIdentity(row) in dislikes) "Remove dislike" else "Dislike concept", tint = if (conceptIdentity(row) in dislikes) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                                }
                             }
-                            Text(row.optJSONObject("brief")?.optString("setting").orEmpty(), maxLines = 2, overflow = TextOverflow.Ellipsis, style = MaterialTheme.typography.bodySmall)
-                            Row { TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "Less" else "Details") }; TextButton(onClick = { edit = row }) { Text("Edit") } }
-                            if (expanded) { Text(row.optString("title")); BriefText(row.optJSONObject("brief")) }
-                        } }
-                    }
-                    }
-                    }
-                    if (!showCreateConcepts) {
-                    item {
-                        Text("Concept batches", style = MaterialTheme.typography.titleLarge)
-                        ServerChoice("Batch", activeBatch?.toString().orEmpty(), batches.map { it.toString() }, enabled = batches.isNotEmpty(), labels = batches.associate { it.toString() to ("Batch #"+it+" · "+concepts.count { row -> row.optInt("run") == it }+" versions") }) { selectedBatch = it.toInt() }
+                            Row(Modifier.fillMaxWidth().padding(start = 20.dp, end = 8.dp, bottom = 4.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                                if (state.active) { GenerationLoading(); Spacer(Modifier.width(8.dp)) }
+                                Text(state.label(), Modifier.weight(1f), style = MaterialTheme.typography.labelSmall, color = if (state.imageIds.isNotEmpty()) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant)
+                                if (state.rows.isNotEmpty()) TextButton(onClick = { historyKey = conceptIdentity(row) }) { Text("Results") }
+                                TextButton(onClick = { detailConcept = row }) { Text("Details") }
+                            }
 
-                        if (batches.isEmpty()) Text("No generated batches yet. Choose Create new batch to start.")
-                    }
-                    item { Text("Batch #$activeBatch · ${batchConcepts.size} versions", style = MaterialTheme.typography.titleLarge) }
-                    visibleResults.forEach { (group, slots) ->
-                    item(key = "result-group-"+group) { Text(group, style = MaterialTheme.typography.titleLarge) }
-                    items(slots, key = { "slot-"+it.first().optInt("slot") }) { revisions ->
-                        val slot = revisions.first().optInt("slot")
-                        val row = revisions.find { it.getString("id") == versions[slot] } ?: revisions.first()
-                        val job = row.optJSONObject("job") ?: JSONObject()
-                        var expanded by remember(row.getString("id")) { mutableStateOf(false) }
-                        val canRerun = !busy && approved && job.optString("status") !in listOf("queued", "submitting", "running")
-                        Card { Column(Modifier.fillMaxWidth().padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                            Text("${conceptLabel(row)} · Run ${row.optInt("run")} / ${row.optInt("slot")} · v${row.optInt("revision")}", style = MaterialTheme.typography.titleMedium)
-                            if (row.optString("catalog_code").isNotBlank()) Text("${row.optString("catalog_code")} · #${conceptOrder(row)} · ${row.optString("family")}", style = MaterialTheme.typography.labelSmall)
-                            job.outputs().forEach { id -> ResultImage(origin, id) { preview = id } }
-                            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                                TextButton(onClick = { toggleFavourite(row) }) { Text(if (conceptIdentity(row) in favourites) "★" else "☆") }
-                                Text(job.optString("status")+" · v"+row.optInt("revision"), modifier = Modifier.padding(top = 12.dp), style = MaterialTheme.typography.bodySmall)
-                                TextButton(onClick = { expanded = !expanded }) { Text(if (expanded) "Close ▴" else "Actions ▾") }
-                            }
-                            if (expanded) {
-                            if (job.optString("status") in listOf("succeeded", "failed", "cancelled")) TextButton(onClick = { action { client.dismissJob(origin, job.getString("id")) } }, enabled = !busy) { Text("Move run to Trash") }
-                            ServerChoice("Version", row.getString("id"), revisions.map { it.getString("id") }, enabled = revisions.size > 1,
-                                labels = revisions.associate { it.getString("id") to ("v"+it.optInt("revision")+" · "+it.optJSONObject("job")?.optString("status")) }) { versions = versions + (slot to it) }
-                            TextButton(onClick = { toggleFavourite(row) }) { Text(if (conceptIdentity(row) in favourites) "★ Favourite" else "☆ Favourite") }
-                            job.optJSONObject("meta")?.optJSONObject("concept_choices")?.let { savedStyling ->
-                                Text("Image styling: "+stylingSummary(savedStyling, stylingMenu), style = MaterialTheme.typography.bodySmall)
-                                TextButton(onClick = { saveChoices(savedStyling); showStyling = true }) { Text("Reuse this image's styling") }
-                            }
-                            BriefText(row.optJSONObject("brief"))
-                            job.realId("error_message")?.let { Text(it, color = MaterialTheme.colorScheme.error, maxLines = 4) }
-                            OutlinedButton(onClick = { generate("concepts/"+row.getString("id")+"/regenerate", JSONObject().put("prompt_mode", "saved")) }, enabled = canRerun && !job.realId("prompt").isNullOrBlank()) { Text("Regenerate · saved prompt") }
-                            OutlinedButton(onClick = { generate("concepts/"+row.getString("id")+"/regenerate", JSONObject().put("prompt_mode", "current")) }, enabled = canRerun) { Text("Regenerate · current prompt") }
-                            OutlinedButton(onClick = { promptEdit = row }, enabled = canRerun) { Text("Edit full prompt & generate") }
-                            OutlinedButton(onClick = { edit = row }, enabled = canRerun) { Text("Edit description & generate") }
-                            if (job.optString("status") == "succeeded") Button(onClick = { confirmation = "Enhance this concept using the configured provider? Charges may apply." to { action { client.enhance(origin, projectId, row.getString("id")); notice = "Enhancement queued. View results in Gallery." } } }, enabled = !busy) { Text("Enhance image") }
-                            }
-                        } }
+                        }
+
                     }
                     }
-                }
                     }
-                3 -> {
-                    item { Text("Gallery (${gallery.size})", style = MaterialTheme.typography.titleLarge); Text("Masters, concepts and enhancements. Tap any image for a full screen preview.") }
-                    if (gallery.isEmpty()) item { Text("No generated images yet.") }
-                    items(gallery, key = { it.id }) { image -> Card { Column(Modifier.padding(12.dp)) {
-                        ResultImage(origin, image.id) { preview = image.id }; Text(image.purpose, style = MaterialTheme.typography.titleMedium); Text(image.filename, maxLines = 2, overflow = TextOverflow.Ellipsis)
-                        OutlinedButton(onClick = { saveImage(context, origin, image.id, image.filename) }) { Text("Save original") }
-                        TextButton(onClick = { action { client.trashAsset(origin, image.id) } }, enabled = !busy) { Text("Move image to Trash") }
-                    } } }
                 }
                 4 -> {
                     item { Text("Generation history", style = MaterialTheme.typography.titleLarge) }
                     items(jobs, key = { it.id }) { job -> Card { Column(Modifier.fillMaxWidth().padding(12.dp)) {
-                        Text("${job.purpose} · ${job.status}", style = MaterialTheme.typography.titleMedium); job.outputAssetIds.forEach { id -> ResultImage(origin, id) { preview = id } }; job.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = androidx.compose.ui.Alignment.CenterVertically) {
+                            if (isGenerating(job.status)) GenerationLoading()
+                            Text("${job.purpose} · ${job.status}", style = MaterialTheme.typography.titleMedium)
+                        }
+                        job.outputAssetIds.forEach { id -> ResultImage(origin, id) { preview = id } }; job.error?.let { Text(it, color = MaterialTheme.colorScheme.error) }
                         if (job.status in listOf("succeeded", "failed", "cancelled")) TextButton(onClick = { action { client.dismissJob(origin, job.id) } }, enabled = !busy) { Text("Move run to Trash") }
                         if (job.status in listOf("queued", "submitting", "running")) TextButton(onClick = { action { client.cancelJob(origin, job.id) } }) { Text("Cancel job") }
                         if (job.status in listOf("failed", "cancelled")) Row { TextButton(onClick = { confirmation = "Retry this generation? Provider charges may apply." to { action { client.retryJob(origin, job.id) } } }) { Text("Retry") } }
@@ -350,17 +499,82 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                 }
             }
         }
+            }
+        }
+        if (step in 0..2) HorizontalPager(
+            state = stepPager,
+            modifier = Modifier.weight(1f).fillMaxWidth(),
+            beyondViewportPageCount = 1,
+            key = { it },
+        ) { page -> StepContent(page) }
+        else Box(Modifier.weight(1f).fillMaxWidth()) { StepContent(step) }
+        if (step == 2 && showCreateConcepts && detail != null) Surface(
+            modifier = Modifier.fillMaxWidth(), shadowElevation = 8.dp,
+            color = MaterialTheme.colorScheme.surface,
+        ) {
+            Button(onClick = {
+                val selected = proposals.filter { it.getString("id") in picked }
+                val payload = JSONObject()
+                if (selected.firstOrNull()?.optInt("run") == 0) payload.put("slots", JSONArray(selected.map { it.optInt("slot") }))
+                else payload.put("proposal_ids", JSONArray(selected.map { it.getString("id") }))
+                generate("concepts/generate", payload)
+            }, enabled = approved && !busy && picked.isNotEmpty(), modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 12.dp).heightIn(min = 48.dp)) {
+                Text(if (picked.isEmpty()) "Select concepts to generate" else "Generate · ${picked.size} concepts")
+            }
+        }
+    }
+    if (step in 0..2) FloatingActionButton(
+        onClick = { navigateTo(3) },
+        modifier = Modifier.align(androidx.compose.ui.Alignment.BottomEnd).padding(end = 24.dp, bottom = if (step == 2 && showCreateConcepts) 96.dp else 24.dp),
+        shape = androidx.compose.foundation.shape.CircleShape,
+        containerColor = MaterialTheme.colorScheme.primary, contentColor = MaterialTheme.colorScheme.onPrimary,
+    ) { Icon(DetailIcons.Gallery, "Open project gallery") }
     }
     if (showFilters) AlertDialog(onDismissRequest = { showFilters = false }, title = { Text("Filter concepts") }, text = {
         Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             FilterChip(selected = favouritesOnly, onClick = { favouritesOnly = !favouritesOnly }, label = { Text("★ Favourites only ("+favouriteVisibleCount+")") })
             Text(favouriteVisibleCount.toString()+" available here · "+favourites.size+" saved on server", style = MaterialTheme.typography.bodySmall)
+            ServerChoice("Disliked concepts", dislikeFilter, listOf("hide", "only", "all"), enabled = true,
+                labels = mapOf("hide" to "Hide disliked", "only" to "Disliked only", "all" to "Show all")) { dislikeFilter = it }
             ServerChoice("Created in this project", progressFilter, listOf("all", "created", "uncreated", "active", "failed"), enabled = true,
                 labels = mapOf("all" to "All concepts", "created" to "Has images", "uncreated" to "Not created", "active" to "Creating", "failed" to "Failed, no image")) { progressFilter = it }
             ServerChoice("Gom nhóm theo", groupMode, listOf("Tư thế / hoạt động", "Bối cảnh"), enabled = true) { groupMode = it }
             ServerChoice("Group", groupFilter, groupOptions, enabled = true) { groupFilter = it }
         }
-    }, confirmButton = { TextButton(onClick = { showFilters = false; scope.launch { lists[2].scrollToItem(0) } }) { Text("Done") } }, dismissButton = { TextButton(onClick = { favouritesOnly = false; groupFilter = "All groups"; progressFilter = "all"; query = "" }) { Text("Reset") } })
+    }, confirmButton = { TextButton(onClick = { showFilters = false; scope.launch { lists[2].scrollToItem(0) } }) { Text("Done") } }, dismissButton = { TextButton(onClick = { favouritesOnly = false; dislikeFilter = "hide"; groupFilter = "All groups"; progressFilter = "all"; query = "" }) { Text("Reset") } })
+    if (showSetups && project != null) SetupLibrarySheet(
+        setupStore, GenerationSetup("", "", choices.toString(), generationTargets(project!!, presets, providers), masterCount, customCount), busy, error,
+        onApply = { setup -> action {
+            choicesError(JSONObject(setup.choices))?.let { throw IllegalArgumentException(it) }
+            client.applyGenerationTargets(origin, projectId, setup.name, setup.steps)
+            saveChoices(JSONObject(setup.choices)); masterCount = setup.masterCount; customCount = setup.customCount
+            showSetups = false; notice = "Applied ${setup.name}"
+        } }, onDismiss = { showSetups = false },
+    )
+    generationDraft?.let { draft ->
+        val currentProject = project
+        if (currentProject != null) {
+            val initialTargets = generationTargets(currentProject, presets, providers)
+            val masterImage = workflow.rows("masters").find { it.optString("id") == workflow.realId("approved_master_id") }?.optJSONObject("job")?.outputs()?.firstOrNull()
+            GenerationReviewSheet(origin, draft, initialTargets, choices, stylingMenu, providers, masterImage, currentProject.assets.count { it.selected }, setupStore,
+                onEditMaster = { generationDraft = null; navigateTo(1) },
+                onEditConcepts = { generationDraft = null; showCreateConcepts = true },
+                onDismiss = { generationDraft = null },
+                onConfirm = { reviewed, targets, styling ->
+                    generationDraft = null
+                    action {
+                        if (targets != initialTargets) client.applyGenerationTargets(origin, projectId, "Mobile generation setup", targets)
+                        if (reviewed.payload.has("choices")) saveChoices(styling)
+                        if (reviewed.purpose == "master") masterCount = reviewed.payload.optInt("variants", masterCount)
+                        if (reviewed.payload.optBoolean("custom")) customCount = reviewed.payload.optInt("count", customCount)
+                        client.projectAction(origin, projectId, reviewed.path, JSONObject(reviewed.payload.toString()).put("confirmed", true))
+                        notice = "Queued ${generationImageCount(reviewed)} images"
+                        library.queueRevision++
+                    }
+                },
+            )
+        }
+    }
     if (settings) ProjectSettingsDialog(project, providers, client, origin, projectId, presets = presets, onPrompts = { settings = false; showProjectPrompts = true }, onSaved = { settings = false; action {} }, onDismiss = { settings = false })
     confirmation?.let { (message, operation) -> AlertDialog(onDismissRequest = { confirmation = null }, title = { Text("Confirm") }, text = { Text(message) }, confirmButton = { TextButton(onClick = { confirmation = null; operation() }) { Text("Continue") } }, dismissButton = { TextButton(onClick = { confirmation = null }) { Text("Cancel") } }) }
     edit?.let { source -> ConceptEditor(source, { edit = null }) { title, brief ->
@@ -372,6 +586,23 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             generate("concepts/generate", payload)
         }
     } }
+    detailConcept?.let { row ->
+        val photoRows = projectProgress[conceptIdentity(row)]?.rows.orEmpty()
+        val detailPhotos = photoRows.flatMap { result ->
+            val job = result.optJSONObject("job") ?: JSONObject()
+            job.outputs().map { id -> conceptGalleryPhoto(id, projectId, project?.name.orEmpty(), result, gallery.find { it.id == id }) }
+        }.distinctBy { it.id }
+        val id = row.getString("id")
+        ConceptDetail(origin, row, detailPhotos, id in picked,
+            disliked = conceptIdentity(row) in dislikes,
+            onToggleDislike = { toggleDislike(row) },
+            onDismiss = { detailConcept = null },
+            onChoose = { picked = if (id in picked) picked - id else picked + id; detailConcept = null },
+            onEdit = { detailConcept = null; edit = row },
+            onDeleted = { deleted -> galleryFeed.remove(deleted); action {} },
+            onOpenProject = { destination -> detailConcept = null; onOpenProject(destination) },
+        )
+    }
     historyKey?.let { key ->
         AlertDialog(onDismissRequest = { historyKey = null }, title = { Text("Results in "+project?.name.orEmpty()) }, text = {
             LazyColumn(Modifier.heightIn(max = 500.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -397,24 +628,33 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
         promptEdit = null
         generate("concepts/"+source.getString("id")+"/regenerate", JSONObject().put("prompt", prompt))
     } }
-    preview?.let { ImageViewer(origin, it) { preview = null } }
+    preview?.let { selected ->
+        val conceptPhotos = concepts.flatMap { row ->
+            val job = row.optJSONObject("job") ?: JSONObject()
+            job.outputs().map { id -> GalleryItem(id, projectId, project?.name.orEmpty(), "concept", "$id.png",
+                prompt = job.optString("prompt"), provider = job.optString("provider"), model = job.optString("model"), createdAt = job.optString("created_at")) }
+        }
+        val photos = (gallery + conceptPhotos).distinctBy { it.id }
+        val ids = (photos.map { it.id } + project?.assets.orEmpty().map { it.id } + workflow.rows("masters").flatMap { it.optJSONObject("job")?.outputs().orEmpty() } + selected).distinct()
+        ImageViewer(origin, selected, imageIds = ids, photos = photos, onOpenProject = { preview = null; navigateTo(0) }) { preview = null }
+    }
 }
 
 @Composable
 private fun BriefText(brief: JSONObject?) { if (brief != null) listOf("setting", "activity", "outfit", "pose", "lighting").forEach { key -> brief.optString(key).takeIf { it.isNotBlank() }?.let { Text("${key.replaceFirstChar { it.uppercase() }}: $it", style = MaterialTheme.typography.bodyMedium) } } }
 @Composable
 internal fun ResultImage(origin: String, id: String, onClick: () -> Unit) { AsyncImage("$origin/api/assets/$id/content", "Generated image", Modifier.fillMaxWidth().height(320.dp).clickable(onClick = onClick), contentScale = ContentScale.Fit) }
-@Composable
-internal fun ImageViewer(origin: String, id: String, onDismiss: () -> Unit) {
-    val context = LocalContext.current
-    Dialog(onDismissRequest = onDismiss, properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false)) { Surface(Modifier.fillMaxSize()) { Column(Modifier.safeDrawingPadding().padding(16.dp)) {
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { TextButton(onClick = onDismiss) { Text("Close") }; TextButton(onClick = { saveImage(context, origin, id, "$id.png") }) { Text("Save original") } }
-        AsyncImage("$origin/api/assets/$id/content", "Full size image", Modifier.weight(1f).fillMaxWidth(), contentScale = ContentScale.Fit)
-    } } }
-}
-internal fun saveImage(context: android.content.Context, origin: String, id: String, filename: String) {
+internal fun saveImage(context: android.content.Context, origin: String, id: String, filename: String, showToast: Boolean = true): Boolean {
     val request = DownloadManager.Request(Uri.parse("$origin/api/assets/$id/download?format=original")).setTitle(filename).setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED).setDestinationInExternalPublicDir(android.os.Environment.DIRECTORY_DOWNLOADS, filename)
-    context.getSystemService(DownloadManager::class.java)?.enqueue(request)
+    return try {
+        val manager = context.getSystemService(DownloadManager::class.java) ?: error("Downloads unavailable")
+        manager.enqueue(request)
+        if (showToast) android.widget.Toast.makeText(context, "Saving to Downloads…", android.widget.Toast.LENGTH_SHORT).show()
+        true
+    } catch (e: Exception) {
+        android.widget.Toast.makeText(context, "Save failed: "+e.message, android.widget.Toast.LENGTH_LONG).show()
+        false
+    }
 }
 @Composable
 private fun ConceptEditor(source: JSONObject, onDismiss: () -> Unit, onGenerate: (String, JSONObject) -> Unit) {

@@ -29,7 +29,7 @@ internal fun conceptTags(row: JSONObject): List<String> = row.optJSONArray("tags
 internal fun conceptOrder(row: JSONObject): Int = if (row.has("display_number") && !row.isNull("display_number")) row.optInt("display_number") else row.optInt("slot")
 internal fun conceptIdentity(row: JSONObject): String = row.optString("bookmark_key").takeIf { it.isNotBlank() }
     ?: (row.optString("master_version_id")+":"+row.optInt("slot"))
-internal fun searchable(value: String): String = Normalizer.normalize(value, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").lowercase()
+internal fun searchable(value: String): String = Normalizer.normalize(value, Normalizer.Form.NFD).replace(Regex("\\p{M}+"), "").lowercase().replace('đ', 'd')
 internal fun matchesConcept(row: JSONObject, query: String): Boolean {
     val text = searchable(listOf(conceptLabel(row), row.optString("title", row.optString("mood")),
         row.optJSONObject("brief")?.toString().orEmpty(), conceptGroup(row), row.optString("family"),

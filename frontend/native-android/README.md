@@ -9,8 +9,45 @@ From `frontend/`, after installing JDK 21+ and Android SDK 36:
 ./android/gradlew -p native-android assembleDebug
 ```
 
-The native client supports backend URL/QR connection, project listing/creation, project
-settings (provider/model), photo upload, rights and asset selection, master/turnaround/
-concept generation, workflow approval, enhancement, job polling with cancel/retry/dismiss,
-global gallery, image previews, and Downloads export. Sticker Studio is intentionally not
-included in this native rewrite.
+`npm run android:build` and `npm run android:install` build and update this native
+client. Install uses `adb install -r` to preserve the saved backend connection.
+The old Capacitor client is available through `android:web:build` and
+`android:web:install`; it shares the application ID but stores its connection
+separately, so switching clients can show a different connection state.
+
+## Mobile workflow
+
+- Searchable/sortable project cards, pull-to-refresh, pagination, and saved project steps.
+- Swipe between References, Master, and Concepts; open Gallery from its floating button.
+- Photo collections with cached thumbnails, full-screen viewing, linked comparison of
+  2–4 images, Markdown prompts, and multi-select save/Trash/enhance actions.
+- Concept details show results from the current project or all projects. Favourite
+  concepts sync with the backend; dislikes, Best photos, and named generation setups
+  are stored locally on this phone, separately for each backend address.
+- Review the master, concepts, styling, model, size, and count before generation.
+  Master generation supports 1–4 variants; concept/enhanced images expose Enhance
+  and the three retry modes from image detail.
+- A global queue exposes active, failed, and recent jobs with cancel/retry controls.
+  Job SSE follows foreground lifecycle with polling/reconnection fallback.
+- Gallery search indexes all pages locally, supports tags/prompts/project names and
+  accent-insensitive queries, and retains a disk cache. Image disk cache is bounded
+  to 256 MB.
+
+Connection and Trash are under Home → More; disconnect requires confirmation.
+Sticker Studio is not included in this native client.
+
+## Backend compatibility
+
+This change does not require the optional project-page endpoint: a missing
+`GET /api/projects/page` falls back to the existing project list and local paging.
+`GET /api/projects/{project_id}/jobs/events` enables realtime updates; polling
+continues when SSE is unavailable. Other actions use the existing gallery,
+concept/enhancement, bookmark, preset, and Trash APIs.
+
+## Validation
+
+```bash
+./android/gradlew -p native-android assembleDebug testDebugUnitTest lintDebug
+```
+
+Run from `frontend/` with JDK 21+ and Android SDK 36 configured.

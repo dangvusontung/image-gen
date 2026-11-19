@@ -38,6 +38,8 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.4")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("com.squareup.okhttp3:okhttp:5.1.0")
+    implementation("com.squareup.okhttp3:okhttp-sse:5.1.0")
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
     implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.noties.markwon:core:4.6.2")
 }
