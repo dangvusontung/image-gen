@@ -1,6 +1,6 @@
 import { TrashImageButton } from '@/components/Trash'
 import CopyPromptButton from '@/components/CopyPromptButton'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ChevronLeftIcon, ChevronRightIcon, Clock3Icon, LoaderCircleIcon, MaximizeIcon, ZoomInIcon, ZoomOutIcon } from 'lucide-react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { assetUrl, downloadUrl, request, useCopyPrompts, useProjects, useProviders, type GenerationJob } from '@/api/client'
@@ -56,12 +56,13 @@ const ZOOM_MIN = 1
 const ZOOM_MAX = 4
 const ZOOM_STEP = 0.5
 
-export function ImagePreview({ assetId, title = 'Ảnh nhân vật', compareAssetId, gallery }: {
+export function ImagePreview({ assetId, title = 'Ảnh nhân vật', compareAssetId, gallery, renderDetails }: {
   assetId: string
   title?: string
   compareAssetId?: string
   /** Images to step through with ‹ › while enlarged; `assetId` is where it opens. */
   gallery?: GalleryImage[]
+  renderDetails?: (assetId: string) => ReactNode
 }) {
   const [open, setOpen] = useState(false)
   const items = gallery?.length ? gallery : [{ assetId, title }]
@@ -131,6 +132,7 @@ export function ImagePreview({ assetId, title = 'Ảnh nhân vật', compareAsse
           </div>
           {canPage && <Button variant="outline" size="icon" aria-label="Ảnh sau" className="shrink-0 self-center" onClick={() => step(1)}><ChevronRightIcon /></Button>}
         </div>
+        {renderDetails && <div key={canPage ? current.assetId : assetId} className="shrink-0">{renderDetails(canPage ? current.assetId : assetId)}</div>}
         <DownloadLinks assetId={canPage ? current.assetId : assetId} />
         <TrashImageButton assetId={canPage ? current.assetId : assetId} onTrashed={() => setOpen(false)} />
       </DialogContent>

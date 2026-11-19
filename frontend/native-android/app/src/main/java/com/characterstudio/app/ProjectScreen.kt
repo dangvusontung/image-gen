@@ -120,7 +120,6 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
     var showProjectPrompts by remember { mutableStateOf(false) }
     val visitPrefs = remember { context.getSharedPreferences("project-visits", android.content.Context.MODE_PRIVATE) }
     val visitKey = origin+"/"+projectId
-    var editingMasterOutfit by remember { mutableStateOf<String?>(null) }
     var masterOutfitId by rememberSaveable(visitKey) { mutableStateOf(visitPrefs.getString(visitKey+"/master-outfit", "").orEmpty()) }
     LaunchedEffect(visitKey, masterOutfitId) { visitPrefs.edit().putString(visitKey+"/master-outfit", masterOutfitId).apply() }
     var step by rememberSaveable(visitKey) { mutableIntStateOf(if (initialStep in 0..4) initialStep else visitPrefs.getInt(visitKey+"/step", 0).takeIf { it in 0..2 } ?: 0) }
@@ -350,7 +349,6 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
         val purpose = when (step) { 2 -> "concept"; else -> "master" }
         val target = detail.generationTarget(purpose, presets)
         if (step == 2) {
-            if (approved) TextButton(enabled = !busy, onClick = { editingMasterOutfit = workflow.realId("approved_master_id") }) { Text("Change Master outfit · optional") }
             Row(Modifier.fillMaxWidth().padding(horizontal = 16.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(selected = showCreateConcepts, onClick = { showCreateConcepts = true; scope.launch { lists[2].scrollToItem(0) } }, label = { Text("Create new batch") })
                 FilterChip(selected = !showCreateConcepts, onClick = { showCreateConcepts = false; scope.launch { lists[2].scrollToItem(0) } }, label = { Text("Previous batches") })
@@ -405,7 +403,6 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
                 pendingPhotos = masters.filter { isGenerating(it.optJSONObject("job")?.optString("status").orEmpty()) }.map { PendingPhoto(it.getString("id"), "Master ${it.optInt("round")}/${it.optInt("variant")} · Creating…") },
             ) {
                 Text("Master collection", style = MaterialTheme.typography.titleLarge)
-                ServerChoice("Master to change outfit", editingMasterOutfit.orEmpty(), listOf("") + masters.filter { it.optJSONObject("job")?.optString("status") == "succeeded" }.map { it.getString("id") }, enabled = !busy, labels = mapOf("" to "Optional: select a Master…") + masters.associate { it.getString("id") to "Master ${it.optInt("round")}/${it.optInt("variant")}" }) { editingMasterOutfit = it.takeIf { id -> id.isNotBlank() } }
                 MasterOutfitPicker(origin, detail.assets, masterOutfitId, enabled = !busy, menu = stylingMenu) { masterOutfitId = it }
                 ServerChoice("Number of master images", masterCount.toString(), listOf("1", "2", "3", "4"), enabled = !busy,
                     labels = mapOf("1" to "1 image", "2" to "2 images", "3" to "3 images", "4" to "4 images")) { masterCount = it.toInt() }
@@ -612,16 +609,6 @@ internal fun ProjectScreen(origin: String, projectId: String, onBack: () -> Unit
             showSetups = false; notice = "Applied ${setup.name}"
         } }, onDismiss = { showSetups = false },
     )
-    editingMasterOutfit?.let { versionId ->
-        val current = project
-        val master = workflow.rows("masters").find { it.optString("id") == versionId }
-        val sourceId = master?.optJSONObject("job")?.outputs()?.firstOrNull()
-        if (current != null && sourceId != null) MasterOutfitEditSheet(origin, current, sourceId, client,
-            onUploaded = { refresh() }, onDismiss = { editingMasterOutfit = null }, onReview = { outfitId ->
-                editingMasterOutfit = null
-                generationDraft = GenerationDraft("master/$versionId/outfit", JSONObject().put("outfit_reference_asset_id", outfitId), "master", emptyList())
-            })
-    }
     generationDraft?.let { draft ->
         val currentProject = project
         if (currentProject != null) {

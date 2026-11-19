@@ -112,3 +112,24 @@ def test_edit_completed_master_outfit_creates_version_without_autoapproval(clien
     other = client.post('/api/projects', json={'name': 'Other'}).json()['id']
     assert client.post(f"/api/projects/{other}/master/{original['id']}/outfit", json={'outfit_reference_asset_id': reference_ids[0]}).status_code == 404
     assert client.post(f"{base}/master/{original['id']}/outfit", json={'outfit_reference_asset_id': 'missing'}).status_code == 400
+
+
+def test_edit_master_outfit_from_preset_uses_only_source_master(client, project, reference_ids):
+    base = f'/api/projects/{project}'
+    result = client.post(f'{base}/master/generate', json={}).json()
+    wait_for_job(client, result['job_ids'][0])
+    source = client.get(f'{base}/workflow').json()['masters'][0]
+    path = f"{base}/master/{source['id']}/outfit"
+    response = client.post(path, json={'master_outfit': {'outfit': 'tank_pleated_classic'}})
+    assert response.status_code == 201, response.text
+    job = wait_for_job(client, response.json()['job_ids'][0])
+    assert job['reference_asset_ids'] == source['job']['output_asset_ids'][:1]
+    assert job['meta']['outfit']['mode'] == 'preset'
+    assert 'pleated mini skirt' in job['prompt']
+    assert 'reference image 2' not in job['prompt']
+    assert 'outfit_reference_asset_id' not in job['meta']
+    assert client.get(f'{base}/workflow').json()['approved_master_id'] is None
+    for payload in ({}, {'master_outfit': {'outfit': 'bikini'}, 'outfit_reference_asset_id': reference_ids[0]},
+                    {'master_outfit': {'outfit': 'master'}}, {'master_outfit': {'outfit': 'custom'}},
+                    {'master_outfit': {'outfit': 'bikini', 'scene': 'beach'}}):
+        assert client.post(path, json=payload).status_code == 422

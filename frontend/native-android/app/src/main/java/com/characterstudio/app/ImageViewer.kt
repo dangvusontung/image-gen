@@ -48,6 +48,8 @@ internal fun ImageViewer(origin: String, id: String, photo: GalleryItem? = null,
     var error by remember { mutableStateOf<String?>(null) }
     var showInfo by remember(currentId) { mutableStateOf(false) }
     val curation = rememberPhotoCuration(origin)
+    var showMasterOutfit by remember(currentId) { mutableStateOf(false) }
+    var masterOutfitQueued by remember(currentId) { mutableStateOf(false) }
     var showEnhance by remember(currentId) { mutableStateOf(false) }
     var enhancementQueued by remember(currentId) { mutableStateOf(false) }
     var showMore by remember(currentId) { mutableStateOf(false) }
@@ -177,6 +179,9 @@ internal fun ImageViewer(origin: String, id: String, photo: GalleryItem? = null,
                 if (controlsVisible) Column(Modifier.align(androidx.compose.ui.Alignment.BottomCenter).safeDrawingPadding().padding(horizontal = 20.dp, vertical = 16.dp),
                     verticalArrangement = Arrangement.spacedBy(12.dp), horizontalAlignment = androidx.compose.ui.Alignment.CenterHorizontally) {
                 error?.let { Text(it, Modifier.padding(16.dp), color = MaterialTheme.colorScheme.error) }
+                if (masterOutfitQueued) Surface(shape = MaterialTheme.shapes.medium, color = Color.White.copy(alpha = 0.95f), contentColor = Color.Black) {
+                    Text("Master outfit change queued", Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelMedium)
+                }
                 if (enhancementQueued) Surface(shape = MaterialTheme.shapes.medium, color = Color.White.copy(alpha = 0.95f), contentColor = Color.Black) {
                     Text("Enhancement queued", Modifier.padding(horizontal = 16.dp, vertical = 8.dp), style = MaterialTheme.typography.labelMedium)
                 }
@@ -188,6 +193,7 @@ internal fun ImageViewer(origin: String, id: String, photo: GalleryItem? = null,
                     IconButton(onClick = onDismiss, enabled = !deleting) { Icon(DetailIcons.Close, "Close") }
                     if (currentPhoto != null) IconButton(onClick = { showInfo = !showInfo }) { Icon(DetailIcons.Info, if (showInfo) "Hide information" else "Show information") }
                     if (currentPhoto?.purpose in listOf("concept", "enhance")) IconButton(onClick = { showEnhance = true }, enabled = !deleting) { Icon(DetailIcons.Enhance, "Enhance image") }
+                    if (currentPhoto?.purpose == "master" && currentPhoto.projectId.isNotBlank()) IconButton(onClick = { showMasterOutfit = true }, enabled = !deleting) { Icon(DetailIcons.Enhance, "Change Master outfit") }
                     if (onChoose != null) IconButton(onClick = { onChoose(currentId) }, enabled = !deleting && !choosing) {
                         Icon(DetailIcons.Check, if (currentId in selectedIds) "Selected photo" else "Select photo", tint = if (currentId in selectedIds) MaterialTheme.colorScheme.primary else Color.White)
                     }
@@ -233,6 +239,11 @@ internal fun ImageViewer(origin: String, id: String, photo: GalleryItem? = null,
                     }
                     }
                 }
+        if (showMasterOutfit && currentPhoto != null) MasterOutfitDetailDialog(origin, currentPhoto, onDismiss = { showMasterOutfit = false }, onQueued = {
+            showMasterOutfit = false
+            masterOutfitQueued = true
+            scope.launch { kotlinx.coroutines.delay(2500); masterOutfitQueued = false }
+        })
         if (showEnhance && currentPhoto != null) PhotoEnhanceSheet(origin, currentPhoto, onQueued = {
             showEnhance = false
             enhancementQueued = true

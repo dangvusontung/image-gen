@@ -273,7 +273,8 @@ def generate_master(project_id: str, data: Generate, request: Request, db: Sessi
 
 
 class MasterOutfitEdit(BaseModel):
-    outfit_reference_asset_id: str = Field(min_length=1, max_length=36)
+    outfit_reference_asset_id: str | None = Field(default=None, min_length=1, max_length=36)
+    master_outfit: ConceptChoices | None = None
     confirmed: bool = False
 
 
@@ -286,21 +287,37 @@ def edit_master_outfit(project_id: str, version_id: str, data: MasterOutfitEdit,
     source_asset = db.get(Asset, source_id)
     if source_asset.trashed or source.job.dismissed:
         fail("master_not_ready", "Master nguồn đã được đưa vào Trash", 400)
-    outfit = db.query(Asset).filter(Asset.id == data.outfit_reference_asset_id, Asset.project_id == project_id,
-                                  Asset.kind.in_(["reference", "side_profile", "template"]), Asset.trashed.is_(False)).first()
-    if outfit is None:
-        fail("outfit_reference_invalid", "Chọn ảnh tham chiếu hoặc template của dự án này", 400)
-    prompt = ("Edit reference image 1, the SOURCE MASTER. Change ONLY its outfit to the garments, colors, layers, "
-              "footwear and wearable accessories visible in reference image 2, the OUTFIT SOURCE. "
-              "Preserve the source Master's identity, face, age, hairstyle, body proportions, expression, pose, camera, "
-              "framing, background, lighting and rendering style. The second image supplies clothing only: never copy "
-              "its person's identity, body, pose, background, handheld props, logos or text. Keep clothing opaque. "
-              "Return the complete edited Master image, with no collage or added text.")
+    if bool(data.outfit_reference_asset_id) == bool(data.master_outfit):
+        fail("outfit_source_conflict", "Chọn một nguồn outfit: ảnh hoặc preset", 422)
+    refs = [source_id]
     meta = {"source_master_version_id": source.id, "source_master_asset_id": source_id,
-            "edit_type": "master_outfit", "reference_labels": ["SOURCE MASTER, preserve identity and composition", "OUTFIT SOURCE, clothing only"],
-            "outfit_reference_asset_id": outfit.id, "outfit_reference_index": 2,
-            "outfit": {"mode": "reference", "asset_id": outfit.id, "reference_index": 2}}
-    job = queue(db, registry, project, purpose="master", prompt=prompt, reference_asset_ids=[source_id, outfit.id],
+            "edit_type": "master_outfit", "reference_labels": ["SOURCE MASTER, preserve identity and composition"]}
+    if data.master_outfit is not None:
+        choices = data.master_outfit
+        allowed = {"outfit", "custom_outfit", "top", "footwear", "custom_footwear"}
+        if choices.outfit in ("auto", "master") or choices.model_dump(exclude_defaults=True).keys() - allowed:
+            fail("outfit_options_invalid", "Chọn preset trang phục cho Master", 422)
+        wardrobe = apply_choices({"outfit": "", "silhouette": ""}, choices, 1, [])
+        direction = "Wear this selected outfit: " + wardrobe["outfit"]
+        if "footwear" in wardrobe:
+            direction += ". Footwear: " + wardrobe["footwear"]
+        meta["outfit"] = {"mode": "preset", "choices": choices.model_dump(), "description": wardrobe["outfit"]}
+    else:
+        outfit = db.query(Asset).filter(Asset.id == data.outfit_reference_asset_id, Asset.project_id == project_id,
+                                      Asset.kind.in_(["reference", "side_profile", "template"]), Asset.trashed.is_(False)).first()
+        if outfit is None:
+            fail("outfit_reference_invalid", "Chọn ảnh tham chiếu hoặc template của dự án này", 400)
+        refs.append(outfit.id)
+        direction = ("Copy garments, colors, layers, footwear and wearable accessories from reference image 2, the OUTFIT SOURCE. "
+                     "This second image supplies clothing only: never copy its person's identity, body, pose, background, handheld props, logos or text.")
+        meta.update(outfit_reference_asset_id=outfit.id, outfit_reference_index=2,
+                    outfit={"mode": "reference", "asset_id": outfit.id, "reference_index": 2})
+        meta["reference_labels"].append("OUTFIT SOURCE, clothing only")
+    prompt = ("Edit reference image 1, the SOURCE MASTER. Change ONLY its outfit. " + direction + ". "
+              "Preserve the source Master's identity, face, age, hairstyle, body proportions, expression, pose, camera, "
+              "framing, background, lighting and rendering style. Keep clothing opaque. "
+              "Return the complete edited Master image, with no collage or added text.")
+    job = queue(db, registry, project, purpose="master", prompt=prompt, reference_asset_ids=refs,
                 aspect_ratio=source.job.settings.get("aspect_ratio", "3:4"), meta=meta)
     db.flush()
     number = (db.query(func.max(MasterVersion.round)).filter_by(project_id=project_id).scalar() or 0) + 1

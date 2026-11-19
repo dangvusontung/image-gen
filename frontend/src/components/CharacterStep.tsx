@@ -1,4 +1,4 @@
-import MasterOutfitEdit from './MasterOutfitEdit'
+import { MasterOutfitDetailAction } from './MasterOutfitEdit'
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { defaultGenerationSize } from '@/lib/generationPolicy'
@@ -38,10 +38,10 @@ function savedHair(projectId: string): { hairstyle: string; custom_hairstyle: st
   return { hairstyle: 'reference', custom_hairstyle: '' }
 }
 
-function ImageJob({ job, projectId, gallery }: { job: Job; projectId: string; gallery?: GalleryImage[] }) {
+function ImageJob({ job, projectId, gallery, master = false }: { job: Job; projectId: string; gallery?: GalleryImage[]; master?: boolean }) {
   return <div className="space-y-2">
     {!job.output_asset_ids.length && <JobPlaceholder job={job} />}
-    {job.output_asset_ids.map(id => <div key={id} className="space-y-2"><ImagePreview assetId={id} gallery={gallery} /><DownloadLinks assetId={id} /></div>)}
+    {job.output_asset_ids.map(id => <div key={id} className="space-y-2"><ImagePreview assetId={id} gallery={gallery} renderDetails={master ? assetId => <MasterOutfitDetailAction projectId={projectId} assetId={assetId} /> : undefined} /><DownloadLinks assetId={id} /></div>)}
     <JobDetails job={job} projectId={projectId} />
   </div>
 }
@@ -71,7 +71,6 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
     try { localStorage.setItem(`master-outfit:${project.id}`, id) } catch { /* Storage may be unavailable. */ }
     setConfirmed(false)
   }
-  const [editingMaster, setEditingMaster] = useState<string | null>(null)
   const [variants, setVariants] = useState(1)
   const [angles, setAngles] = useState<string[]>(ANGLE_KEYS)
   const [confirmed, setConfirmed] = useState(false)
@@ -188,10 +187,8 @@ export default function CharacterStep({ project, step, onApproved, onSkip }: { o
         </div>
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {group.map(m => <article key={m.id} className="space-y-3 rounded-xl border p-4">
-            <h4>Biến thể {m.variant}</h4><ImageJob job={m.job} projectId={project.id} gallery={masterGallery} />
+            <h4>Biến thể {m.variant}</h4><ImageJob job={m.job} projectId={project.id} gallery={masterGallery} master />
             <Button disabled={pending || m.job.status !== 'succeeded' || data?.approved_master_id === m.id} onClick={() => run(`${base}/master/${m.id}/approve`, undefined, undefined, onApproved)}>{data?.approved_master_id === m.id ? 'Đã duyệt' : 'Duyệt nhân vật này'}</Button>
-            {m.job.status === 'succeeded' && m.job.output_asset_ids[0] && <Button variant="outline" disabled={pending} onClick={() => setEditingMaster(editingMaster === m.id ? null : m.id)}>Đổi outfit · tùy chọn</Button>}
-            {editingMaster === m.id && <MasterOutfitEdit project={project} masterId={m.id} masterAssetId={m.job.output_asset_ids[0]} onClose={() => setEditingMaster(null)} />}
             {['failed', 'cancelled'].includes(m.job.status) && <Button variant="outline" disabled={pending} onClick={() => run(`${base}/master/generate`, { variants: 1, ...hair, ...outfitPayload })}>Tạo lại từ ảnh tham chiếu</Button>}
           </article>)}
         </div>

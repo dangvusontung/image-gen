@@ -1,3 +1,4 @@
+import { MasterOutfitDetailAction } from '@/components/MasterOutfitEdit'
 import { TrashImageButton } from '@/components/Trash'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { useEffect, useState } from 'react'
@@ -126,6 +127,7 @@ export default function ImageGallery({ projectId }: { projectId?: string }) {
               <p className="text-sm">{PURPOSES[detail.purpose] || detail.purpose}</p>
               <p className="text-xs text-muted-foreground">{new Date(detail.created_at).toLocaleString('vi-VN')}</p>
               <p className="break-words text-sm">{detail.provider} · {detail.model}</p>
+              {detail.purpose === 'master' && <MasterOutfitDetailAction key={detail.id} projectId={detail.project_id} assetId={detail.id} />}
               <DownloadLinks assetId={detail.id} />
               <TrashImageButton assetId={detail.id} onTrashed={() => { setSelected(ids => ids.filter(id => id !== detail.id)); setDetail(null) }} />
               <h3 className="font-medium">Prompt</h3>
